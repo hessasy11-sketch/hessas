@@ -1,4 +1,4 @@
-import { Shield, Activity, Users, Settings, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Shield, Activity, Users, Settings, TrendingUp, AlertTriangle, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -48,6 +48,13 @@ export function HQDashboard() {
       return;
     }
     navigate(path, { replace: true });
+  };
+
+  const handleLogout = () => {
+    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+      localStorage.removeItem('platform_staff_session');
+      navigate('/admin/access', { replace: true });
+    }
   };
 
   const dashboardCards = [
@@ -106,12 +113,21 @@ export function HQDashboard() {
               </div>
             </div>
 
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-600"
-            >
-              الصفحة الرئيسية
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/')}
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-600"
+              >
+                الصفحة الرئيسية
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all flex items-center gap-2"
+              >
+                <LogOut className="w-5 h-5" />
+                تسجيل الخروج
+              </button>
+            </div>
           </div>
         </div>
 

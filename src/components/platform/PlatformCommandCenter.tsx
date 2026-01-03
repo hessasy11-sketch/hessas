@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { Crown, Shield, Activity, AlertTriangle, FileText, X, Store, Sprout, ArrowRight } from 'lucide-react';
+import { Crown, Shield, Activity, AlertTriangle, FileText, X, Store, Sprout, ArrowRight, LogOut } from 'lucide-react';
 import SmartDashboardView from './SmartDashboardView';
 import StructurePermissionsView from './StructurePermissionsView';
 import CriticalAlertsView from './CriticalAlertsView';
@@ -15,6 +16,7 @@ interface Props {
 type TabType = 'dashboard' | 'structure' | 'alerts' | 'reports';
 
 export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavigateToAuctions }: Props) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [platformRole, setPlatformRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,28 +27,36 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
 
   const checkPlatformRole = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const sessionData = localStorage.getItem('platform_staff_session');
+      if (!sessionData) {
+        alert('يجب عليك تسجيل الدخول أولاً من خلال بوابة الدخول الذكي');
         onClose();
         return;
       }
 
-      const { data: role } = await supabase.rpc('get_platform_role', {
-        check_user_id: user.id
-      });
+      const session = JSON.parse(sessionData);
+      const staffRole = session.role;
 
-      if (!role) {
+      if (!['platform_owner', 'general_manager', 'super_admin'].includes(staffRole)) {
         alert('ليس لديك صلاحية الوصول لبوابة قيادة المنصة');
         onClose();
         return;
       }
 
-      setPlatformRole(role);
+      setPlatformRole(staffRole);
     } catch (error) {
       console.error('Error checking platform role:', error);
+      alert('حدث خطأ في التحقق من الصلاحيات');
       onClose();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+      localStorage.removeItem('platform_staff_session');
+      navigate('/admin/access', { replace: true });
     }
   };
 
@@ -78,12 +88,21 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-2 transition-all text-sm"
+              >
+                <LogOut className="w-5 h-5" />
+                خروج
+              </button>
+              <button
+                onClick={onClose}
+                className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         </div>
 

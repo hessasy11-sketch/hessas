@@ -43,6 +43,15 @@ export function AdminSmartAccessGateV3() {
       setStaffInfo(result.staff);
       setDefaultRoute(result.default_route || '/admin');
 
+      localStorage.setItem('platform_staff_session', JSON.stringify({
+        staff_id: result.staff.id,
+        full_name: result.staff.full_name,
+        role: result.staff.role,
+        role_title: result.staff.role_title,
+        department: result.staff.department,
+        timestamp: new Date().toISOString(),
+      }));
+
       await registerDeviceAccess(
         result.staff.id,
         deviceInfo.fingerprint,
@@ -88,6 +97,15 @@ export function AdminSmartAccessGateV3() {
     setScanStatus('valid');
 
     if (staffInfo && deviceInfo) {
+      localStorage.setItem('platform_staff_session', JSON.stringify({
+        staff_id: staffInfo.id,
+        full_name: staffInfo.full_name,
+        role: staffInfo.role,
+        role_title: staffInfo.role_title,
+        department: staffInfo.department,
+        timestamp: new Date().toISOString(),
+      }));
+
       await registerDeviceAccess(
         staffInfo.id,
         deviceInfo.fingerprint,
