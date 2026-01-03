@@ -47,28 +47,28 @@ const SCOPE_OPTIONS = [
 ];
 
 const MODULE_OPTIONS = [
-  'hq_dashboard',
-  'scenario_generator',
-  'staff_management',
-  'auctions_management',
-  'b2f_dashboard',
-  'farm_operations',
-  'my_tasks',
-  'contracts',
-  'payments',
-  'reports',
-  'settings'
+  { value: 'hq_dashboard', label: 'لوحة الإدارة العليا' },
+  { value: 'scenario_generator', label: 'مولد السيناريوهات' },
+  { value: 'staff_management', label: 'إدارة الموظفين' },
+  { value: 'auctions_management', label: 'إدارة المزادات' },
+  { value: 'b2f_dashboard', label: 'لوحة استثمار المزارع' },
+  { value: 'farm_operations', label: 'عمليات المزارع' },
+  { value: 'my_tasks', label: 'مهامي' },
+  { value: 'contracts', label: 'العقود' },
+  { value: 'payments', label: 'المدفوعات' },
+  { value: 'reports', label: 'التقارير' },
+  { value: 'settings', label: 'الإعدادات' }
 ];
 
 const ACTION_OPTIONS = [
-  'create',
-  'read',
-  'update',
-  'delete',
-  'approve',
-  'reject',
-  'assign',
-  'view_reports'
+  { value: 'create', label: 'إنشاء' },
+  { value: 'read', label: 'قراءة' },
+  { value: 'update', label: 'تحديث' },
+  { value: 'delete', label: 'حذف' },
+  { value: 'approve', label: 'موافقة' },
+  { value: 'reject', label: 'رفض' },
+  { value: 'assign', label: 'تعيين' },
+  { value: 'view_reports', label: 'عرض التقارير' }
 ];
 
 export default function ScenarioGeneratorView() {
@@ -358,14 +358,14 @@ export default function ScenarioGeneratorView() {
               <label className="block text-white font-bold mb-3">الوحدات المسموحة</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {MODULE_OPTIONS.map(module => (
-                  <label key={module} className="flex items-center gap-2 cursor-pointer">
+                  <label key={module.value} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.allowed_modules.includes(module)}
-                      onChange={() => toggleModule(module)}
+                      checked={formData.allowed_modules.includes(module.value)}
+                      onChange={() => toggleModule(module.value)}
                       className="w-4 h-4"
                     />
-                    <span className="text-white text-sm">{module}</span>
+                    <span className="text-white text-sm">{module.label}</span>
                   </label>
                 ))}
               </div>
@@ -375,14 +375,14 @@ export default function ScenarioGeneratorView() {
               <label className="block text-white font-bold mb-3">الإجراءات المسموحة</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {ACTION_OPTIONS.map(action => (
-                  <label key={action} className="flex items-center gap-2 cursor-pointer">
+                  <label key={action.value} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.allowed_actions.includes(action)}
-                      onChange={() => toggleAction(action)}
+                      checked={formData.allowed_actions.includes(action.value)}
+                      onChange={() => toggleAction(action.value)}
                       className="w-4 h-4"
                     />
-                    <span className="text-white text-sm">{action}</span>
+                    <span className="text-white text-sm">{action.label}</span>
                   </label>
                 ))}
               </div>
