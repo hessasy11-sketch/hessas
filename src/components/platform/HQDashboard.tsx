@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import SmartDashboardView from './SmartDashboardView';
-import AdvancedTeamManagement from './AdvancedTeamManagement';
+import TeamManagementView from './TeamManagementView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
 import { SessionTracker } from './SessionTracker';
@@ -298,7 +298,7 @@ export function HQDashboard() {
           />
         )}
 
-        {activeTab === 'team' && <AdvancedTeamManagement />}
+        {activeTab === 'team' && <TeamManagementView />}
 
         {activeTab === 'reports' && <ReportsView />}
 
