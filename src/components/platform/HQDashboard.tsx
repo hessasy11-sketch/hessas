@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
+const ADMIN_GATES = {
+  b2b: '/admin/b2b',
+  b2f: '/b2f',
+  users: '/hq/users',
+  settings: '/hq/settings',
+} as const;
+
 export function HQDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -34,6 +41,15 @@ export function HQDashboard() {
     }
   };
 
+  const goToGate = (key: keyof typeof ADMIN_GATES) => {
+    const path = ADMIN_GATES[key];
+    if (!path) {
+      navigate('/hq', { replace: true });
+      return;
+    }
+    navigate(path, { replace: true });
+  };
+
   const dashboardCards = [
     {
       title: 'إدارة المزادات',
@@ -41,7 +57,7 @@ export function HQDashboard() {
       color: 'from-blue-500 to-blue-600',
       count: stats.activeAuctions,
       label: 'مزاد نشط',
-      action: () => navigate('/'),
+      action: () => goToGate('b2b'),
     },
     {
       title: 'إدارة B2F',
@@ -49,7 +65,7 @@ export function HQDashboard() {
       color: 'from-emerald-500 to-emerald-600',
       count: 0,
       label: 'عمليات نشطة',
-      action: () => navigate('/b2f'),
+      action: () => goToGate('b2f'),
     },
     {
       title: 'إدارة المستخدمين',
@@ -57,7 +73,7 @@ export function HQDashboard() {
       color: 'from-purple-500 to-purple-600',
       count: stats.totalUsers,
       label: 'مستخدم',
-      action: () => navigate('/'),
+      action: () => goToGate('users'),
     },
     {
       title: 'الإعدادات المتقدمة',
@@ -65,7 +81,7 @@ export function HQDashboard() {
       color: 'from-orange-500 to-orange-600',
       count: stats.pendingActions,
       label: 'إجراء معلق',
-      action: () => navigate('/'),
+      action: () => goToGate('settings'),
     },
   ];
 
