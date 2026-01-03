@@ -45,7 +45,7 @@ type SidebarView = 'identity' | 'reservations' | 'my-requests' | 'finance' | 'co
 type QuickActionType = 'harvest' | 'gift' | 'charity' | 'transfer' | 'visit' | null;
 
 export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
-  const { user, account, signOut } = useInvestorAuth();
+  const { user, account, signOut, refreshAccountFromPhone } = useInvestorAuth();
   const [currentView, setCurrentView] = useState<SidebarView>('identity');
   const [loggingOut, setLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -69,6 +69,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
 
   useEffect(() => {
     if (isOpen) {
+      refreshAccountFromPhone();
       setCurrentView('identity');
     }
   }, [isOpen]);
@@ -139,7 +140,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
   };
 
   const handleNavigate = (view: SidebarView) => {
-    if (!user && view !== 'identity') {
+    if (!account && view !== 'identity') {
       setPendingView(view);
       setShowRegistration(true);
     } else {
@@ -196,7 +197,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
               {/* النصوص */}
               <div>
                 <h2 className="text-xl font-black tracking-tight drop-shadow-sm">
-                  {user ? 'حسابي' : 'مرحباً بك'}
+                  {account ? 'حسابي' : 'مرحباً بك'}
                 </h2>
                 <p className="text-xs text-emerald-50 font-medium">منصة استثمار المزارع</p>
               </div>
@@ -212,7 +213,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
         </div>
 
         {/* بطاقة الهوية الاستثمارية - للمستخدمين المسجلين فقط */}
-        {user && !investorJourney.loading && (
+        {account && !investorJourney.loading && (
           <div className="px-2 pt-2 flex-shrink-0">
             <InvestorIdentityCard
               investorName={investorJourney.name}
@@ -224,7 +225,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
         )}
 
         {/* رسالة الضيف */}
-        {!user && (
+        {!account && (
           <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-b border-emerald-100 p-4 flex-shrink-0">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -247,7 +248,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
         )}
 
         {/* Navigation Menu - أزرار أصغر */}
-        {user && (
+        {account && (
           <div className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-200 px-2 py-1.5 flex-shrink-0">
             <div className="grid grid-cols-3 gap-1.5">
               {/* ملخص حسابي */}
@@ -381,7 +382,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
         {/* المحتوى الديناميكي */}
         <div className="flex-1 overflow-y-auto bg-gray-50">
           {/* صفحة ملخص حسابي */}
-          {currentView === 'identity' && user && !investorJourney.loading && (
+          {currentView === 'identity' && account && !investorJourney.loading && (
             <div className="p-4 space-y-4">
               {/* شريط المراحل التفاعلي */}
               <div className="transform hover:scale-[1.01] transition-transform duration-200">
@@ -406,7 +407,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
           )}
 
           {/* صفحة ملخص حسابي للضيف */}
-          {currentView === 'identity' && !user && (
+          {currentView === 'identity' && !account && (
             <div className="p-4">
               <h3 className="text-sm font-bold text-gray-700 mb-3 px-1">الخدمات المتاحة</h3>
               <div className="space-y-2.5">
@@ -461,7 +462,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
             </div>
           )}
 
-          {currentView === 'reservations' && user && account && (
+          {currentView === 'reservations' && account && (
             <InvestorReservationsView
               key={account.contact_phone}
               investorPhone={account.contact_phone}
@@ -469,7 +470,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
             />
           )}
 
-          {currentView === 'operations' && user && account && (
+          {currentView === 'operations' && account && (
             <InvestorMyTreesOperations />
           )}
 
@@ -478,7 +479,7 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
           )}
 
           {/* خدمة المستثمر */}
-          {currentView === 'service' && user && (
+          {currentView === 'service' && account && (
             <div className="p-4 space-y-6">
               {/* Header */}
               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 shadow-sm border-2 border-rose-100 text-center">
@@ -588,28 +589,28 @@ export function InvestorSidebar({ isOpen, onClose }: InvestorSidebarProps) {
           )}
 
           {/* طلباتي (الجديد) */}
-          {currentView === 'my-requests' && user && account && (
+          {currentView === 'my-requests' && account && (
             <div className="p-4">
               <InvestorMyRequestsView />
             </div>
           )}
 
           {/* المالية */}
-          {currentView === 'finance' && user && account && (
+          {currentView === 'finance' && account && (
             <div className="p-4">
               <InvestorFinanceView />
             </div>
           )}
 
           {/* طلباتي */}
-          {currentView === 'my-actions' && user && account && (
+          {currentView === 'my-actions' && account && (
             <div className="p-4">
               <MyActionRequestsView />
             </div>
           )}
 
           {/* بياناتي */}
-          {currentView === 'profile' && user && account && (
+          {currentView === 'profile' && account && (
             <div className="p-4">
               <div className="bg-white rounded-3xl p-5 shadow-lg border-2 border-gray-100 space-y-4">
                 {/* Header */}
