@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Shield, Lock, Key, CheckCircle, XCircle, QrCode, Fingerprint, Clock, Eye, Edit, Save, Plus, Settings, Users, Activity } from 'lucide-react';
+import { Shield, Lock, Key, CheckCircle, XCircle, QrCode, Fingerprint, Clock, Eye, Edit, Save, Plus, Settings, Users, Activity, Trash2, X, AlertCircle } from 'lucide-react';
 
 interface RoleDefinition {
   id: string;
@@ -67,6 +67,11 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
   const [scopePerms, setScopePerms] = useState<ScopePermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tempAccessSettings, setTempAccessSettings] = useState<AccessSettings | null>(null);
+  const [tempOperationalPerms, setTempOperationalPerms] = useState<OperationalPermission[]>([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadRoles();
@@ -78,6 +83,13 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
     }
   }, [selectedRole]);
 
+  useEffect(() => {
+    if (editMode) {
+      setTempAccessSettings(accessSettings);
+      setTempOperationalPerms([...operationalPerms]);
+    }
+  }, [editMode]);
+
   const loadRoles = async () => {
     try {
       const { data, error } = await supabase
@@ -87,7 +99,7 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
 
       if (error) throw error;
       setRoles(data || []);
-      if (data && data.length > 0) {
+      if (data && data.length > 0 && !selectedRole) {
         setSelectedRole(data[0].role_key);
       }
     } catch (error) {
@@ -108,9 +120,108 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
       setAccessSettings(accessRes.data);
       setOperationalPerms(operationalRes.data || []);
       setScopePerms(scopeRes.data || []);
+      setEditMode(false);
     } catch (error) {
       console.error('Error loading role details:', error);
     }
+  };
+
+  const handleSaveChanges = async () => {
+    if (!tempAccessSettings || !selectedRole) return;
+
+    setSaving(true);
+    try {
+      await supabase
+        .from('role_access_settings')
+        .update({
+          requires_qr: tempAccessSettings.requires_qr,
+          requires_pin: tempAccessSettings.requires_pin,
+          allow_image_upload: tempAccessSettings.allow_image_upload,
+          allow_camera_scan: tempAccessSettings.allow_camera_scan,
+          bind_first_device: tempAccessSettings.bind_first_device,
+          allow_multi_device: tempAccessSettings.allow_multi_device,
+          session_duration_minutes: tempAccessSettings.session_duration_minutes,
+          idle_timeout_minutes: tempAccessSettings.idle_timeout_minutes,
+          qr_type: tempAccessSettings.qr_type
+        })
+        .eq('role_key', selectedRole);
+
+      for (const perm of tempOperationalPerms) {
+        await supabase
+          .from('role_operational_permissions')
+          .update({
+            can_create: perm.can_create,
+            can_view: perm.can_view,
+            can_edit: perm.can_edit,
+            can_delete: perm.can_delete,
+            can_approve: perm.can_approve,
+            can_reject: perm.can_reject,
+            can_assign: perm.can_assign,
+            can_upload_proof: perm.can_upload_proof,
+            can_review_reports: perm.can_review_reports,
+            can_send_to_management: perm.can_send_to_management
+          })
+          .eq('id', perm.id);
+      }
+
+      await loadRoleDetails(selectedRole);
+      setEditMode(false);
+      alert('تم حفظ التغييرات بنجاح');
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('حدث خطأ أثناء حفظ التغييرات');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!selectedRole) return;
+
+    try {
+      await supabase
+        .from('role_definitions')
+        .delete()
+        .eq('role_key', selectedRole);
+
+      setShowDeleteConfirm(false);
+      await loadRoles();
+      setSelectedRole(roles[0]?.role_key || null);
+      alert('تم حذف الدور بنجاح');
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      alert('حدث خطأ أثناء حذف الدور');
+    }
+  };
+
+  const handleToggleActive = async (roleKey: string, currentState: boolean) => {
+    try {
+      await supabase
+        .from('role_definitions')
+        .update({ is_active: !currentState })
+        .eq('role_key', roleKey);
+
+      await loadRoles();
+      if (selectedRole === roleKey) {
+        await loadRoleDetails(roleKey);
+      }
+    } catch (error) {
+      console.error('Error toggling role active state:', error);
+    }
+  };
+
+  const updateTempAccessSetting = (field: keyof AccessSettings, value: any) => {
+    if (!tempAccessSettings) return;
+    setTempAccessSettings({
+      ...tempAccessSettings,
+      [field]: value
+    });
+  };
+
+  const updateTempOperationalPerm = (permId: string, field: string, value: boolean) => {
+    setTempOperationalPerms(prev =>
+      prev.map(p => p.id === permId ? { ...p, [field]: value } : p)
+    );
   };
 
   const selectedRoleData = roles.find(r => r.role_key === selectedRole);
@@ -121,6 +232,8 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
     if (level <= 6) return 'from-emerald-600 to-teal-700';
     return 'from-gray-500 to-gray-600';
   };
+
+  const canEdit = platformRole === 'platform_owner' || platformRole === 'super_admin';
 
   if (loading) {
     return (
@@ -135,7 +248,6 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* العنوان والوصف */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -180,11 +292,19 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* قائمة الأدوار */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-900">الأدوار</h3>
+              {canEdit && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="إضافة دور"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              )}
             </div>
             <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
               {roles.map((role) => (
@@ -205,11 +325,19 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                       <div className="font-bold text-gray-900 text-sm">{role.role_name_ar}</div>
                       <div className="text-xs text-gray-500">{role.role_name_en}</div>
                     </div>
-                    {role.is_active ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-600" />
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleActive(role.role_key, role.is_active);
+                      }}
+                      className="flex-shrink-0"
+                    >
+                      {role.is_active ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-600" />
+                      )}
+                    </button>
                   </div>
                 </button>
               ))}
@@ -217,11 +345,9 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
           </div>
         </div>
 
-        {/* تفاصيل الدور */}
         <div className="lg:col-span-3">
           {selectedRoleData && (
             <div className="space-y-6">
-              {/* معلومات الدور الأساسية */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
@@ -235,25 +361,59 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {(platformRole === 'platform_owner' || platformRole === 'super_admin') && (
+                    {canEdit && (
                       <>
-                        <button
-                          onClick={() => setEditMode(!editMode)}
-                          className={`px-4 py-2 rounded-lg font-bold transition-all inline-flex items-center gap-2 ${
-                            editMode
-                              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
-                          }`}
-                        >
-                          {editMode ? <Save className="w-5 h-5" /> : <Edit className="w-5 h-5" />}
-                          {editMode ? 'حفظ' : 'تعديل'}
-                        </button>
+                        {editMode ? (
+                          <>
+                            <button
+                              onClick={() => setEditMode(false)}
+                              disabled={saving}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition-all inline-flex items-center gap-2"
+                            >
+                              <X className="w-5 h-5" />
+                              إلغاء
+                            </button>
+                            <button
+                              onClick={handleSaveChanges}
+                              disabled={saving}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all inline-flex items-center gap-2"
+                            >
+                              {saving ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                  جاري الحفظ...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="w-5 h-5" />
+                                  حفظ التغييرات
+                                </>
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setEditMode(true)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all inline-flex items-center gap-2"
+                            >
+                              <Edit className="w-5 h-5" />
+                              تعديل
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(true)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all inline-flex items-center gap-2"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                              حذف
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* التبويبات */}
                 <div className="flex gap-2 border-b border-gray-200">
                   <button
                     onClick={() => setActiveTab('overview')}
@@ -275,7 +435,7 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                     }`}
                   >
                     <QrCode className="w-5 h-5 inline-block ml-2" />
-                    إعدادات الدخول الذكي
+                    إعدادات الدخول
                   </button>
                   <button
                     onClick={() => setActiveTab('operations')}
@@ -301,7 +461,6 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                   </button>
                 </div>
 
-                {/* محتوى التبويبات */}
                 <div className="mt-6">
                   {activeTab === 'overview' && (
                     <div className="space-y-4">
@@ -348,7 +507,7 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                     </div>
                   )}
 
-                  {activeTab === 'access' && accessSettings && (
+                  {activeTab === 'access' && tempAccessSettings && (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
@@ -357,27 +516,38 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                             طريقة الدخول
                           </h4>
                           <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">يتطلب Barcode</span>
-                              {accessSettings.requires_qr ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.requires_qr}
+                                onChange={(e) => updateTempAccessSetting('requires_qr', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">يتطلب PIN</span>
-                              {accessSettings.requires_pin ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="text-gray-700">نوع Barcode</span>
-                              <span className="font-bold text-blue-600">
-                                {accessSettings.qr_type === 'permanent' ? 'دائم' : accessSettings.qr_type === 'temporary' ? 'مؤقت' : 'الاثنين'}
-                              </span>
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.requires_pin}
+                                onChange={(e) => updateTempAccessSetting('requires_pin', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                              <label className="block text-gray-700 mb-2">نوع Barcode</label>
+                              <select
+                                value={tempAccessSettings.qr_type}
+                                onChange={(e) => updateTempAccessSetting('qr_type', e.target.value)}
+                                disabled={!editMode}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                              >
+                                <option value="permanent">دائم</option>
+                                <option value="temporary">مؤقت</option>
+                                <option value="both">الاثنين</option>
+                              </select>
                             </div>
                           </div>
                         </div>
@@ -388,38 +558,46 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                             إعدادات الجهاز
                           </h4>
                           <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">رفع صورة Barcode</span>
-                              {accessSettings.allow_image_upload ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.allow_image_upload}
+                                onChange={(e) => updateTempAccessSetting('allow_image_upload', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">مسح بالكاميرا</span>
-                              {accessSettings.allow_camera_scan ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.allow_camera_scan}
+                                onChange={(e) => updateTempAccessSetting('allow_camera_scan', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">ربط أول جهاز</span>
-                              {accessSettings.bind_first_device ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.bind_first_device}
+                                onChange={(e) => updateTempAccessSetting('bind_first_device', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                               <span className="text-gray-700">أجهزة متعددة</span>
-                              {accessSettings.allow_multi_device ? (
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              ) : (
-                                <XCircle className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
+                              <input
+                                type="checkbox"
+                                checked={tempAccessSettings.allow_multi_device}
+                                onChange={(e) => updateTempAccessSetting('allow_multi_device', e.target.checked)}
+                                disabled={!editMode}
+                                className="w-5 h-5"
+                              />
+                            </label>
                           </div>
                         </div>
                       </div>
@@ -431,12 +609,24 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-white/60 rounded-lg p-3">
-                            <div className="text-sm text-orange-700 mb-1">مدة الجلسة</div>
-                            <div className="text-2xl font-bold text-orange-900">{accessSettings.session_duration_minutes} دقيقة</div>
+                            <label className="text-sm text-orange-700 mb-1 block">مدة الجلسة (دقيقة)</label>
+                            <input
+                              type="number"
+                              value={tempAccessSettings.session_duration_minutes}
+                              onChange={(e) => updateTempAccessSetting('session_duration_minutes', parseInt(e.target.value))}
+                              disabled={!editMode}
+                              className="w-full px-3 py-2 border border-orange-300 rounded-lg text-orange-900 font-bold text-xl"
+                            />
                           </div>
                           <div className="bg-white/60 rounded-lg p-3">
-                            <div className="text-sm text-orange-700 mb-1">مهلة عدم النشاط</div>
-                            <div className="text-2xl font-bold text-orange-900">{accessSettings.idle_timeout_minutes} دقيقة</div>
+                            <label className="text-sm text-orange-700 mb-1 block">مهلة عدم النشاط (دقيقة)</label>
+                            <input
+                              type="number"
+                              value={tempAccessSettings.idle_timeout_minutes}
+                              onChange={(e) => updateTempAccessSetting('idle_timeout_minutes', parseInt(e.target.value))}
+                              disabled={!editMode}
+                              className="w-full px-3 py-2 border border-orange-300 rounded-lg text-orange-900 font-bold text-xl"
+                            />
                           </div>
                         </div>
                       </div>
@@ -452,14 +642,14 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                         </p>
                       </div>
 
-                      {operationalPerms.length === 0 ? (
+                      {tempOperationalPerms.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                           <Activity className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                           <p>لا توجد صلاحيات تشغيلية محددة</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {operationalPerms.map((perm) => (
+                          {tempOperationalPerms.map((perm) => (
                             <div key={perm.id} className="bg-gray-50 rounded-lg p-4">
                               <div className="flex items-start justify-between mb-3">
                                 <div>
@@ -472,32 +662,34 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                 {[
-                                  { key: 'can_create', label: 'إنشاء', value: perm.can_create },
-                                  { key: 'can_view', label: 'عرض', value: perm.can_view },
-                                  { key: 'can_edit', label: 'تعديل', value: perm.can_edit },
-                                  { key: 'can_delete', label: 'حذف', value: perm.can_delete },
-                                  { key: 'can_approve', label: 'اعتماد', value: perm.can_approve },
-                                  { key: 'can_reject', label: 'رفض', value: perm.can_reject },
-                                  { key: 'can_assign', label: 'توزيع', value: perm.can_assign },
-                                  { key: 'can_upload_proof', label: 'رفع إثبات', value: perm.can_upload_proof },
-                                  { key: 'can_review_reports', label: 'مراجعة تقارير', value: perm.can_review_reports },
-                                  { key: 'can_send_to_management', label: 'إرسال للإدارة', value: perm.can_send_to_management }
-                                ].map(({ key, label, value }) => (
-                                  <div
+                                  { key: 'can_create', label: 'إنشاء' },
+                                  { key: 'can_view', label: 'عرض' },
+                                  { key: 'can_edit', label: 'تعديل' },
+                                  { key: 'can_delete', label: 'حذف' },
+                                  { key: 'can_approve', label: 'اعتماد' },
+                                  { key: 'can_reject', label: 'رفض' },
+                                  { key: 'can_assign', label: 'توزيع' },
+                                  { key: 'can_upload_proof', label: 'رفع إثبات' },
+                                  { key: 'can_review_reports', label: 'مراجعة تقارير' },
+                                  { key: 'can_send_to_management', label: 'إرسال للإدارة' }
+                                ].map(({ key, label }) => (
+                                  <label
                                     key={key}
-                                    className={`flex items-center gap-2 p-2 rounded ${
-                                      value ? 'bg-green-100' : 'bg-gray-200'
-                                    }`}
+                                    className={`flex items-center gap-2 p-2 rounded cursor-pointer ${
+                                      perm[key as keyof OperationalPermission] ? 'bg-green-100' : 'bg-gray-200'
+                                    } ${editMode ? 'hover:opacity-80' : ''}`}
                                   >
-                                    {value ? (
-                                      <CheckCircle className="w-4 h-4 text-green-600" />
-                                    ) : (
-                                      <XCircle className="w-4 h-4 text-gray-400" />
-                                    )}
-                                    <span className={`text-xs font-medium ${value ? 'text-green-800' : 'text-gray-600'}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={perm[key as keyof OperationalPermission] as boolean}
+                                      onChange={(e) => updateTempOperationalPerm(perm.id, key, e.target.checked)}
+                                      disabled={!editMode}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className={`text-xs font-medium ${perm[key as keyof OperationalPermission] ? 'text-green-800' : 'text-gray-600'}`}>
                                       {label}
                                     </span>
-                                  </div>
+                                  </label>
                                 ))}
                               </div>
                             </div>
@@ -556,6 +748,41 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">تأكيد الحذف</h3>
+                <p className="text-sm text-gray-600">هل أنت متأكد من حذف هذا الدور؟</p>
+              </div>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-800">
+                سيتم حذف الدور وجميع الصلاحيات المرتبطة به. هذا الإجراء لا يمكن التراجع عنه.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleDeleteRole}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
