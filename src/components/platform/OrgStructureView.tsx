@@ -9,6 +9,7 @@ import PlatformToast, { ToastMessage } from './PlatformToast';
 import OrgTreeView from './OrgTreeView';
 import ReassignStaffModal from './ReassignStaffModal';
 import { AuditLogsView } from './AuditLogsView';
+import { TemporaryQRAlert } from './TemporaryQRAlert';
 
 interface Staff {
   id: string;
@@ -218,6 +219,8 @@ export default function OrgStructureView() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100" dir="rtl">
+      <TemporaryQRAlert />
+
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
