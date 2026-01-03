@@ -17,6 +17,7 @@ export interface VerificationResult {
   message: string;
   reason?: string;
   requires_pin?: boolean;
+  default_route?: string;
   staff?: StaffInfo;
 }
 

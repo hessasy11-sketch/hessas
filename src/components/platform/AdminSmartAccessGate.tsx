@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QrCode, Shield, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { SmartQRScanner } from './SmartQRScanner';
 import { PinInputModal } from './PinInputModal';
@@ -7,9 +8,11 @@ import { useQRVerification, StaffInfo } from '../../hooks/useQRVerification';
 type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected' | 'verifying';
 
 export function AdminSmartAccessGate() {
+  const navigate = useNavigate();
   const [scanStatus, setScanStatus] = useState<ScanStatus>('ready');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
+  const [defaultRoute, setDefaultRoute] = useState<string>('');
   const [showPinModal, setShowPinModal] = useState(false);
   const { verifyQRToken, verifyStaffPin } = useQRVerification();
 
@@ -22,6 +25,7 @@ export function AdminSmartAccessGate() {
 
     if (result.success && result.staff) {
       setStaffInfo(result.staff);
+      setDefaultRoute(result.default_route || '/admin');
 
       if (result.requires_pin) {
         setScanStatus('needsPin');
@@ -29,9 +33,8 @@ export function AdminSmartAccessGate() {
       } else {
         setScanStatus('valid');
         setTimeout(() => {
-          setScanStatus('ready');
-          setStaffInfo(null);
-        }, 5000);
+          navigate(result.default_route || '/admin');
+        }, 2000);
       }
     } else {
       setErrorMessage(result.message);
@@ -59,9 +62,8 @@ export function AdminSmartAccessGate() {
     setScanStatus('valid');
 
     setTimeout(() => {
-      setScanStatus('ready');
-      setStaffInfo(null);
-    }, 5000);
+      navigate(defaultRoute || '/admin');
+    }, 2000);
   };
 
   const handlePinCancel = () => {
@@ -150,6 +152,12 @@ export function AdminSmartAccessGate() {
                       <div className="flex items-center justify-center gap-2 text-emerald-400 text-xs">
                         <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                         <span>{staffInfo.department}</span>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-emerald-500/30">
+                        <p className="text-emerald-300 text-xs" dir="rtl">جاري التوجيه...</p>
+                        <div className="mt-2">
+                          <Loader2 className="w-5 h-5 text-emerald-400 mx-auto animate-spin" />
+                        </div>
                       </div>
                     </div>
                   </div>
