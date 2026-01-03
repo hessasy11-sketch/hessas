@@ -44,19 +44,38 @@ export function useB2FFarms() {
 
   const addFarm = async (farmData: Omit<B2FFarm, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error: insertError } = await supabase
-        .from('b2f_farms')
-        .insert([farmData])
-        .select()
-        .single();
+      const adminUserId = sessionStorage.getItem('adminUserId');
+      if (!adminUserId) {
+        return { success: false, error: 'يجب تسجيل الدخول أولاً' };
+      }
 
-      if (insertError) throw insertError;
+      const { data, error: rpcError } = await supabase.rpc('add_farm_as_admin', {
+        p_user_id: adminUserId,
+        p_name: farmData.name,
+        p_location: farmData.location,
+        p_total_trees_available: farmData.total_trees_available,
+        p_description: farmData.description,
+        p_city: farmData.city,
+        p_is_active: farmData.is_active
+      });
+
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
+        throw rpcError;
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'فشل إضافة المزرعة' };
+      }
 
       await loadFarms();
       return { success: true, data };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding B2F farm:', err);
-      return { success: false, error: 'فشل إضافة المزرعة' };
+      return {
+        success: false,
+        error: err.message || 'فشل إضافة المزرعة'
+      };
     }
   };
 
