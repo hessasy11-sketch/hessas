@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { LogIn, X, AlertCircle } from 'lucide-react';
 
 interface StaffAccessProps {
@@ -7,6 +8,7 @@ interface StaffAccessProps {
 }
 
 export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
+  const { setGuestSession } = useAuth();
   const [tapCount, setTapCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUnauthorized, setShowUnauthorized] = useState(false);
@@ -62,6 +64,12 @@ export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
         console.log('User authenticated successfully via verify_login:', loginResult.user_id);
 
         localStorage.setItem('b2f_investor_phone', phone);
+
+        // إنشاء session للمستخدم في AuthContext
+        await setGuestSession(loginResult.user_id);
+
+        // الانتظار قليلاً لضمان تحديث الـ context
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         await verifyStaffAccess(loginResult.user_id);
         setShowLoginModal(false);
