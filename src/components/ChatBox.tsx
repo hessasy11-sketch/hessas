@@ -31,7 +31,6 @@ export function ChatBox({ auctionId, currentPrice, isClosed = false }: ChatBoxPr
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>('');
-  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const bids = messages
     .filter(msg => extractPrice(msg.message) !== null)
@@ -51,7 +50,7 @@ export function ChatBox({ auctionId, currentPrice, isClosed = false }: ChatBoxPr
     if (!newMessage.trim() || sending || isClosed) return;
 
     if (!user) {
-      setShowGuestModal(true);
+      setError('يجب تسجيل الدخول للمزايدة');
       return;
     }
 
@@ -83,21 +82,6 @@ export function ChatBox({ auctionId, currentPrice, isClosed = false }: ChatBoxPr
 
   const quickBid = (amount: number) => {
     setNewMessage(`${topBid + amount} ريال`);
-  };
-
-  const handleGuestRegistrationSuccess = async (userId: string) => {
-    setShowGuestModal(false);
-    if (newMessage.trim()) {
-      setSending(true);
-      try {
-        await sendMessage(newMessage, userId);
-        setNewMessage('');
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setSending(false);
-      }
-    }
   };
 
   return (

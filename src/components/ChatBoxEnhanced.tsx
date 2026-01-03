@@ -36,7 +36,6 @@ export function ChatBoxEnhanced({ auctionId, currentPrice, isClosed = false, isO
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>('');
-  const [showGuestModal, setShowGuestModal] = useState(false);
   const [showMenuForMessage, setShowMenuForMessage] = useState<string | null>(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -62,7 +61,7 @@ export function ChatBoxEnhanced({ auctionId, currentPrice, isClosed = false, isO
     if (!newMessage.trim() || sending || isClosed) return;
 
     if (!user) {
-      setShowGuestModal(true);
+      setError('يجب تسجيل الدخول للمزايدة');
       return;
     }
 
@@ -154,21 +153,6 @@ export function ChatBoxEnhanced({ auctionId, currentPrice, isClosed = false, isO
     setSelectedMessageId(messageId);
     setShowMenuForMessage(null);
     setShowReportModal(true);
-  };
-
-  const handleGuestRegistrationSuccess = async (userId: string) => {
-    setShowGuestModal(false);
-    if (newMessage.trim()) {
-      setSending(true);
-      try {
-        await sendMessage(newMessage, userId);
-        setNewMessage('');
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setSending(false);
-      }
-    }
   };
 
   return (
