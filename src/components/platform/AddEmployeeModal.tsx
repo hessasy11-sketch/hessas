@@ -251,10 +251,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" dir="rtl">
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl w-full max-w-4xl border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" dir="rtl">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl w-full max-w-4xl border border-white/10 shadow-2xl my-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-2xl font-bold text-white">إضافة موظف جديد</h2>
           <button
             onClick={staffCard ? handleClose : onClose}
@@ -287,7 +287,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
         )}
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 min-h-[400px]">
           {/* Step 1: بيانات الموظف */}
           {step === 1 && (
             <div className="space-y-5">
@@ -515,7 +515,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
           {/* Staff Card Preview */}
           {staffCard && (
-            <div className="space-y-6">
+            <div className="space-y-6 min-h-0">
               <div className="bg-gradient-to-br from-white to-gray-100 rounded-2xl p-8 border-4 border-emerald-500 shadow-2xl">
                 <div className="text-center mb-6">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
@@ -592,7 +592,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
         {/* Footer Actions - Only show if not on card view */}
         {!staffCard && (
-          <div className="px-6 py-4 bg-slate-800/50 flex gap-3 sticky bottom-0 rounded-b-2xl">
+          <div className="px-6 py-4 bg-slate-800/50 flex gap-3 rounded-b-2xl border-t border-white/10">
             {step > 1 && (
               <button
                 type="button"
