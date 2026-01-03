@@ -112,7 +112,7 @@ export default function EnhancedPermissionsView({ platformRole }: Props) {
   const loadRoleDetails = async (roleKey: string) => {
     try {
       const [accessRes, operationalRes, scopeRes] = await Promise.all([
-        supabase.from('role_access_settings').select('*').eq('role_key', roleKey).single(),
+        supabase.from('role_access_settings').select('*').eq('role_key', roleKey).maybeSingle(),
         supabase.from('role_operational_permissions').select('*').eq('role_key', roleKey),
         supabase.from('role_scope_permissions').select('*').eq('role_key', roleKey)
       ]);
