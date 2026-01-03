@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
 const ADMIN_GATES = {
-  b2b: '/admin/b2b',
-  b2f: '/b2f',
-  users: '/hq/users',
-  settings: '/hq/settings',
+  auctions: '/admin/auctions',
+  b2f: '/admin/b2f',
+  platform: '/admin/platform',
+  settings: '/admin/settings',
 } as const;
 
 export function HQDashboard() {
@@ -52,15 +52,15 @@ export function HQDashboard() {
 
   const dashboardCards = [
     {
-      title: 'إدارة المزادات',
+      title: 'إدارة المزادات (B2B)',
       icon: Activity,
       color: 'from-blue-500 to-blue-600',
       count: stats.activeAuctions,
       label: 'مزاد نشط',
-      action: () => goToGate('b2b'),
+      action: () => goToGate('auctions'),
     },
     {
-      title: 'إدارة B2F',
+      title: 'إدارة استثمار المزارع (B2F)',
       icon: TrendingUp,
       color: 'from-emerald-500 to-emerald-600',
       count: 0,
@@ -68,12 +68,12 @@ export function HQDashboard() {
       action: () => goToGate('b2f'),
     },
     {
-      title: 'إدارة المستخدمين',
-      icon: Users,
+      title: 'قيادة المنصة (Command Center)',
+      icon: Shield,
       color: 'from-purple-500 to-purple-600',
       count: stats.totalUsers,
       label: 'مستخدم',
-      action: () => goToGate('users'),
+      action: () => goToGate('platform'),
     },
     {
       title: 'الإعدادات المتقدمة',
