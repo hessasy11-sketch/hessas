@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>باركود المدير العام</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .crown {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .qr-container {
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        #qrcode {
+            display: inline-block;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box {
+            background: #f7fafc;
+            border-right: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .info-box h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .info-box h3 span {
+            margin-left: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .pin-badge {
+            background: #48bb78;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background: #fff5f5;
+            border: 2px solid #feb2b2;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .warning-box h4 {
+            color: #c53030;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .warning-box h4 span {
+            margin-left: 8px;
+        }
+
+        .warning-box p {
+            color: #742a2a;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .btn-download, .warning-box {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="crown">👑</div>
+            <h1>باركود دخول المدير العام</h1>
+            <p class="subtitle">للاستخدام الشخصي فقط</p>
+        </div>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="info-box">
+            <h3><span>ℹ️</span> معلومات الحساب</h3>
+            <div class="info-item">
+                <span class="info-value">المدير العام</span>
+                <span class="info-label">الاسم:</span>
+            </div>
+            <div class="info-item">
+                <span class="info-value">0500000001</span>
+                <span class="info-label">رقم الهاتف:</span>
+            </div>
+            <div class="info-item">
+                <span class="info-value">super_admin</span>
+                <span class="info-label">الدور:</span>
+            </div>
+            <div class="info-item">
+                <span class="info-value"><span class="pin-badge">مطلوب</span></span>
+                <span class="info-label">رمز PIN:</span>
+            </div>
+            <div class="info-item">
+                <span class="info-value" style="direction: ltr;">123456</span>
+                <span class="info-label">رمز PIN الافتراضي:</span>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4><span>⚠️</span> تحذير أمني</h4>
+            <p>
+                هذا الباركود للاستخدام الشخصي فقط. لا تشاركه مع أي شخص آخر.
+                إذا فُقد أو سُرق، يجب إبلاغ قسم تقنية المعلومات فوراً لإبطاله وإصدار باركود جديد.
+            </p>
+        </div>
+
+        <button class="btn-download" onclick="downloadQR()">📥 تحميل الباركود</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // QR Token للمدير العام
+        const qrToken = 'TEMP_GM_aT7xqyOnK3-yluCTyrfFuktxJnyDMsRC2QhUyMjmG9k=';
+
+        // إنشاء QR Code
+        const qrcode = new QRCode(document.getElementById('qrcode'), {
+            text: qrToken,
+            width: 256,
+            height: 256,
+            colorDark: '#1a202c',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // وظيفة تحميل QR
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (canvas) {
+                const url = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'general-manager-qr.png';
+                link.href = url;
+                link.click();
+            } else {
+                // إذا لم يتوفر canvas، استخدم الصورة
+                const img = document.querySelector('#qrcode img');
+                if (img) {
+                    const link = document.createElement('a');
+                    link.download = 'general-manager-qr.png';
+                    link.href = img.src;
+                    link.click();
+                }
+            }
+        }
+
+        // Print on Ctrl+P
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>
