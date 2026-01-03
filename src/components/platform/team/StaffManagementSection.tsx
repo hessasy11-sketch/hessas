@@ -15,6 +15,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import AddEmployeeModal from '../AddEmployeeModal';
 
 interface StaffMember {
   id: string;
@@ -271,170 +272,15 @@ export default function StaffManagementSection({ onStaffUpdated }: StaffManageme
         </div>
       )}
 
-      {showAddModal && (
-        <AddStaffModal
-          onClose={() => setShowAddModal(false)}
-          onAdded={() => {
-            setShowAddModal(false);
-            loadStaff();
-            onStaffUpdated();
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-interface AddStaffModalProps {
-  onClose: () => void;
-  onAdded: () => void;
-}
-
-function AddStaffModal({ onClose, onAdded }: AddStaffModalProps) {
-  const [formData, setFormData] = useState({
-    phone_number: '',
-    full_name: '',
-    email: '',
-    role: 'staff',
-    department: 'b2b',
-    reports_to: '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.phone_number || !formData.full_name) {
-      alert('رقم الجوال والاسم مطلوبان');
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const { error } = await supabase.from('platform_staff').insert([
-        {
-          phone_number: formData.phone_number,
-          full_name: formData.full_name,
-          email: formData.email || null,
-          role: formData.role,
-          department: formData.department,
-          reports_to: formData.reports_to || null,
-          is_active: true,
-        },
-      ]);
-
-      if (error) throw error;
-
-      onAdded();
-    } catch (error: any) {
-      console.error('Error adding staff:', error);
-      alert(error.message || 'فشل إضافة الموظف');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-2xl max-w-2xl w-full border border-white/10 shadow-2xl">
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">إضافة موظف جديد</h2>
-          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">رقم الجوال *</label>
-              <input
-                type="tel"
-                value={formData.phone_number}
-                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                placeholder="05xxxxxxxx"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">الاسم الكامل *</label>
-              <input
-                type="text"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="مثال: أحمد محمد"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-300 mb-2">البريد الإلكتروني</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="example@domain.com"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">المسمى الوظيفي</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="staff">موظف</option>
-                <option value="manager">مشرف</option>
-                <option value="admin">مدير</option>
-                <option value="sales">مبيعات</option>
-                <option value="operations">عمليات</option>
-                <option value="finance">مالية</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">القسم</label>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="b2b">المزادات (B2B)</option>
-                <option value="b2f">استثمار المزارع (B2F)</option>
-                <option value="hq">الإدارة العليا (HQ)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4 border-t border-white/10">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <UserPlus className="w-5 h-5" />
-              {saving ? 'جاري الإضافة...' : 'إضافة موظف'}
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all disabled:opacity-50"
-            >
-              إلغاء
-            </button>
-          </div>
-        </form>
-      </div>
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => {
+          setShowAddModal(false);
+          loadStaff();
+          onStaffUpdated();
+        }}
+      />
     </div>
   );
 }
