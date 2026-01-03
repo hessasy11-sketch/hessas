@@ -6,6 +6,8 @@ import SmartDashboardView from './SmartDashboardView';
 import StructurePermissionsView from './StructurePermissionsView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
+import { SessionTracker } from './SessionTracker';
+import { adminSessionManager } from '../../utils/adminSessionManager';
 
 const ADMIN_GATES = {
   auctions: '/admin/auctions',
@@ -32,12 +34,11 @@ export function HQDashboard() {
   }, []);
 
   const checkAccess = () => {
-    const sessionData = localStorage.getItem('platform_staff_session');
-    if (!sessionData) {
+    const session = adminSessionManager.getSession();
+    if (!session) {
       navigate('/admin/access', { replace: true });
       return;
     }
-    const session = JSON.parse(sessionData);
     setPlatformRole(session.role);
   };
 
@@ -70,7 +71,7 @@ export function HQDashboard() {
 
   const handleLogout = () => {
     if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-      localStorage.removeItem('platform_staff_session');
+      adminSessionManager.destroySession();
       navigate('/admin/access', { replace: true });
     }
   };
@@ -96,6 +97,7 @@ export function HQDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" dir="rtl">
+      <SessionTracker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">

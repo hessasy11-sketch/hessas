@@ -6,6 +6,7 @@ import { ImageQRUploader } from './ImageQRUploader';
 import { PinInputModal } from './PinInputModal';
 import { useQRVerification, StaffInfo } from '../../hooks/useQRVerification';
 import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
+import { adminSessionManager } from '../../utils/adminSessionManager';
 
 type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected' | 'verifying';
 type AccessMethod = 'camera' | 'upload';
@@ -30,7 +31,11 @@ export function AdminSmartAccessGateV3() {
       setIsLoading(false);
     };
     checkDevice();
-  }, []);
+
+    if (adminSessionManager.isAuthenticated()) {
+      navigate('/hq', { replace: true });
+    }
+  }, [navigate]);
 
   const handleScanSuccess = async (decodedText: string) => {
     setScanStatus('verifying');
@@ -43,14 +48,18 @@ export function AdminSmartAccessGateV3() {
       setStaffInfo(result.staff);
       setDefaultRoute(result.default_route || '/admin');
 
-      localStorage.setItem('platform_staff_session', JSON.stringify({
-        staff_id: result.staff.id,
-        full_name: result.staff.full_name,
-        role: result.staff.role,
-        role_title: result.staff.role_title,
-        department: result.staff.department,
-        timestamp: new Date().toISOString(),
-      }));
+      if (!result.requires_pin) {
+        adminSessionManager.createSession({
+          staff_id: result.staff.id,
+          user_id: result.staff.user_id || '',
+          full_name: result.staff.full_name,
+          role: result.staff.role,
+          role_title: result.staff.role_title || result.staff.role,
+          department: result.staff.department || 'الإدارة',
+          is_super_admin: result.staff.role === 'super_admin',
+          is_platform_owner: result.staff.role === 'platform_owner',
+        });
+      }
 
       await registerDeviceAccess(
         result.staff.id,
@@ -97,14 +106,16 @@ export function AdminSmartAccessGateV3() {
     setScanStatus('valid');
 
     if (staffInfo && deviceInfo) {
-      localStorage.setItem('platform_staff_session', JSON.stringify({
+      adminSessionManager.createSession({
         staff_id: staffInfo.id,
+        user_id: staffInfo.user_id || '',
         full_name: staffInfo.full_name,
         role: staffInfo.role,
-        role_title: staffInfo.role_title,
-        department: staffInfo.department,
-        timestamp: new Date().toISOString(),
-      }));
+        role_title: staffInfo.role_title || staffInfo.role,
+        department: staffInfo.department || 'الإدارة',
+        is_super_admin: staffInfo.role === 'super_admin',
+        is_platform_owner: staffInfo.role === 'platform_owner',
+      });
 
       await registerDeviceAccess(
         staffInfo.id,

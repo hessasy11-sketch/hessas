@@ -6,6 +6,8 @@ import SmartDashboardView from './SmartDashboardView';
 import StructurePermissionsView from './StructurePermissionsView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
+import { SessionTracker } from './SessionTracker';
+import { adminSessionManager } from '../../utils/adminSessionManager';
 
 interface Props {
   onClose: () => void;
@@ -27,14 +29,13 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
 
   const checkPlatformRole = async () => {
     try {
-      const sessionData = localStorage.getItem('platform_staff_session');
-      if (!sessionData) {
+      const session = adminSessionManager.getSession();
+      if (!session) {
         alert('يجب عليك تسجيل الدخول أولاً من خلال بوابة الدخول الذكي');
         onClose();
         return;
       }
 
-      const session = JSON.parse(sessionData);
       const staffRole = session.role;
 
       if (!['platform_owner', 'general_manager', 'super_admin'].includes(staffRole)) {
@@ -55,7 +56,7 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
 
   const handleLogout = () => {
     if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-      localStorage.removeItem('platform_staff_session');
+      adminSessionManager.destroySession();
       navigate('/admin/access', { replace: true });
     }
   };
@@ -73,6 +74,7 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-hidden">
+      <SessionTracker />
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-700 via-gray-800 to-slate-900 text-white px-6 py-5 shadow-2xl">
