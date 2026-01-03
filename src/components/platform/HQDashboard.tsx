@@ -8,6 +8,7 @@ import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
 import { SessionTracker } from './SessionTracker';
 import { adminSessionManager } from '../../utils/adminSessionManager';
+import { PageGuard } from './PermissionGuard';
 
 const ADMIN_GATES = {
   auctions: '/admin/auctions',
@@ -96,9 +97,10 @@ export function HQDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" dir="rtl">
-      <SessionTracker />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PageGuard platformRole={platformRole} pageKey="hq">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" dir="rtl">
+        <SessionTracker />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -303,5 +305,6 @@ export function HQDashboard() {
         {activeTab === 'alerts' && <CriticalAlertsView />}
       </div>
     </div>
+    </PageGuard>
   );
 }
