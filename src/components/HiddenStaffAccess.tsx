@@ -48,6 +48,29 @@ export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
     try {
       console.log('Attempting login with phone:', phone);
 
+      // محاولة تسجيل الدخول باستخدام نظام password_hash الجديد
+      const { data: verifyResult, error: verifyError } = await supabase
+        .rpc('verify_login', {
+          p_phone_number: phone,
+          p_password: password
+        });
+
+      console.log('Verify login result:', { verifyResult, verifyError });
+
+      if (!verifyError && verifyResult && verifyResult.length > 0 && verifyResult[0].success) {
+        const loginResult = verifyResult[0];
+        console.log('User authenticated successfully via verify_login:', loginResult.user_id);
+        await verifyStaffAccess(loginResult.user_id);
+        setShowLoginModal(false);
+        setPhone('');
+        setPassword('');
+        setIsLoading(false);
+        return;
+      }
+
+      // إذا فشل النظام الجديد، نحاول النظام القديم (auth.users)
+      console.log('Trying legacy auth system...');
+
       const { data: authUserData, error: authError } = await supabase
         .rpc('get_email_by_phone', { phone_param: phone });
 
@@ -61,7 +84,7 @@ export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
       }
 
       if (!authUserData) {
-        setError('رقم الجوال غير موجود');
+        setError('رقم الجوال أو كلمة المرور غير صحيحة');
         setIsLoading(false);
         return;
       }
@@ -77,7 +100,7 @@ export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
 
       if (signInError) {
         console.error('Sign in error:', signInError);
-        setError(`خطأ في تسجيل الدخول: ${signInError.message}`);
+        setError('رقم الجوال أو كلمة المرور غير صحيحة');
         setIsLoading(false);
         return;
       }
