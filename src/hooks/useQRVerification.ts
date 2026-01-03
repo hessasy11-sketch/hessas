@@ -16,7 +16,16 @@ export interface VerificationResult {
   success: boolean;
   message: string;
   reason?: string;
+  requires_pin?: boolean;
   staff?: StaffInfo;
+}
+
+export interface PinVerificationResult {
+  success: boolean;
+  message: string;
+  reason?: string;
+  attempts_remaining?: number;
+  locked_until?: string;
 }
 
 export function useQRVerification() {
@@ -68,12 +77,46 @@ export function useQRVerification() {
     }
   };
 
+  const verifyStaffPin = async (staffId: string, pinCode: string): Promise<PinVerificationResult> => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Missing Supabase configuration');
+      }
+
+      const apiUrl = `${supabaseUrl}/functions/v1/verify-staff-pin`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ staff_id: staffId, pin_code: pinCode }),
+      });
+
+      const result: PinVerificationResult = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+
+      return {
+        success: false,
+        message: 'خطأ في الاتصال بالخادم',
+        reason: 'network_error',
+      };
+    }
+  };
+
   const resetVerification = () => {
     setVerificationResult(null);
   };
 
   return {
     verifyQRToken,
+    verifyStaffPin,
     isVerifying,
     verificationResult,
     resetVerification,

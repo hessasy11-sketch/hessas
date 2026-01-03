@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { QrCode, Shield, Lock, CheckCircle2, User, Loader2 } from 'lucide-react';
+import { QrCode, Shield, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { SmartQRScanner } from './SmartQRScanner';
+import { PinInputModal } from './PinInputModal';
 import { useQRVerification, StaffInfo } from '../../hooks/useQRVerification';
 
 type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected' | 'verifying';
@@ -9,7 +10,8 @@ export function AdminSmartAccessGate() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>('ready');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
-  const { verifyQRToken } = useQRVerification();
+  const [showPinModal, setShowPinModal] = useState(false);
+  const { verifyQRToken, verifyStaffPin } = useQRVerification();
 
   const handleScanSuccess = async (decodedText: string) => {
     setScanStatus('verifying');
@@ -20,12 +22,17 @@ export function AdminSmartAccessGate() {
 
     if (result.success && result.staff) {
       setStaffInfo(result.staff);
-      setScanStatus('valid');
 
-      setTimeout(() => {
-        setScanStatus('ready');
-        setStaffInfo(null);
-      }, 5000);
+      if (result.requires_pin) {
+        setScanStatus('needsPin');
+        setShowPinModal(true);
+      } else {
+        setScanStatus('valid');
+        setTimeout(() => {
+          setScanStatus('ready');
+          setStaffInfo(null);
+        }, 5000);
+      }
     } else {
       setErrorMessage(result.message);
       setScanStatus('rejected');
@@ -45,6 +52,22 @@ export function AdminSmartAccessGate() {
       setScanStatus('ready');
       setErrorMessage('');
     }, 3000);
+  };
+
+  const handlePinSuccess = () => {
+    setShowPinModal(false);
+    setScanStatus('valid');
+
+    setTimeout(() => {
+      setScanStatus('ready');
+      setStaffInfo(null);
+    }, 5000);
+  };
+
+  const handlePinCancel = () => {
+    setShowPinModal(false);
+    setScanStatus('ready');
+    setStaffInfo(null);
   };
 
   const getFrameColor = () => {
@@ -148,15 +171,6 @@ export function AdminSmartAccessGate() {
                   </div>
                 </div>
               )}
-
-              {scanStatus === 'needsPin' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 backdrop-blur-sm">
-                  <div className="text-center">
-                    <Lock className="w-16 h-16 text-blue-400 mx-auto mb-3" />
-                    <p className="text-blue-400 font-bold text-xl" dir="rtl">يتطلب رمز PIN</p>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="mt-6 text-center" dir="rtl">
@@ -168,15 +182,16 @@ export function AdminSmartAccessGate() {
                   scanStatus === 'ready' ? 'bg-gray-500 animate-pulse' :
                   scanStatus === 'verifying' ? 'bg-blue-500 animate-pulse' :
                   scanStatus === 'valid' ? 'bg-emerald-500' :
+                  scanStatus === 'needsPin' ? 'bg-blue-500' :
                   scanStatus === 'rejected' ? 'bg-red-500' :
-                  'bg-blue-500'
+                  'bg-gray-500'
                 }`}></div>
                 <span>
                   {scanStatus === 'ready' && 'جاهز للمسح'}
                   {scanStatus === 'verifying' && 'جاري التحقق...'}
                   {scanStatus === 'valid' && 'تم القبول'}
-                  {scanStatus === 'rejected' && 'تم الرفض'}
                   {scanStatus === 'needsPin' && 'يتطلب رمز PIN'}
+                  {scanStatus === 'rejected' && 'تم الرفض'}
                 </span>
               </div>
             </div>
@@ -198,6 +213,16 @@ export function AdminSmartAccessGate() {
       </div>
 
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+
+      {showPinModal && staffInfo && (
+        <PinInputModal
+          staffId={staffInfo.id}
+          staffName={staffInfo.full_name}
+          onSuccess={handlePinSuccess}
+          onCancel={handlePinCancel}
+          onPinVerification={verifyStaffPin}
+        />
+      )}
     </div>
   );
 }
