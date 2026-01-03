@@ -27,6 +27,7 @@ import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
 import { AdminSmartAccessGateV3 } from './components/platform/AdminSmartAccessGateV3';
+import { HQDashboard } from './components/platform/HQDashboard';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -445,6 +446,7 @@ function App() {
   return (
     <Routes>
       <Route path="/admin/access" element={<AdminSmartAccessGateV3 />} />
+      <Route path="/hq" element={<HQDashboard />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
   );
