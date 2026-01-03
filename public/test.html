@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار الإجراءات</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        h2 { color: #1f2937; }
+    </style>
+</head>
+<body>
+    <h1>🧪 اختبار إجراءات المشتركين</h1>
+
+    <div class="test-section">
+        <h2>1️⃣ اختبار تمديد اشتراك</h2>
+        <button onclick="testExtend()">تمديد اشتراك مشترك فضي 30 يوم</button>
+        <div id="extend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2️⃣ اختبار ترقية</h2>
+        <button onclick="testUpgrade()">ترقية مشترك من المجانية للفضية</button>
+        <div id="upgrade-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3️⃣ اختبار إيقاف مميزات</h2>
+        <button onclick="testDisableFeatures()">إيقاف مميزات لمشترك فضي</button>
+        <div id="disable-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4️⃣ اختبار تفعيل/تعطيل AI</h2>
+        <button onclick="testToggleAI()">تبديل حالة الذكاء الصناعي</button>
+        <div id="ai-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5️⃣ عرض حالة المشتركين</h2>
+        <button onclick="showSubscribers()">عرض جميع المشتركين</button>
+        <div id="subscribers-result" class="result"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const SUPABASE_URL = 'https://bzeehrbfhrhfxbnapnwf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZWVocmJmaHJoZnhibmFwbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3ODMzMjcsImV4cCI6MjA3ODM1OTMyN30.IyozqPIKz1C9o44OORsybNvQoOX_OiDyssQtwwHTSXY';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        window.testExtend = async function() {
+            const resultDiv = document.getElementById('extend-result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'جاري التنفيذ...';
+
+            try {
+                // الحصول على مشترك فضي
+                const { data: silverUser } = await supabase
+                    .from('user_subscriptions')
+                    .select('user_id, ends_at, profiles(display_name)')
+                    .eq('plan_id', '5750a6b1-ce02-42ce-9809-e71700ab9133')
+                    .limit(1)
+                    .single();
+
+                if (!silverUser) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'لم يتم العثور على مشترك فضي';
+                    return;
+                }
+
+                const oldDate = new Date(silverUser.ends_at);
+                const newDate = new Date(oldDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+                // تمديد الاشتراك
+                const { error } = await supabase
+                    .from('user_subscriptions')
+                    .update({ ends_at: newDate.toISOString() })
+                    .eq('user_id', silverUser.user_id);
+
+                if (error) throw error;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ نجح!
+المشترك: ${silverUser.profiles.display_name}
+التاريخ القديم: ${oldDate.toLocaleDateString('ar-SA')}
+التاريخ الجديد: ${newDate.toLocaleDateString('ar-SA')}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ فشل: ${error.message}`;
+            }
+        };
+
+        window.testUpgrade = async function() {
+            const resultDiv = document.getElementById('upgrade-result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'جاري التنفيذ...';
+
+            try {
+                // الحصول على مشترك مجاني
+                const { data: freeUser } = await supabase
+                    .from('user_subscriptions')
+                    .select('user_id, profiles(display_name)')
+                    .eq('plan_id', 'a581fe3b-738b-483f-ae01-98fc9e58dd35')
+                    .limit(1)
+                    .single();
+
+                if (!freeUser) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'لم يتم العثور على مشترك مجاني';
+                    return;
+                }
+
+                // ترقية للفضية
+                const startDate = new Date();
+                const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+                const { error } = await supabase
+                    .from('user_subscriptions')
+                    .update({
+                        plan_id: '5750a6b1-ce02-42ce-9809-e71700ab9133',
+                        status: 'active',
+                        starts_at: startDate.toISOString(),
+                        ends_at: endDate.toISOString()
+                    })
+                    .eq('user_id', freeUser.user_id);
+
+                if (error) throw error;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ نجح!
+المشترك: ${freeUser.profiles.display_name}
+تمت الترقية من: المجانية
+إلى: الفضية (Agricultural)
+ينتهي في: ${endDate.toLocaleDateString('ar-SA')}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ فشل: ${error.message}`;
+            }
+        };
+
+        window.testDisableFeatures = async function() {
+            const resultDiv = document.getElementById('disable-result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'جاري التنفيذ...';
+
+            try {
+                // الحصول على مشترك فضي
+                const { data: silverUser } = await supabase
+                    .from('user_subscriptions')
+                    .select('user_id, profiles(display_name)')
+                    .eq('plan_id', '5750a6b1-ce02-42ce-9809-e71700ab9133')
+                    .limit(1)
+                    .single();
+
+                if (!silverUser) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'لم يتم العثور على مشترك فضي';
+                    return;
+                }
+
+                // تسجيل إيقاف المميزات
+                const { error } = await supabase
+                    .from('subscription_action_logs')
+                    .insert({
+                        user_id: silverUser.user_id,
+                        admin_id: 'TEST',
+                        action_type: 'disable_features',
+                        action_data: {
+                            disabled_features: ['create_auction', 'chat', 'view_phone']
+                        },
+                        notes: 'اختبار: تم إيقاف 3 مميزات'
+                    });
+
+                if (error) throw error;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ نجح!
+المشترك: ${silverUser.profiles.display_name}
+المميزات الموقوفة:
+- إنشاء مزادات
+- المحادثات
+- عرض أرقام الهاتف`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ فشل: ${error.message}`;
+            }
+        };
+
+        window.testToggleAI = async function() {
+            const resultDiv = document.getElementById('ai-result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'جاري التنفيذ...';
+
+            try {
+                // قراءة الحالة الحالية
+                const { data: currentSettings } = await supabase
+                    .from('ai_settings')
+                    .select('ai_enabled')
+                    .limit(1)
+                    .single();
+
+                const newStatus = !currentSettings.ai_enabled;
+
+                // تحديث الحالة
+                const { error } = await supabase
+                    .from('ai_settings')
+                    .update({
+                        ai_enabled: newStatus,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', (await supabase.from('ai_settings').select('id').single()).data.id);
+
+                if (error) throw error;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ نجح!
+الحالة السابقة: ${currentSettings.ai_enabled ? 'مفعّل' : 'معطّل'}
+الحالة الجديدة: ${newStatus ? 'مفعّل ✅' : 'معطّل ❌'}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ فشل: ${error.message}`;
+            }
+        };
+
+        window.showSubscribers = async function() {
+            const resultDiv = document.getElementById('subscribers-result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'جاري التحميل...';
+
+            try {
+                const { data, error } = await supabase
+                    .from('user_subscriptions')
+                    .select(`
+                        user_id,
+                        ends_at,
+                        profiles(display_name),
+                        subscription_plans(name)
+                    `)
+                    .order('ends_at', { ascending: false });
+
+                if (error) throw error;
+
+                let output = `📊 إجمالي المشتركين: ${data.length}\n\n`;
+
+                const planGroups = {
+                    'Free': [],
+                    'Agricultural': [],
+                    'Golden': []
+                };
+
+                data.forEach(sub => {
+                    const planName = sub.subscription_plans.name;
+                    const endDate = new Date(sub.ends_at);
+                    const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+
+                    planGroups[planName].push(
+                        `${sub.profiles.display_name} - ينتهي: ${endDate.toLocaleDateString('ar-SA')} (${daysLeft} يوم)`
+                    );
+                });
+
+                output += `🟡 الذهبية (${planGroups.Golden.length}):\n${planGroups.Golden.join('\n') || 'لا يوجد'}\n\n`;
+                output += `⚡ الفضية (${planGroups.Agricultural.length}):\n${planGroups.Agricultural.join('\n') || 'لا يوجد'}\n\n`;
+                output += `📦 المجانية (${planGroups.Free.length}):\n${planGroups.Free.join('\n') || 'لا يوجد'}`;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = output;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ فشل: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>

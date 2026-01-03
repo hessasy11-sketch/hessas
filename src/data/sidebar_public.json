@@ -1,0 +1,78 @@
+{
+  "sectionName": "المزادات العامة",
+  "sectionId": "public",
+  "color": {
+    "primary": "#10B981",
+    "light": "#D1FAE5",
+    "text": "#065F46"
+  },
+  "icon": "🌿",
+  "items": [
+    {
+      "id": "home",
+      "label": "الصفحة الرئيسية",
+      "icon": "Home",
+      "action": "home"
+    },
+    {
+      "id": "profile",
+      "label": "الملف الشخصي",
+      "icon": "User",
+      "action": "profile"
+    },
+    {
+      "id": "myAuctions",
+      "label": "مزاداتي",
+      "icon": "Package",
+      "action": "myAuctions"
+    },
+    {
+      "id": "wallet",
+      "label": "المحفظة الزراعية",
+      "icon": "Wallet",
+      "action": "wallet"
+    },
+    {
+      "id": "myRequests",
+      "label": "طلباتي",
+      "icon": "FileText",
+      "action": "myRequests"
+    },
+    {
+      "id": "favorites",
+      "label": "المفضلة",
+      "icon": "Heart",
+      "action": "favorites"
+    },
+    {
+      "id": "followers",
+      "label": "المتابعون",
+      "icon": "Users",
+      "action": "followers"
+    },
+    {
+      "id": "subscriptions",
+      "label": "الاشتراكات",
+      "icon": "CreditCard",
+      "action": "subscriptions"
+    },
+    {
+      "id": "helpCenter",
+      "label": "مركز المساعدة",
+      "icon": "HelpCircle",
+      "action": "helpCenter"
+    },
+    {
+      "id": "notifications",
+      "label": "الإشعارات",
+      "icon": "Bell",
+      "action": "notifications"
+    },
+    {
+      "id": "settings",
+      "label": "الإعدادات",
+      "icon": "Settings",
+      "action": "account-settings"
+    }
+  ]
+}

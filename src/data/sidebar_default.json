@@ -1,0 +1,42 @@
+{
+  "sectionName": "القائمة الرئيسية",
+  "sectionId": "default",
+  "color": {
+    "primary": "#10B981",
+    "light": "#D1FAE5",
+    "text": "#065F46"
+  },
+  "icon": "🌾",
+  "items": [
+    {
+      "id": "home",
+      "label": "الصفحة الرئيسية",
+      "icon": "Home",
+      "action": "home"
+    },
+    {
+      "id": "profile",
+      "label": "حسابي",
+      "icon": "User",
+      "action": "profile"
+    },
+    {
+      "id": "helpCenter",
+      "label": "مركز المساعدة",
+      "icon": "HelpCircle",
+      "action": "helpCenter"
+    },
+    {
+      "id": "subscriptions",
+      "label": "الباقات الذكية",
+      "icon": "Crown",
+      "action": "subscriptions"
+    },
+    {
+      "id": "settings",
+      "label": "الإعدادات",
+      "icon": "Settings",
+      "action": "account-settings"
+    }
+  ]
+}

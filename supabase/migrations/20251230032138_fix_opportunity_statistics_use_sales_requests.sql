@@ -1,0 +1,131 @@
+/*
+  # إصلاح دالة إحصائيات الفرص لاستخدام الجدول الصحيح
+  
+  1. المشكلة
+    - الدالة تستخدم جدول b2f_investment_requests غير الموجود
+    - الجدول الفعلي هو b2f_sales_requests
+    - لذلك تعيد دائماً 0 للأشجار المحجوزة والمتبقية
+  
+  2. الإصلاح
+    - تحديث جميع الدوال لاستخدام b2f_sales_requests
+    - استخدام الحالات الصحيحة من النظام الجديد
+    - الطلبات النشطة: collection_queue, payment_open, receipt_uploaded, receipt_approved, contract_issued
+*/
+
+-- حذف الدوال القديمة
+DROP FUNCTION IF EXISTS get_b2f_opportunity_statistics(uuid);
+DROP FUNCTION IF EXISTS get_b2f_opportunity_remaining_trees(uuid);
+DROP FUNCTION IF EXISTS get_b2f_opportunity_reserved_trees(uuid);
+
+-- Function: حساب عدد الأشجار المحجوزة من الطلبات النشطة
+CREATE OR REPLACE FUNCTION get_b2f_opportunity_reserved_trees(opportunity_id_param uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  reserved_count integer;
+BEGIN
+  -- حساب الأشجار المحجوزة من الطلبات النشطة فقط
+  -- (نستثني rejected و transferred_to_operations)
+  SELECT COALESCE(SUM(number_of_trees), 0)::integer
+  INTO reserved_count
+  FROM b2f_sales_requests
+  WHERE opportunity_id = opportunity_id_param
+    AND status IN ('collection_queue', 'payment_open', 'receipt_uploaded', 'receipt_approved', 'contract_issued')
+    AND transferred_to_operations = false;
+  
+  RETURN COALESCE(reserved_count, 0);
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN 0;
+END;
+$$;
+
+-- Function: حساب عدد الأشجار المتبقية
+CREATE OR REPLACE FUNCTION get_b2f_opportunity_remaining_trees(opportunity_id_param uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  total_available integer;
+  total_reserved integer;
+BEGIN
+  -- الحصول على إجمالي الأشجار المتاحة من العرض
+  SELECT available_trees
+  INTO total_available
+  FROM b2f_opportunities
+  WHERE id = opportunity_id_param;
+  
+  IF total_available IS NULL OR total_available = 0 THEN
+    RETURN 0;
+  END IF;
+  
+  -- حساب الأشجار المحجوزة
+  total_reserved := get_b2f_opportunity_reserved_trees(opportunity_id_param);
+  
+  -- إرجاع المتبقي (لا يقل عن صفر)
+  RETURN GREATEST(total_available - total_reserved, 0);
+END;
+$$;
+
+-- Function: الحصول على إحصائيات العرض الكاملة
+CREATE OR REPLACE FUNCTION get_b2f_opportunity_statistics(opportunity_id_param uuid)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result json;
+  total_available integer;
+  total_reserved integer;
+  total_remaining integer;
+  reservation_count integer;
+BEGIN
+  -- الحصول على إجمالي الأشجار المتاحة
+  SELECT available_trees
+  INTO total_available
+  FROM b2f_opportunities
+  WHERE id = opportunity_id_param;
+  
+  -- حساب الأشجار المحجوزة
+  total_reserved := get_b2f_opportunity_reserved_trees(opportunity_id_param);
+  
+  -- حساب الأشجار المتبقية
+  total_remaining := get_b2f_opportunity_remaining_trees(opportunity_id_param);
+  
+  -- حساب عدد المستثمرين (الطلبات النشطة فقط)
+  SELECT COUNT(DISTINCT investor_phone)::integer
+  INTO reservation_count
+  FROM b2f_sales_requests
+  WHERE opportunity_id = opportunity_id_param
+    AND status IN ('collection_queue', 'payment_open', 'receipt_uploaded', 'receipt_approved', 'contract_issued')
+    AND transferred_to_operations = false;
+  
+  -- بناء النتيجة
+  result := json_build_object(
+    'available_trees', COALESCE(total_available, 0),
+    'reserved_trees', total_reserved,
+    'remaining_trees', total_remaining,
+    'reservation_count', reservation_count,
+    'is_full', (total_remaining = 0)
+  );
+  
+  RETURN result;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN json_build_object(
+      'available_trees', 0,
+      'reserved_trees', 0,
+      'remaining_trees', 0,
+      'reservation_count', 0,
+      'is_full', false
+    );
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION get_b2f_opportunity_reserved_trees(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_b2f_opportunity_remaining_trees(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_b2f_opportunity_statistics(uuid) TO anon, authenticated;

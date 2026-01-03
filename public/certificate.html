@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شهادة استئجار أشجار - منصة الحبر</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-full-width { max-width: 100% !important; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 min-h-screen">
+
+  <!-- Loading State -->
+  <div id="loading" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <div class="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-gray-600 text-lg font-bold">جاري تحميل الشهادة...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="error" class="hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">لم يتم العثور على الشهادة</h2>
+      <p id="errorMessage" class="text-gray-600 mb-6">الشهادة غير موجودة أو محذوفة</p>
+      <button onclick="window.close()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+        إغلاق
+      </button>
+    </div>
+  </div>
+
+  <!-- Certificate Content -->
+  <div id="certificate" class="hidden">
+    <!-- Action Buttons -->
+    <div class="max-w-4xl mx-auto mb-6 p-4 no-print">
+      <div class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between">
+        <button onclick="window.close()" class="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span>إغلاق</span>
+        </button>
+        <button onclick="window.print()" class="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          <span>طباعة</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Certificate Card -->
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none print-full-width animate-fade-in">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+        <div class="relative z-10 text-center">
+          <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+            </svg>
+          </div>
+          <h1 class="text-4xl font-bold mb-2">شهادة استئجار عدد أشجار</h1>
+          <p class="text-amber-100 text-lg">منصة الحبر للتسويق الزراعي</p>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="p-8 md:p-12" id="certificateContent">
+        <!-- Will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Supabase
+    const SUPABASE_URL = 'https://jymwxhdtizwhdyfymebq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5bXd4aGR0aXp3aGR5ZnltZWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEyMDg5NzMsImV4cCI6MjA0Njc4NDk3M30.CScTsBRn5N41nkPfGdJbzTYv3tO0aYVjuqCGSHvAaxU';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Get certificate number from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const certificateNumber = urlParams.get('cert');
+
+    if (!certificateNumber) {
+      showError('رقم الشهادة غير موجود في الرابط');
+    } else {
+      loadCertificate(certificateNumber);
+    }
+
+    async function loadCertificate(certNumber) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('b2f_certificates')
+          .select('*')
+          .eq('certificate_number', certNumber)
+          .single();
+
+        if (error) throw error;
+        if (!data) throw new Error('الشهادة غير موجودة');
+
+        displayCertificate(data);
+      } catch (error) {
+        console.error('Error loading certificate:', error);
+        showError(error.message || 'حدث خطأ أثناء تحميل الشهادة');
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    function displayCertificate(cert) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('certificate').classList.remove('hidden');
+
+      const content = `
+        <!-- Certificate Header -->
+        <div class="text-center mb-8 pb-6 border-b-2 border-amber-200">
+          <div class="mb-4">
+            <p class="text-sm text-gray-500 mb-1">رقم الشهادة</p>
+            <p class="text-2xl font-bold text-amber-700">${cert.certificate_number}</p>
+          </div>
+          <div class="mb-4">
+            <p class="text-sm text-gray-500 mb-1">تاريخ الإصدار</p>
+            <p class="text-lg font-bold text-gray-900">${new Date(cert.issued_date).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+          <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mt-4">
+            <p class="text-sm text-blue-900 leading-relaxed">
+              تشهد <span class="font-bold">منصة الحبر للتسويق الزراعي</span> بأن المستثمر الموضحة بياناته أدناه قد أتم استئجار عدد من الأشجار وفقًا للبيانات التالية:
+            </p>
+          </div>
+        </div>
+
+        <!-- Investor Info -->
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div class="w-1 h-6 bg-amber-600 rounded-full"></div>
+            بيانات المستثمر
+          </h2>
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 space-y-3 border border-gray-200">
+            <div class="flex items-center justify-between py-2 border-b border-gray-200">
+              <span class="text-gray-700 font-bold">الاسم:</span>
+              <span class="font-bold text-gray-900 text-lg">${cert.investor_name}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-gray-200">
+              <span class="text-gray-700 font-bold">رقم المستثمر:</span>
+              <span class="font-bold text-gray-900 dir-ltr">${cert.investor_phone}</span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-gray-700 font-bold">رقم الحجز/الطلب:</span>
+              <span class="font-bold text-gray-900">${cert.request_id || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lease Details -->
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div class="w-1 h-6 bg-amber-600 rounded-full"></div>
+            بيانات الاستئجار
+          </h2>
+          <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-green-200">
+              <span class="text-gray-700 font-bold">عدد الأشجار المستأجرة:</span>
+              <span class="text-2xl font-bold text-green-700">${cert.tree_count} شجرة</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-green-200">
+              <span class="text-gray-700 font-bold">نوع الأشجار:</span>
+              <span class="text-xl font-bold text-gray-900">${cert.tree_type}</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-green-200">
+              <span class="text-gray-700 font-bold">موقع المزرعة:</span>
+              <span class="text-lg font-bold text-gray-900">${cert.farm_name}</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-green-200">
+              <span class="text-gray-700 font-bold">مدة الاستئجار:</span>
+              <span class="text-base font-bold text-gray-900">من ${new Date(cert.start_date).toLocaleDateString('ar-SA')} إلى ${new Date(cert.end_date).toLocaleDateString('ar-SA')}</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-green-200">
+              <span class="text-gray-700 font-bold">حالة السداد:</span>
+              <span class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-lg font-bold text-green-700">مكتمل – معتمد إلكترونياً</span>
+              </span>
+            </div>
+            ${cert.contract_number ? `
+            <div class="flex items-center justify-between">
+              <span class="text-gray-700 font-bold">رقم عقد الاستئجار المرتبط:</span>
+              <span class="text-lg font-bold text-amber-700">${cert.contract_number}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Certification Text -->
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            نص الاعتماد
+          </h2>
+          <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-300">
+            <p class="text-gray-800 leading-relaxed text-base mb-4">
+              تم إصدار هذه الشهادة آليًا بعد مطابقة بيانات السداد والتحقق من صحة الإيصال عبر <span class="font-bold text-amber-800">نظام ذكاء صناعي متطور</span>.
+            </p>
+            <p class="text-gray-800 leading-relaxed text-base">
+              وتعد هذه الوثيقة <span class="font-bold text-amber-800">تأكيدًا رسميًا لعملية الاستئجار</span>، وتسمح ببدء التشغيل والمتابعة داخل المنصة.
+            </p>
+          </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+            </svg>
+            هام
+          </h2>
+          <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200 space-y-3">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <p class="text-gray-800 leading-relaxed">الشهادة تثبت <span class="font-bold text-green-700">الاستئجار فقط ولا تعني التملك</span>.</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <p class="text-gray-800 leading-relaxed">المنصة تدير <span class="font-bold text-green-700">التشغيل والمتابعة</span> حسب البنود المعتمدة لكل عقد.</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <p class="text-gray-800 leading-relaxed">الشهادة <span class="font-bold text-green-700">تعتمد إلكترونيًا</span> ولا تتطلب توقيعًا أو ختمًا ورقيًا.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Footer -->
+        <div class="border-t-2 border-amber-300 pt-6">
+          <div class="text-center mb-4">
+            <h3 class="text-xl font-bold text-amber-800 mb-2 flex items-center justify-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              صادر عن
+            </h3>
+            <p class="text-2xl font-bold text-gray-900 mb-1">منصة الحبر للتسويق الزراعي</p>
+            <p class="text-lg text-gray-700 font-bold mb-4">قسم العقود والتشغيل</p>
+          </div>
+
+          <div class="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-100 rounded-xl p-4 text-center border-2 border-amber-300">
+            <p class="text-sm text-gray-700 leading-relaxed mb-2">
+              <span class="font-bold text-amber-800">تم اعتماد هذه الشهادة إلكترونياً</span>
+            </p>
+            <p class="text-xs text-gray-600">
+              ولا تحتاج إلى توقيع أو ختم ورقي
+            </p>
+          </div>
+
+          <div class="mt-6 text-center text-xs text-gray-500">
+            <p>تاريخ الإصدار: ${new Date(cert.issued_date).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('certificateContent').innerHTML = content;
+      document.title = `شهادة ${cert.certificate_number} - منصة الحبر`;
+    }
+  </script>
+</body>
+</html>
