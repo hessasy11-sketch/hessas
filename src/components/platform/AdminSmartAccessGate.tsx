@@ -1,20 +1,33 @@
-import { useState, useEffect } from 'react';
-import { QrCode, Shield, Scan, Lock } from 'lucide-react';
+import { useState } from 'react';
+import { QrCode, Shield, Lock } from 'lucide-react';
+import { SmartQRScanner } from './SmartQRScanner';
 
 type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected';
 
 export function AdminSmartAccessGate() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>('ready');
-  const [scanLinePosition, setScanLinePosition] = useState(0);
   const [scannedData, setScannedData] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setScanLinePosition((prev) => (prev >= 100 ? 0 : prev + 2));
-    }, 30);
+  const handleScanSuccess = (decodedText: string) => {
+    setScannedData(decodedText);
+    setScanStatus('valid');
+    setErrorMessage('');
 
-    return () => clearInterval(interval);
-  }, []);
+    setTimeout(() => {
+      setScanStatus('ready');
+    }, 2000);
+  };
+
+  const handleScanError = (error: string) => {
+    setErrorMessage(error);
+    setScanStatus('rejected');
+
+    setTimeout(() => {
+      setScanStatus('ready');
+      setErrorMessage('');
+    }, 3000);
+  };
 
   const getFrameColor = () => {
     switch (scanStatus) {
@@ -28,19 +41,6 @@ export function AdminSmartAccessGate() {
         return 'border-red-500 shadow-red-500/50';
       default:
         return 'border-gray-500';
-    }
-  };
-
-  const getScanLineColor = () => {
-    switch (scanStatus) {
-      case 'valid':
-        return 'bg-emerald-500';
-      case 'needsPin':
-        return 'bg-blue-500';
-      case 'rejected':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-400';
     }
   };
 
@@ -75,70 +75,48 @@ export function AdminSmartAccessGate() {
           </div>
 
           <div className="relative">
-            <div
-              className={`relative aspect-square rounded-2xl border-4 ${getFrameColor()} transition-all duration-300 shadow-lg overflow-hidden bg-slate-900/50`}
-            >
-              <div className="absolute inset-4 border-2 border-dashed border-gray-600/50 rounded-xl"></div>
-
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Scan className="w-24 h-24 text-gray-600/30" />
-              </div>
-
-              <div
-                className={`absolute left-0 right-0 h-1 ${getScanLineColor()} opacity-60 blur-sm transition-all duration-100`}
-                style={{ top: `${scanLinePosition}%` }}
-              ></div>
-
-              <div
-                className={`absolute left-0 right-0 h-0.5 ${getScanLineColor()} transition-all duration-100`}
-                style={{ top: `${scanLinePosition}%` }}
-              ></div>
-
-              <div className="absolute top-4 left-4 right-4">
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="w-4 h-4 border-t-2 border-l-2 border-gray-500 rounded-tl"></div>
-                  <div className="w-4 h-4 border-t-2 border-r-2 border-gray-500 rounded-tr"></div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="w-4 h-4 border-b-2 border-l-2 border-gray-500 rounded-bl"></div>
-                  <div className="w-4 h-4 border-b-2 border-r-2 border-gray-500 rounded-br"></div>
-                </div>
-              </div>
+            <div className={`relative rounded-2xl border-4 ${getFrameColor()} transition-all duration-300 shadow-lg overflow-hidden`}>
+              <SmartQRScanner
+                onScanSuccess={handleScanSuccess}
+                onScanError={handleScanError}
+                scanStatus={scanStatus}
+              />
 
               {scanStatus === 'valid' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 animate-pulse">
+                <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 backdrop-blur-sm animate-pulse">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-2">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/50">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <p className="text-emerald-400 font-bold text-lg">تم التحقق</p>
+                    <p className="text-emerald-400 font-bold text-xl">تم التحقق بنجاح</p>
+                    <p className="text-emerald-300 text-sm mt-1">{scannedData.slice(0, 20)}...</p>
                   </div>
                 </div>
               )}
 
               {scanStatus === 'rejected' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 animate-pulse">
+                <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 backdrop-blur-sm animate-pulse">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-2">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-red-500/50">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
-                    <p className="text-red-400 font-bold text-lg">مرفوض</p>
+                    <p className="text-red-400 font-bold text-xl">مرفوض</p>
+                    {errorMessage && (
+                      <p className="text-red-300 text-sm mt-1">{errorMessage}</p>
+                    )}
                   </div>
                 </div>
               )}
 
               {scanStatus === 'needsPin' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10">
+                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 backdrop-blur-sm">
                   <div className="text-center">
-                    <Lock className="w-12 h-12 text-blue-400 mx-auto mb-2" />
-                    <p className="text-blue-400 font-bold">يتطلب PIN</p>
+                    <Lock className="w-16 h-16 text-blue-400 mx-auto mb-3" />
+                    <p className="text-blue-400 font-bold text-xl">يتطلب رمز PIN</p>
                   </div>
                 </div>
               )}
