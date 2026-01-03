@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FileText, Download, Calendar, DollarSign, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useInvestorAuth } from '../../contexts/InvestorAuthContext';
 
 interface Contract {
   id: string;
@@ -25,16 +26,17 @@ interface Farm {
 }
 
 export default function InvestorMyContractsView() {
+  const { investorPhone } = useInvestorAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [farms, setFarms] = useState<{ [key: string]: Farm }>({});
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
 
-  const investorPhone = localStorage.getItem('b2f_investor_phone');
-
   useEffect(() => {
     if (investorPhone) {
       loadContracts();
+    } else {
+      setLoading(false);
     }
   }, [investorPhone]);
 

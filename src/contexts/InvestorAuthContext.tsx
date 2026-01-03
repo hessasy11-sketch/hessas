@@ -66,9 +66,14 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
       setAccount(data);
+
+      if (data?.contact_phone) {
+        localStorage.setItem('b2f_investor_phone', data.contact_phone);
+      }
     } catch (error) {
       console.error('Error loading account:', error);
       setAccount(null);
+      localStorage.removeItem('b2f_investor_phone');
     } finally {
       setLoading(false);
     }
@@ -156,6 +161,7 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.auth.signOut();
       setAccount(null);
+      localStorage.removeItem('b2f_investor_phone');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
