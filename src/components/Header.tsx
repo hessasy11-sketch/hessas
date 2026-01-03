@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import RootAccessBadge from './platform/RootAccessBadge';
+import { HiddenAdminButton } from './platform/HiddenAdminButton';
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -29,6 +30,7 @@ export function Header({ onNavigate }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
           <div className="flex items-center gap-2">
+            <HiddenAdminButton />
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-emerald-900 bg-white/70 hover:bg-white/90 backdrop-blur-sm border border-white/30 transition-all shadow-sm hover:shadow-md"
