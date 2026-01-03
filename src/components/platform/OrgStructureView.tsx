@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Users, Briefcase, Network, Plus, Search, Filter, Eye, Edit2, Power, PowerOff, ChevronDown, Save, X, AlertCircle, UserPlus } from 'lucide-react';
+import { Users, Briefcase, Network, Plus, Search, Filter, Eye, Edit2, Power, PowerOff, ChevronDown, Save, X, AlertCircle, UserPlus, Activity } from 'lucide-react';
 import AddEmployeeModal from './AddEmployeeModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import CreateRoleModal from './CreateRoleModal';
@@ -8,6 +8,7 @@ import CreateTeamModal from './CreateTeamModal';
 import PlatformToast, { ToastMessage } from './PlatformToast';
 import OrgTreeView from './OrgTreeView';
 import ReassignStaffModal from './ReassignStaffModal';
+import { AuditLogsView } from './AuditLogsView';
 
 interface Staff {
   id: string;
@@ -44,7 +45,7 @@ interface AuditLog {
   created_at: string;
 }
 
-type Tab = 'staff' | 'roles' | 'tree';
+type Tab = 'staff' | 'roles' | 'tree' | 'audit';
 
 export default function OrgStructureView() {
   const [activeTab, setActiveTab] = useState<Tab>('staff');
@@ -266,10 +267,22 @@ export default function OrgStructureView() {
             <Network className="w-5 h-5" />
             الهيكل الهرمي
           </button>
+          <button
+            onClick={() => setActiveTab('audit')}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all ${
+              activeTab === 'audit'
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Activity className="w-5 h-5" />
+            نشاط الدخول
+          </button>
         </div>
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        {activeTab !== 'audit' && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -322,6 +335,7 @@ export default function OrgStructureView() {
             )}
           </div>
         </div>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -465,6 +479,11 @@ export default function OrgStructureView() {
                 onToggleStatus={handleTreeToggleStatus}
                 onReassignStaff={handleReassignStaff}
               />
+            )}
+
+            {/* Audit Logs Tab */}
+            {activeTab === 'audit' && (
+              <AuditLogsView />
             )}
           </>
         )}
