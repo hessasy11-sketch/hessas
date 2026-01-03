@@ -56,7 +56,24 @@ export function useQRVerification() {
         body: JSON.stringify({ qr_token: qrToken }),
       });
 
-      const result: VerificationResult = await response.json();
+      const rawResult = await response.json();
+
+      const result: VerificationResult = {
+        ...rawResult,
+        default_route: rawResult.redirect_to || rawResult.default_route,
+        requires_pin: rawResult.staff?.requires_pin || false,
+        staff: rawResult.staff ? {
+          id: rawResult.staff.id,
+          user_id: rawResult.staff.user_id,
+          full_name: rawResult.staff.display_name || rawResult.staff.full_name || 'مستخدم',
+          phone: rawResult.staff.phone_number || rawResult.staff.phone || '',
+          role: rawResult.staff.role || '',
+          role_title: rawResult.staff.job_title || rawResult.staff.role_title || '',
+          department: rawResult.staff.department || '',
+          permissions: {},
+          scope_farms: [],
+        } : undefined,
+      };
 
       setVerificationResult(result);
       setIsVerifying(false);
