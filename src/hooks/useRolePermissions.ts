@@ -67,12 +67,18 @@ export function useRolePermissions(platformRole: string | null): RolePermissions
     if (!platformRole) return;
 
     try {
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('role_definitions')
         .select('role_key, role_name_ar, hierarchy_level')
         .eq('role_key', platformRole)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+        setLoading(false);
+        return;
+      }
 
       if (!roleData) {
         console.warn('Role not found or inactive:', platformRole);
@@ -89,7 +95,7 @@ export function useRolePermissions(platformRole: string | null): RolePermissions
           .from('role_access_settings')
           .select('*')
           .eq('role_key', roleData.role_key)
-          .single(),
+          .maybeSingle(),
         supabase
           .from('role_operational_permissions')
           .select('*')
