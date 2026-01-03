@@ -30,7 +30,6 @@ import { AdminSmartAccessGateV3 } from './components/platform/AdminSmartAccessGa
 import { HQDashboard } from './components/platform/HQDashboard';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
-import { PlatformAdminPage } from './components/platform/PlatformAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
@@ -453,7 +452,6 @@ function App() {
       <Route path="/hq" element={<HQDashboard />} />
       <Route path="/admin/auctions" element={<AuctionsAdminPage />} />
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
-      <Route path="/admin/platform" element={<PlatformAdminPage />} />
       <Route path="/admin/settings" element={<SettingsAdminPage />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
