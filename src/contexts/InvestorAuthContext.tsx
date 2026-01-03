@@ -22,6 +22,7 @@ interface InvestorAuthContextType {
   signIn: (phone: string, password: string) => Promise<{ user: User }>;
   signOut: () => Promise<void>;
   refreshAccount: () => Promise<void>;
+  refreshAccountFromPhone: () => Promise<void>;
 }
 
 const InvestorAuthContext = createContext<InvestorAuthContextType | undefined>(undefined);
@@ -32,22 +33,43 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (session?.user) {
-        loadAccount(session.user.id);
+        setUser(session.user);
+        await loadAccount(session.user.id);
       } else {
+        const savedPhone = localStorage.getItem('b2f_investor_phone');
+        if (savedPhone) {
+          try {
+            const { data: accountData } = await supabase
+              .from('b2f_investor_accounts')
+              .select('*')
+              .eq('contact_phone', savedPhone)
+              .maybeSingle();
+
+            if (accountData) {
+              setAccount(accountData);
+            }
+          } catch (error) {
+            console.error('Error loading account by phone:', error);
+          }
+        }
         setLoading(false);
       }
-    });
+    };
+
+    checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          loadAccount(session.user.id);
+          await loadAccount(session.user.id);
         } else {
           setAccount(null);
+          localStorage.removeItem('b2f_investor_phone');
           setLoading(false);
         }
       }
@@ -174,6 +196,25 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshAccountFromPhone = async () => {
+    const savedPhone = localStorage.getItem('b2f_investor_phone');
+    if (savedPhone) {
+      try {
+        const { data: accountData } = await supabase
+          .from('b2f_investor_accounts')
+          .select('*')
+          .eq('contact_phone', savedPhone)
+          .maybeSingle();
+
+        if (accountData) {
+          setAccount(accountData);
+        }
+      } catch (error) {
+        console.error('Error refreshing account by phone:', error);
+      }
+    }
+  };
+
   return (
     <InvestorAuthContext.Provider
       value={{
@@ -184,7 +225,8 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signIn,
         signOut,
-        refreshAccount
+        refreshAccount,
+        refreshAccountFromPhone
       }}
     >
       {children}

@@ -60,6 +60,9 @@ export function HiddenStaffAccess({ onNavigate }: StaffAccessProps) {
       if (!verifyError && verifyResult && verifyResult.length > 0 && verifyResult[0].success) {
         const loginResult = verifyResult[0];
         console.log('User authenticated successfully via verify_login:', loginResult.user_id);
+
+        localStorage.setItem('b2f_investor_phone', phone);
+
         await verifyStaffAccess(loginResult.user_id);
         setShowLoginModal(false);
         setPhone('');

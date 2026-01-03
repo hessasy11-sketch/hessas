@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ArrowRight, Loader, TreePine, Menu } from 'lucide-react';
 import { useOpportunities } from '../../hooks/useOpportunities';
 import { useInvestorAuth } from '../../contexts/InvestorAuthContext';
@@ -34,11 +34,15 @@ export default function InvestorOpportunitiesView({
   onSidebarOpenChange
 }: InvestorOpportunitiesViewProps) {
   const { opportunities, loading, reloadOpportunities } = useOpportunities();
-  const { user } = useInvestorAuth();
+  const { user, refreshAccountFromPhone } = useInvestorAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [bookingOpportunity, setBookingOpportunity] = useState<OpportunityForBooking | null>(null);
+
+  useEffect(() => {
+    refreshAccountFromPhone();
+  }, []);
 
   const activeOpportunities = opportunities.filter(
     opp => opp.status === 'active' && opp.is_active
