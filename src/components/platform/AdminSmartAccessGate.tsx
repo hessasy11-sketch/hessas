@@ -1,22 +1,40 @@
 import { useState } from 'react';
-import { QrCode, Shield, Lock } from 'lucide-react';
+import { QrCode, Shield, Lock, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { SmartQRScanner } from './SmartQRScanner';
+import { useQRVerification, StaffInfo } from '../../hooks/useQRVerification';
 
-type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected';
+type ScanStatus = 'ready' | 'valid' | 'needsPin' | 'rejected' | 'verifying';
 
 export function AdminSmartAccessGate() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>('ready');
-  const [scannedData, setScannedData] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
+  const { verifyQRToken } = useQRVerification();
 
-  const handleScanSuccess = (decodedText: string) => {
-    setScannedData(decodedText);
-    setScanStatus('valid');
+  const handleScanSuccess = async (decodedText: string) => {
+    setScanStatus('verifying');
     setErrorMessage('');
+    setStaffInfo(null);
 
-    setTimeout(() => {
-      setScanStatus('ready');
-    }, 2000);
+    const result = await verifyQRToken(decodedText);
+
+    if (result.success && result.staff) {
+      setStaffInfo(result.staff);
+      setScanStatus('valid');
+
+      setTimeout(() => {
+        setScanStatus('ready');
+        setStaffInfo(null);
+      }, 5000);
+    } else {
+      setErrorMessage(result.message);
+      setScanStatus('rejected');
+
+      setTimeout(() => {
+        setScanStatus('ready');
+        setErrorMessage('');
+      }, 4000);
+    }
   };
 
   const handleScanError = (error: string) => {
@@ -33,6 +51,8 @@ export function AdminSmartAccessGate() {
     switch (scanStatus) {
       case 'ready':
         return 'border-gray-500';
+      case 'verifying':
+        return 'border-blue-500 shadow-blue-500/50 animate-pulse';
       case 'valid':
         return 'border-emerald-500 shadow-emerald-500/50';
       case 'needsPin':
@@ -82,31 +102,48 @@ export function AdminSmartAccessGate() {
                 scanStatus={scanStatus}
               />
 
-              {scanStatus === 'valid' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 backdrop-blur-sm animate-pulse">
+              {scanStatus === 'verifying' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 backdrop-blur-sm">
                   <div className="text-center">
+                    <Loader2 className="w-16 h-16 text-blue-400 mx-auto mb-3 animate-spin" />
+                    <p className="text-blue-400 font-bold text-xl" dir="rtl">جاري التحقق...</p>
+                  </div>
+                </div>
+              )}
+
+              {scanStatus === 'valid' && staffInfo && (
+                <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 backdrop-blur-sm">
+                  <div className="text-center px-6">
                     <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/50">
-                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <CheckCircle2 className="w-12 h-12 text-white" />
                     </div>
-                    <p className="text-emerald-400 font-bold text-xl">تم التحقق بنجاح</p>
-                    <p className="text-emerald-300 text-sm mt-1">{scannedData.slice(0, 20)}...</p>
+                    <p className="text-emerald-400 font-bold text-2xl mb-2" dir="rtl">مرحباً بك</p>
+                    <div className="bg-emerald-900/30 backdrop-blur-sm rounded-xl p-4 border border-emerald-500/30 space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <User className="w-5 h-5 text-emerald-300" />
+                        <p className="text-emerald-200 font-bold text-lg">{staffInfo.full_name}</p>
+                      </div>
+                      <p className="text-emerald-300 text-sm">{staffInfo.role_title || staffInfo.role}</p>
+                      <div className="flex items-center justify-center gap-2 text-emerald-400 text-xs">
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                        <span>{staffInfo.department}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               {scanStatus === 'rejected' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 backdrop-blur-sm animate-pulse">
-                  <div className="text-center">
+                <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 backdrop-blur-sm">
+                  <div className="text-center px-6">
                     <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-red-500/50">
                       <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
-                    <p className="text-red-400 font-bold text-xl">مرفوض</p>
+                    <p className="text-red-400 font-bold text-xl mb-2" dir="rtl">الدخول مرفوض</p>
                     {errorMessage && (
-                      <p className="text-red-300 text-sm mt-1">{errorMessage}</p>
+                      <p className="text-red-300 text-sm" dir="rtl">{errorMessage}</p>
                     )}
                   </div>
                 </div>
@@ -116,7 +153,7 @@ export function AdminSmartAccessGate() {
                 <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 backdrop-blur-sm">
                   <div className="text-center">
                     <Lock className="w-16 h-16 text-blue-400 mx-auto mb-3" />
-                    <p className="text-blue-400 font-bold text-xl">يتطلب رمز PIN</p>
+                    <p className="text-blue-400 font-bold text-xl" dir="rtl">يتطلب رمز PIN</p>
                   </div>
                 </div>
               )}
@@ -127,9 +164,16 @@ export function AdminSmartAccessGate() {
                 ضع رمز QR الخاص بك أمام الكاميرا
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                <div className={`w-2 h-2 rounded-full ${scanStatus === 'ready' ? 'bg-gray-500 animate-pulse' : scanStatus === 'valid' ? 'bg-emerald-500' : scanStatus === 'rejected' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${
+                  scanStatus === 'ready' ? 'bg-gray-500 animate-pulse' :
+                  scanStatus === 'verifying' ? 'bg-blue-500 animate-pulse' :
+                  scanStatus === 'valid' ? 'bg-emerald-500' :
+                  scanStatus === 'rejected' ? 'bg-red-500' :
+                  'bg-blue-500'
+                }`}></div>
                 <span>
                   {scanStatus === 'ready' && 'جاهز للمسح'}
+                  {scanStatus === 'verifying' && 'جاري التحقق...'}
                   {scanStatus === 'valid' && 'تم القبول'}
                   {scanStatus === 'rejected' && 'تم الرفض'}
                   {scanStatus === 'needsPin' && 'يتطلب رمز PIN'}
@@ -141,7 +185,7 @@ export function AdminSmartAccessGate() {
           <div className="mt-8 pt-6 border-t border-white/10">
             <div className="flex items-center justify-center gap-3 text-gray-500 text-xs">
               <Shield className="w-4 h-4" />
-              <span>محمي بتقنية التشفير المتقدم</span>
+              <span>محمي بتقنية التشفير المتقدم + AI</span>
             </div>
           </div>
         </div>
