@@ -26,7 +26,7 @@ import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
-import { AdminSmartAccessGate } from './components/platform/AdminSmartAccessGate';
+import { AdminSmartAccessGateV2 } from './components/platform/AdminSmartAccessGateV2';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -444,7 +444,7 @@ function MainApp() {
 function App() {
   return (
     <Routes>
-      <Route path="/admin/access" element={<AdminSmartAccessGate />} />
+      <Route path="/admin/access" element={<AdminSmartAccessGateV2 />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
   );

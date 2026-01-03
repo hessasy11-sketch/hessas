@@ -111,6 +111,42 @@ export function useQRVerification() {
     }
   };
 
+  const registerDeviceAccess = async (
+    staffId: string,
+    deviceFingerprint: string,
+    deviceType: string,
+    deviceInfo: Record<string, any>,
+    accessMethod: 'camera_scan' | 'image_upload',
+    requiresPin: boolean,
+    pinVerified: boolean
+  ): Promise<any> => {
+    try {
+      const { supabase } = await import('../lib/supabase');
+
+      const { data, error } = await supabase.rpc('register_device_access', {
+        p_staff_id: staffId,
+        p_device_fingerprint: deviceFingerprint,
+        p_device_type: deviceType,
+        p_device_info: deviceInfo,
+        p_access_method: accessMethod,
+        p_requires_pin: requiresPin,
+        p_pin_verified: pinVerified,
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
+
+      if (error) {
+        console.error('Error registering device:', error);
+        return { success: false };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error registering device access:', error);
+      return { success: false };
+    }
+  };
+
   const resetVerification = () => {
     setVerificationResult(null);
   };
@@ -118,6 +154,7 @@ export function useQRVerification() {
   return {
     verifyQRToken,
     verifyStaffPin,
+    registerDeviceAccess,
     isVerifying,
     verificationResult,
     resetVerification,
