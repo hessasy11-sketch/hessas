@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { useCategories } from './hooks/useCategories';
 import { useAuctions } from './hooks/useAuctions';
 import { useRegionsAndCities } from './hooks/useRegionsAndCities';
@@ -25,6 +26,7 @@ import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
+import { AdminSmartAccessGate } from './components/platform/AdminSmartAccessGate';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -37,7 +39,7 @@ const SECTION_COLORS: Record<Section, string> = {
   b2f: '#10B981',
 };
 
-function App() {
+function MainApp() {
   const { isOnline } = usePWA();
   const { regions, getCitiesByRegion, getRegionById } = useRegionsAndCities();
   const [activeSection, setActiveSection] = useState<Section>(() => {
@@ -436,6 +438,15 @@ function App() {
         />
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/admin/access" element={<AdminSmartAccessGate />} />
+      <Route path="*" element={<MainApp />} />
+    </Routes>
   );
 }
 
