@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Crown, Shield, Activity, AlertTriangle, FileText, X, Store, Sprout, ArrowRight, LogOut } from 'lucide-react';
 import SmartDashboardView from './SmartDashboardView';
-import StructurePermissionsView from './StructurePermissionsView';
+import EnhancedPermissionsView from './EnhancedPermissionsView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
 import { SessionTracker } from './SessionTracker';
@@ -169,7 +169,7 @@ export default function PlatformCommandCenter({ onClose, onNavigateToB2F, onNavi
                 onNavigateToAuctions={onNavigateToAuctions}
               />
             )}
-            {activeTab === 'structure' && <StructurePermissionsView platformRole={platformRole} />}
+            {activeTab === 'structure' && <EnhancedPermissionsView platformRole={platformRole} />}
             {activeTab === 'reports' && <ReportsView />}
             {activeTab === 'alerts' && <CriticalAlertsView />}
           </div>

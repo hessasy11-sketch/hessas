@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import SmartDashboardView from './SmartDashboardView';
-import StructurePermissionsView from './StructurePermissionsView';
+import EnhancedPermissionsView from './EnhancedPermissionsView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
 import { SessionTracker } from './SessionTracker';
@@ -296,7 +296,7 @@ export function HQDashboard() {
           />
         )}
 
-        {activeTab === 'structure' && <StructurePermissionsView platformRole={platformRole} />}
+        {activeTab === 'structure' && <EnhancedPermissionsView platformRole={platformRole} />}
 
         {activeTab === 'reports' && <ReportsView />}
 
