@@ -10,6 +10,9 @@ export interface StaffInfo {
   department: string;
   permissions: Record<string, any>;
   scope_farms: string[];
+  scenario_id?: string;
+  scenario_name?: string;
+  landing_route?: string;
 }
 
 export interface VerificationResult {
@@ -18,6 +21,7 @@ export interface VerificationResult {
   reason?: string;
   requires_pin?: boolean;
   default_route?: string;
+  landing_route?: string;
   staff?: StaffInfo;
 }
 
@@ -60,7 +64,8 @@ export function useQRVerification() {
 
       const result: VerificationResult = {
         ...rawResult,
-        default_route: rawResult.redirect_to || rawResult.default_route,
+        default_route: rawResult.staff?.landing_route || rawResult.redirect_to || rawResult.default_route || '/hq',
+        landing_route: rawResult.staff?.landing_route || '/hq',
         requires_pin: rawResult.staff?.requires_pin || false,
         staff: rawResult.staff ? {
           id: rawResult.staff.id,
@@ -72,6 +77,9 @@ export function useQRVerification() {
           department: rawResult.staff.department || '',
           permissions: {},
           scope_farms: [],
+          scenario_id: rawResult.staff.scenario_id,
+          scenario_name: rawResult.staff.scenario_name,
+          landing_route: rawResult.staff.landing_route || '/hq',
         } : undefined,
       };
 

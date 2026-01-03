@@ -46,7 +46,7 @@ export function AdminSmartAccessGateV3() {
 
     if (result.success && result.staff && deviceInfo) {
       setStaffInfo(result.staff);
-      setDefaultRoute(result.default_route || '/admin');
+      setDefaultRoute(result.landing_route || result.staff.landing_route || result.default_route || '/hq');
 
       if (!result.requires_pin) {
         adminSessionManager.createSession({
@@ -77,7 +77,7 @@ export function AdminSmartAccessGateV3() {
       } else {
         setScanStatus('valid');
         setTimeout(() => {
-          navigate(result.default_route || '/admin');
+          navigate(result.landing_route || result.staff.landing_route || result.default_route || '/hq');
         }, 2000);
       }
     } else {
@@ -129,7 +129,7 @@ export function AdminSmartAccessGateV3() {
     }
 
     setTimeout(() => {
-      navigate(defaultRoute || '/admin');
+      navigate(defaultRoute || '/hq');
     }, 2000);
   };
 
