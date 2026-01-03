@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Send, Zap, Crown, TrendingUp, MoreVertical, AlertCircle, Ban } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../contexts/AuthContext';
-import { GuestRegistrationModal } from './GuestRegistrationModal';
 import { BlockUserModal } from './BlockUserModal';
 import { ReportUserModal } from './ReportUserModal';
 import { supabase } from '../lib/supabase';
@@ -367,13 +366,6 @@ export function ChatBoxEnhanced({ auctionId, currentPrice, isClosed = false, isO
           </div>
         </form>
       </div>
-
-      {showGuestModal && (
-        <GuestRegistrationModal
-          onClose={() => setShowGuestModal(false)}
-          onSuccess={handleGuestRegistrationSuccess}
-        />
-      )}
 
       <BlockUserModal
         isOpen={showBlockModal}

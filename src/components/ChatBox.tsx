@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Send, Zap, Crown, TrendingUp } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../contexts/AuthContext';
-import { GuestRegistrationModal } from './GuestRegistrationModal';
 
 interface ChatBoxProps {
   auctionId: string;
@@ -245,13 +244,6 @@ export function ChatBox({ auctionId, currentPrice, isClosed = false }: ChatBoxPr
           </div>
         </form>
       </div>
-
-      {showGuestModal && (
-        <GuestRegistrationModal
-          onClose={() => setShowGuestModal(false)}
-          onSuccess={handleGuestRegistrationSuccess}
-        />
-      )}
     </>
   );
 }

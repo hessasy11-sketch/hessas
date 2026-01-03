@@ -1,9 +1,6 @@
-import { useState, useCallback } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { InvestorAuthProvider, useInvestorAuth } from './contexts/InvestorAuthContext';
+import { useState } from 'react';
 import { useCategories } from './hooks/useCategories';
 import { useAuctions } from './hooks/useAuctions';
-import { useRealtimeNotifications } from './hooks/useRealtimeNotifications';
 import { useRegionsAndCities } from './hooks/useRegionsAndCities';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -18,9 +15,6 @@ import { HelpCenterView } from './components/HelpCenterView';
 import { NotificationsView } from './components/NotificationsView';
 import { AccountSettingsView } from './components/AccountSettingsView';
 import { SubscriptionsView } from './components/SubscriptionsView';
-import { AdminDashboard } from './components/AdminDashboard';
-import { PlanDetailsView } from './components/PlanDetailsView';
-import { SignupFlow } from './components/SignupFlow';
 import { SearchPage } from './components/SearchPage';
 import { SectionTabs, type Section } from './components/SectionTabs';
 import { CompanyTabs, type SubType } from './components/CompanyTabs';
@@ -29,19 +23,9 @@ import { RegionCitySlider } from './components/RegionCitySlider';
 import { AuctionCard } from './components/AuctionCard';
 import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
-import { NotificationToast } from './components/NotificationToast';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { SubscriptionExpiryAlert } from './components/SubscriptionExpiryAlert';
-import { PromotionalOfferModal } from './components/PromotionalOfferModal';
-import { TrialCountdownBanner } from './components/TrialCountdownBanner';
-import { TrialExpiryNotification } from './components/TrialExpiryNotification';
 import B2FSection from './components/B2FSection';
-import B2FControlPanel from './components/B2F/B2FControlPanel';
-import { EnhancedAuctionsManagement } from './components/EnhancedAuctionsManagement';
-import PlatformCommandCenterV2 from './components/platform/PlatformCommandCenterV2';
 import { usePWA } from './hooks/usePWA';
-import { usePromotionalOffer } from './hooks/usePromotionalOffer';
-import { useDynamicPlans } from './hooks/useDynamicPlans';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
 
@@ -53,11 +37,8 @@ const SECTION_COLORS: Record<Section, string> = {
   b2f: '#10B981',
 };
 
-function MainApp() {
-  const { user, profile } = useAuth();
-  const { user: investorUser, account: investorAccount } = useInvestorAuth();
+function App() {
   const { isOnline } = usePWA();
-  const { hasActiveOffer } = usePromotionalOffer(user?.id);
   const { regions, getCitiesByRegion, getRegionById } = useRegionsAndCities();
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const saved = localStorage.getItem('lastSection');
@@ -69,23 +50,14 @@ function MainApp() {
   const [selectedCityIds, setSelectedCityIds] = useState<string[]>([]);
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
   const [showAuctionForm, setShowAuctionForm] = useState(false);
-  const [showSignupFlow, setShowSignupFlow] = useState(false);
   const [showSearchPage, setShowSearchPage] = useState(false);
-  const [showPromotionalOffer, setShowPromotionalOffer] = useState(false);
-  const [showTrialNotification, setShowTrialNotification] = useState(true);
-  const [showCommandCenter, setShowCommandCenter] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [openInvestorSidebar, setOpenInvestorSidebar] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [currentPage, setCurrentPage] = useState<
     'home' | 'profile' | 'myAuctions' | 'wallet' | 'myRequests' |
-    'favorites' | 'followers' | 'planDetails' | 'helpCenter' |
-    'notifications' | 'settings' | 'adminDashboard' | 'subscriptions' | 'b2fAdmin' | 'b2bAdmin'
+    'favorites' | 'followers' | 'helpCenter' |
+    'notifications' | 'settings' | 'subscriptions'
   >('home');
-
-  const { notifications, removeNotification } = useRealtimeNotifications(user?.id);
-  const { plans: dynamicPlans, userStatus } = useDynamicPlans();
 
   const { categories } = useCategories(
     activeSection,
@@ -111,7 +83,6 @@ function MainApp() {
   };
 
   const handleGetReloadFunction = (reloadFn: () => void) => {
-    // Store reload function if needed
   };
 
   const handleRegionSelect = (regionId: string | null) => {
@@ -134,10 +105,8 @@ function MainApp() {
   const handleNavigate = (page: string) => {
     if (page === 'home') {
       setCurrentPage('home');
-      // إغلاق أي sidebars مفتوحة
       setShowSidebar(false);
       setOpenInvestorSidebar(false);
-      // إعادة التمرير لأعلى الصفحة
       window.scrollTo(0, 0);
     }
     else if (page === 'profile') setCurrentPage('profile');
@@ -146,33 +115,12 @@ function MainApp() {
     else if (page === 'myRequests') setCurrentPage('myRequests');
     else if (page === 'favorites') setCurrentPage('favorites');
     else if (page === 'followers') setCurrentPage('followers');
-    else if (page === 'operations') setCurrentPage('operations');
-    else if (page.startsWith('planDetails:')) {
-      const planId = page.split(':')[1];
-      setSelectedPlanId(planId);
-      setCurrentPage('planDetails');
-    }
     else if (page === 'helpCenter') setCurrentPage('helpCenter');
     else if (page === 'notifications') setCurrentPage('notifications');
     else if (page === 'account-settings') setCurrentPage('settings');
     else if (page === 'accountSettings') setCurrentPage('settings');
     else if (page === 'subscriptions') setCurrentPage('subscriptions');
-    else if (page === 'adminDashboard') {
-      setCurrentPage('adminDashboard');
-    }
-    else if (page === 'b2fAdmin') {
-      setCurrentPage('b2fAdmin');
-    }
-    else if (page === 'b2bAdmin') {
-      setCurrentPage('b2bAdmin');
-    }
-    else if (page === 'platformCommand') {
-      setShowCommandCenter(true);
-    }
     else if (page === 'addAuction') setShowAuctionForm(true);
-    else if (page === 'signup') {
-      setShowSignupFlow(true);
-    }
   };
 
   const sectionColor = SECTION_COLORS[activeSection];
@@ -292,26 +240,6 @@ function MainApp() {
     );
   }
 
-  if (currentPage === 'planDetails' && selectedPlanId) {
-    const selectedPlan = dynamicPlans.find(p => p.id === selectedPlanId);
-
-    if (!selectedPlan) {
-      setCurrentPage('home');
-      return null;
-    }
-
-    return (
-      <PlanDetailsView
-        plan={selectedPlan}
-        userStatus={userStatus}
-        onBack={() => {
-          setCurrentPage('home');
-          setSelectedPlanId(null);
-        }}
-      />
-    );
-  }
-
   if (currentPage === 'helpCenter') {
     return (
       <div dir="rtl">
@@ -326,30 +254,6 @@ function MainApp() {
             onCancel={() => setShowAuctionForm(false)}
           />
         )}
-      </div>
-    );
-  }
-
-  if (currentPage === 'adminDashboard') {
-    return (
-      <div dir="rtl">
-        <AdminDashboard />
-      </div>
-    );
-  }
-
-  if (currentPage === 'b2fAdmin') {
-    return (
-      <div dir="rtl">
-        <B2FControlPanel onClose={() => setCurrentPage('home')} />
-      </div>
-    );
-  }
-
-  if (currentPage === 'b2bAdmin') {
-    return (
-      <div dir="rtl">
-        <EnhancedAuctionsManagement onClose={() => setCurrentPage('home')} />
       </div>
     );
   }
@@ -398,7 +302,6 @@ function MainApp() {
     );
   }
 
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
       {!isOnline && (
@@ -407,17 +310,7 @@ function MainApp() {
         </div>
       )}
       <PWAInstallPrompt />
-      {user && <SubscriptionExpiryAlert userId={user.id} />}
-      {user && hasActiveOffer && (
-        <PromotionalOfferModal
-          userId={user.id}
-          onAccept={(offerId, planId) => {
-            setShowPromotionalOffer(false);
-            setCurrentPage('subscriptions');
-          }}
-          onClose={() => setShowPromotionalOffer(false)}
-        />
-      )}
+
       <Header
         onNavigate={handleNavigate}
       />
@@ -437,21 +330,6 @@ function MainApp() {
       </div>
 
       <main className="max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 pb-24 md:pb-8 flex-1 w-full">
-        {userStatus && userStatus.is_on_trial && userStatus.days_remaining && (
-          <div className="mb-1.5">
-            <TrialCountdownBanner
-              userStatus={userStatus}
-              onUpgrade={() => {
-                const currentPlan = dynamicPlans.find(p => p.plan_type === userStatus.current_plan_type);
-                if (currentPlan) {
-                  setSelectedPlanId(currentPlan.id);
-                  setCurrentPage('planDetails');
-                }
-              }}
-            />
-          </div>
-        )}
-
         {activeSection === 'b2f' ? (
           <B2FSection
             onNavigate={handleNavigate}
@@ -515,11 +393,6 @@ function MainApp() {
         )}
       </main>
 
-      <NotificationToast
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
-
       <Footer
         onAddAuction={() => setShowAuctionForm(true)}
         onSearchClick={() => setShowSearchPage(true)}
@@ -528,11 +401,7 @@ function MainApp() {
         onB2FSidebarOpen={() => setOpenInvestorSidebar(true)}
         onMenuClick={() => {
           if (activeSection === 'b2f') {
-            if (user) {
-              setCurrentPage('profile');
-            } else {
-              setShowSignupFlow(true);
-            }
+            setCurrentPage('profile');
           } else {
             setShowSidebar(true);
           }
@@ -566,58 +435,7 @@ function MainApp() {
           onCancel={() => setShowAuctionForm(false)}
         />
       )}
-
-      {userStatus && userStatus.is_on_trial && userStatus.days_remaining && userStatus.days_remaining <= 2 && showTrialNotification && (
-        <TrialExpiryNotification
-          userStatus={userStatus}
-          onClose={() => setShowTrialNotification(false)}
-          onUpgrade={() => {
-            setShowTrialNotification(false);
-            const currentPlan = dynamicPlans.find(p => p.plan_type === userStatus.current_plan_type);
-            if (currentPlan) {
-              setSelectedPlanId(currentPlan.id);
-              setCurrentPage('planDetails');
-            }
-          }}
-        />
-      )}
-
-      {showSignupFlow && (
-        <SignupFlow
-          onClose={() => setShowSignupFlow(false)}
-          onComplete={(userData) => {
-            console.log('Account created:', userData);
-            setShowSignupFlow(false);
-            setCurrentPage('home');
-          }}
-        />
-      )}
-
-      {showCommandCenter && (
-        <PlatformCommandCenterV2
-          onClose={() => setShowCommandCenter(false)}
-          onNavigateToB2F={() => {
-            setShowCommandCenter(false);
-            setCurrentPage('b2fAdmin');
-          }}
-          onNavigateToAuctions={() => {
-            setShowCommandCenter(false);
-            setCurrentPage('b2bAdmin');
-          }}
-        />
-      )}
-
     </div>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <InvestorAuthProvider>
-        <MainApp />
-      </InvestorAuthProvider>
-    </AuthProvider>
   );
 }
 

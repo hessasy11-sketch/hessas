@@ -1,7 +1,6 @@
 import { Home, Plus, User, Search } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
 import { B2FNotificationCenter } from './B2FNotificationCenter';
-import { HiddenStaffAccess } from './HiddenStaffAccess';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import AIAssistantModal from './B2F/AIAssistantModal';
@@ -217,8 +216,6 @@ export function Footer({
           </div>
         </div>
       </footer>
-
-      <HiddenStaffAccess onNavigate={onNavigate} />
 
       <style>{`
         .safe-area-bottom {
