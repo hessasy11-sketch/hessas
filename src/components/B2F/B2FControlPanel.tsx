@@ -149,9 +149,139 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
 
   const tabSections = [
     {
-      title: 'إدارة الاستثمار الميدانية',
-      icon: Sprout,
-      color: 'from-green-600 to-emerald-700',
+      title: '1️⃣ البداية - تأسيس المزارع',
+      icon: MapPin,
+      color: 'from-emerald-600 to-teal-700',
+      tabs: [
+        {
+          id: 'farms' as TabId,
+          title: '1. إدارة المزارع',
+          icon: Sprout,
+          gradient: 'from-emerald-500 to-teal-600',
+          iconBg: 'from-emerald-400 to-teal-500',
+          description: 'الخطوة الأولى - إضافة وإدارة المزارع المرجعية',
+          badge: `${stats.totalFarms} مزرعة`
+        }
+      ]
+    },
+    {
+      title: '2️⃣ العرض - الفرص الاستثمارية',
+      icon: TrendingUp,
+      color: 'from-amber-600 to-orange-700',
+      tabs: [
+        {
+          id: 'opportunities' as TabId,
+          title: '2. العروض الاستثمارية',
+          icon: TrendingUp,
+          gradient: 'from-amber-500 to-orange-600',
+          iconBg: 'from-amber-400 to-orange-500',
+          description: 'الخطوة الثانية - إنشاء عروض مرتبطة بالمزارع',
+          badge: `${stats.totalOpportunities} عرض`
+        }
+      ]
+    },
+    {
+      title: '3️⃣ البيع - استقبال الطلبات',
+      icon: FileCheck,
+      color: 'from-blue-600 to-cyan-700',
+      tabs: [
+        {
+          id: 'sales' as TabId,
+          title: '3. المبيعات',
+          icon: FileCheck,
+          gradient: 'from-blue-500 to-cyan-600',
+          iconBg: 'from-blue-400 to-cyan-500',
+          description: 'الخطوة الثالثة - استقبال طلبات الشراء من المستثمرين',
+          badge: `${stats.totalSalesRequests} طلب`
+        }
+      ]
+    },
+    {
+      title: '4️⃣ التحصيل - المراجعة المالية',
+      icon: DollarSign,
+      color: 'from-emerald-600 to-green-700',
+      tabs: [
+        {
+          id: 'finance' as TabId,
+          title: '4. المالية',
+          icon: DollarSign,
+          gradient: 'from-emerald-600 to-teal-600',
+          iconBg: 'from-emerald-500 to-teal-500',
+          description: 'الخطوة الرابعة - مراجعة المدفوعات وإدارة التحصيل',
+          badge: `${stats.collectionQueue} قيد المراجعة`
+        }
+      ]
+    },
+    {
+      title: '5️⃣ التعاقد - إصدار العقود',
+      icon: FileText,
+      color: 'from-indigo-600 to-violet-700',
+      tabs: [
+        {
+          id: 'contracts' as TabId,
+          title: '5. العقود',
+          icon: FileText,
+          gradient: 'from-indigo-500 to-purple-600',
+          iconBg: 'from-indigo-400 to-purple-500',
+          description: 'الخطوة الخامسة - إصدار عقود الاستنفاع للمستثمرين',
+          badge: `${stats.totalContracts} عقد`
+        }
+      ]
+    },
+    {
+      title: '6️⃣ التشغيل - متابعة العمليات',
+      icon: Activity,
+      color: 'from-teal-600 to-emerald-700',
+      tabs: [
+        {
+          id: 'operations' as TabId,
+          title: '6. التشغيل والمتابعة',
+          icon: Activity,
+          gradient: 'from-teal-500 to-emerald-600',
+          iconBg: 'from-teal-400 to-emerald-500',
+          description: 'الخطوة السادسة - نظام التشغيل المركزي ومتابعة الأشجار',
+          badge: `${stats.totalOperations} عملية`
+        },
+        {
+          id: 'reports' as TabId,
+          title: '6ب. تقارير التوثيق',
+          icon: FileText,
+          gradient: 'from-rose-500 to-pink-600',
+          iconBg: 'from-rose-400 to-pink-500',
+          description: 'تقارير المشرفين ومدراء المزارع المرسلة للإدارة',
+          badge: 'توثيق'
+        }
+      ]
+    },
+    {
+      title: '7️⃣ خدمة العملاء - المستثمرون',
+      icon: UserCog,
+      color: 'from-purple-600 to-pink-700',
+      tabs: [
+        {
+          id: 'investor_service' as TabId,
+          title: '7. خدمة المستثمر',
+          icon: UserCog,
+          gradient: 'from-purple-500 to-pink-600',
+          iconBg: 'from-purple-400 to-pink-500',
+          description: 'دعم المستثمرين والتواصل معهم',
+          badge: `${stats.activeInvestors} مستثمر`
+        },
+        {
+          id: 'notifications' as TabId,
+          title: '7ب. الإشعارات',
+          icon: Bell,
+          gradient: 'from-teal-500 to-cyan-600',
+          iconBg: 'from-teal-400 to-cyan-500',
+          description: 'إرسال وإدارة إشعارات المستثمرين',
+          badge: `${stats.unreadNotifications} غير مقروء`
+        }
+      ]
+    },
+    {
+      title: '🔧 الإدارة الداخلية',
+      icon: Settings,
+      color: 'from-slate-600 to-gray-700',
       tabs: [
         {
           id: 'my_farms' as TabId,
@@ -160,7 +290,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           gradient: 'from-green-500 to-emerald-600',
           iconBg: 'from-green-400 to-emerald-500',
           description: 'المزارع المُسندة لي كمدير استثمار',
-          badge: 'مدير استثمار'
+          badge: 'مدير'
         },
         {
           id: 'investment_approvals' as TabId,
@@ -170,115 +300,6 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           iconBg: 'from-orange-400 to-amber-500',
           description: 'المهام التي تحتاج موافقتي الاستثمارية',
           badge: 'اعتماد'
-        }
-      ]
-    },
-    {
-      title: 'المنتجات والعروض',
-      icon: TrendingUp,
-      color: 'from-amber-600 to-orange-700',
-      tabs: [
-        {
-          id: 'farms' as TabId,
-          title: 'إدارة المزارع',
-          icon: Sprout,
-          gradient: 'from-emerald-500 to-teal-600',
-          iconBg: 'from-emerald-400 to-teal-500',
-          description: 'إضافة وإدارة المزارع المرجعية',
-          badge: `${stats.totalFarms} مزرعة`
-        },
-        {
-          id: 'opportunities' as TabId,
-          title: 'العروض الاستثمارية',
-          icon: TrendingUp,
-          gradient: 'from-amber-500 to-orange-600',
-          iconBg: 'from-amber-400 to-orange-500',
-          description: 'إنشاء وإدارة العروض المرتبطة بالمزارع',
-          badge: `${stats.totalOpportunities} عرض`
-        }
-      ]
-    },
-    {
-      title: 'المالية والمبيعات',
-      icon: DollarSign,
-      color: 'from-blue-600 to-cyan-700',
-      tabs: [
-        {
-          id: 'finance' as TabId,
-          title: 'المالية',
-          icon: DollarSign,
-          gradient: 'from-emerald-600 to-teal-600',
-          iconBg: 'from-emerald-500 to-teal-500',
-          description: 'إدارة الفواتير + بوابات الدفع + التحصيل',
-          badge: `${stats.collectionQueue} في التحصيل`
-        },
-        {
-          id: 'sales' as TabId,
-          title: 'المبيعات',
-          icon: FileCheck,
-          gradient: 'from-blue-500 to-cyan-600',
-          iconBg: 'from-blue-400 to-cyan-500',
-          description: 'استقبال الطلبات + فتح الدفع + الإيصالات',
-          badge: `${stats.totalSalesRequests} طلب`
-        },
-        {
-          id: 'contracts' as TabId,
-          title: 'العقود',
-          icon: FileText,
-          gradient: 'from-indigo-500 to-purple-600',
-          iconBg: 'from-indigo-400 to-purple-500',
-          description: 'إدارة عقود الاستنفاع الصادرة',
-          badge: `${stats.totalContracts} عقد`
-        }
-      ]
-    },
-    {
-      title: 'العمليات والتشغيل',
-      icon: Activity,
-      color: 'from-teal-600 to-emerald-700',
-      tabs: [
-        {
-          id: 'operations' as TabId,
-          title: 'التشغيل والمتابعة',
-          icon: Activity,
-          gradient: 'from-teal-500 to-emerald-600',
-          iconBg: 'from-teal-400 to-emerald-500',
-          description: 'نظام التشغيل المركزي - تحديث واحد يصل لجميع المستثمرين',
-          badge: 'مركزي'
-        },
-        {
-          id: 'reports' as TabId,
-          title: 'تقارير التوثيق',
-          icon: FileText,
-          gradient: 'from-rose-500 to-pink-600',
-          iconBg: 'from-rose-400 to-pink-500',
-          description: 'تقارير المشرفين ومدراء المزارع المرسلة للإدارة',
-          badge: 'إدارة'
-        }
-      ]
-    },
-    {
-      title: 'خدمة العملاء',
-      icon: UserCog,
-      color: 'from-purple-600 to-pink-700',
-      tabs: [
-        {
-          id: 'investor_service' as TabId,
-          title: 'خدمة المستثمر',
-          icon: UserCog,
-          gradient: 'from-purple-500 to-pink-600',
-          iconBg: 'from-purple-400 to-pink-500',
-          description: 'إدارة المستثمرين والتواصل معهم',
-          badge: `${stats.activeInvestors} مستثمر`
-        },
-        {
-          id: 'notifications' as TabId,
-          title: 'الإشعارات',
-          icon: Bell,
-          gradient: 'from-teal-500 to-cyan-600',
-          iconBg: 'from-teal-400 to-cyan-500',
-          description: 'إرسال وإدارة إشعارات المستثمرين',
-          badge: `${stats.unreadNotifications} غير مقروء`
         },
         {
           id: 'ai' as TabId,
@@ -288,14 +309,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           iconBg: 'from-violet-500 to-fuchsia-500',
           description: 'إدارة قاعدة المعرفة والتعلم الذاتي',
           badge: 'AI'
-        }
-      ]
-    },
-    {
-      title: 'الإعدادات',
-      icon: Settings,
-      color: 'from-slate-600 to-slate-700',
-      tabs: [
+        },
         {
           id: 'settings' as TabId,
           title: 'إعدادات القسم',
@@ -303,7 +317,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           gradient: 'from-slate-500 to-slate-700',
           iconBg: 'from-slate-400 to-slate-600',
           description: 'الإعدادات العامة وتخصيص النصوص',
-          badge: 'أساسي'
+          badge: 'إعدادات'
         }
       ]
     }
@@ -551,21 +565,21 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
 
             <div className="flex-1">
               <h3 className="text-base md:text-lg font-black text-blue-900 mb-2 md:mb-3">
-                خط السير الرسمي
+                مسار العمل الصحيح - من البداية للنهاية
               </h3>
 
               <div className="space-y-2 text-xs md:text-sm text-blue-800">
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed"><strong>إدارة → عرض → بيع → عقد → تشغيل → خدمة المستثمر</strong></p>
+                  <p className="leading-relaxed"><strong>1. إدارة المزارع → 2. العروض → 3. المبيعات → 4. المالية → 5. العقود → 6. التشغيل → 7. خدمة المستثمر</strong></p>
                 </div>
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed">أقسام منفصلة بدون دمج لضمان وضوح المسار</p>
+                  <p className="leading-relaxed">البطاقات مرتبة حسب تسلسل العمليات الفعلي</p>
                 </div>
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed">معزول تماماً عن نظام مزاد الشركات</p>
+                  <p className="leading-relaxed">كل مرحلة لها رقمها ووصفها الواضح</p>
                 </div>
               </div>
             </div>
