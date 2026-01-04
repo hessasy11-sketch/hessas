@@ -34,12 +34,14 @@ import NotificationsManagementTab from './tabs/NotificationsManagementTab';
 import AIAssistantManagementTab from './tabs/AIAssistantManagementTab';
 import SettingsTab from './tabs/SettingsTab';
 import ManagementReportsView from './admin/ManagementReportsView';
+import MyFarmsTab from './tabs/MyFarmsTab';
+import InvestmentApprovalsTab from './tabs/InvestmentApprovalsTab';
 
 interface B2FControlPanelProps {
   onClose: () => void;
 }
 
-type TabId = 'settings' | 'farms' | 'opportunities' | 'finance' | 'sales' | 'contracts' | 'operations' | 'reports' | 'investor_service' | 'notifications' | 'ai';
+type TabId = 'settings' | 'farms' | 'opportunities' | 'finance' | 'sales' | 'contracts' | 'operations' | 'reports' | 'investor_service' | 'notifications' | 'ai' | 'my_farms' | 'investment_approvals';
 
 interface Tab {
   id: TabId;
@@ -236,6 +238,24 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
       badge: 'AI'
     },
     {
+      id: 'my_farms',
+      title: 'مزارعي',
+      icon: MapPin,
+      gradient: 'from-green-500 to-emerald-600',
+      iconBg: 'from-green-400 to-emerald-500',
+      description: 'المزارع المُسندة لي كمدير استثمار',
+      badge: 'مدير استثمار'
+    },
+    {
+      id: 'investment_approvals',
+      title: 'اعتمادات الاستثمار',
+      icon: CheckCircle,
+      gradient: 'from-orange-500 to-amber-600',
+      iconBg: 'from-orange-400 to-amber-500',
+      description: 'المهام التي تحتاج موافقتي الاستثمارية',
+      badge: 'اعتماد'
+    },
+    {
       id: 'settings',
       title: '0️⃣ إعدادات القسم',
       icon: Settings,
@@ -293,6 +313,8 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           {activeTab === 'investor_service' && <InvestorServiceTab />}
           {activeTab === 'notifications' && <NotificationsManagementTab />}
           {activeTab === 'ai' && <AIAssistantManagementTab />}
+          {activeTab === 'my_farms' && <MyFarmsTab />}
+          {activeTab === 'investment_approvals' && <InvestmentApprovalsTab />}
         </div>
       </div>
     );
