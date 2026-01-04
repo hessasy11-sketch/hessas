@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { retryFetch } from '../utils/retryFetch';
 
 export interface Region {
   id: string;
@@ -29,17 +30,21 @@ export function useRegionsAndCities() {
 
   const loadRegions = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('regions')
-        .select('*')
-        .order('display_order', { ascending: true });
+      const result = await retryFetch(async () => {
+        const { data, error: fetchError } = await supabase
+          .from('regions')
+          .select('*')
+          .order('display_order', { ascending: true });
 
-      if (fetchError) throw fetchError;
+        if (fetchError) throw fetchError;
+        return data;
+      }, 2, 500);
 
-      setRegions(data || []);
+      setRegions(result || []);
     } catch (err) {
       console.error('Error loading regions:', err);
       setError(err instanceof Error ? err.message : 'فشل تحميل المناطق');
+      setRegions([]);
     } finally {
       setLoading(false);
     }
@@ -47,17 +52,21 @@ export function useRegionsAndCities() {
 
   const loadCities = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('cities')
-        .select('*')
-        .order('display_order', { ascending: true });
+      const result = await retryFetch(async () => {
+        const { data, error: fetchError } = await supabase
+          .from('cities')
+          .select('*')
+          .order('display_order', { ascending: true });
 
-      if (fetchError) throw fetchError;
+        if (fetchError) throw fetchError;
+        return data;
+      }, 2, 500);
 
-      setCities(data || []);
+      setCities(result || []);
     } catch (err) {
       console.error('Error loading cities:', err);
       setError(err instanceof Error ? err.message : 'فشل تحميل المدن');
+      setCities([]);
     }
   };
 

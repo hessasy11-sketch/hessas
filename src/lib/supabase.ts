@@ -18,6 +18,12 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     headers: {
       'apikey': supabaseAnonKey,
     },
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(30000),
+      });
+    },
   },
   db: {
     schema: 'public',

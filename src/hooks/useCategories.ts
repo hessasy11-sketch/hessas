@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { retryFetch } from '../utils/retryFetch';
 import type { Section } from '../components/SectionTabs';
 import type { SubType } from '../components/CompanyTabs';
 
@@ -25,26 +26,29 @@ export function useCategories(section: Section, subType?: SubType | null) {
     try {
       setLoading(true);
 
-      let query = supabase
-        .from('categories')
-        .select('*')
-        .eq('section', section)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+      const result = await retryFetch(async () => {
+        let query = supabase
+          .from('categories')
+          .select('*')
+          .eq('section', section)
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
 
-      if (section === 'companies') {
-        if (subType) {
-          query = query.eq('sub_type', subType);
+        if (section === 'companies') {
+          if (subType) {
+            query = query.eq('sub_type', subType);
+          }
+        } else {
+          query = query.is('sub_type', null);
         }
-      } else {
-        query = query.is('sub_type', null);
-      }
 
-      const { data, error } = await query;
+        const { data, error } = await query;
 
-      if (error) throw error;
+        if (error) throw error;
+        return data;
+      }, 2, 500);
 
-      setCategories(data || []);
+      setCategories(result || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setCategories([]);

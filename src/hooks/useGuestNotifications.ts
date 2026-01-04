@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { retryFetch } from '../utils/retryFetch';
 
 export interface GuestNotification {
   id: string;
@@ -19,14 +20,18 @@ export function useGuestNotifications() {
   useEffect(() => {
     const fetchGuestNotifications = async () => {
       try {
-        const { data, error } = await supabase
-          .rpc('get_active_guest_notifications');
+        const result = await retryFetch(async () => {
+          const { data, error } = await supabase
+            .rpc('get_active_guest_notifications');
 
-        if (error) throw error;
+          if (error) throw error;
+          return data;
+        }, 2, 500);
 
-        setNotifications(data || []);
+        setNotifications(result || []);
       } catch (err) {
         console.error('Error fetching guest notifications:', err);
+        setNotifications([]);
       } finally {
         setLoading(false);
       }

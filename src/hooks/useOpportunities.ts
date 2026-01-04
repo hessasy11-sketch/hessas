@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { retryFetch } from '../utils/retryFetch';
 
 export interface Opportunity {
   id: string;
@@ -53,19 +54,22 @@ export function useOpportunities() {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('b2f_opportunities')
-        .select(`
-          *,
-          b2f_farms (
-            name,
-            location,
-            city
-          )
-        `)
-        .order('created_at', { ascending: false });
+      const data = await retryFetch(async () => {
+        const { data, error: fetchError } = await supabase
+          .from('b2f_opportunities')
+          .select(`
+            *,
+            b2f_farms (
+              name,
+              location,
+              city
+            )
+          `)
+          .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+        if (fetchError) throw fetchError;
+        return data;
+      }, 2, 500);
 
       if (data) {
         const opportunitiesWithStats = await Promise.all(
@@ -111,10 +115,13 @@ export function useOpportunities() {
         );
 
         setOpportunities(opportunitiesWithStats);
+      } else {
+        setOpportunities([]);
       }
     } catch (err) {
       console.error('Error loading opportunities:', err);
       setError('فشل تحميل العروض الاستثمارية');
+      setOpportunities([]);
     } finally {
       setLoading(false);
     }
