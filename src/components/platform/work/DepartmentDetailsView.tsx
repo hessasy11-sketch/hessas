@@ -117,6 +117,8 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
       }
 
       try {
+        await supabase.rpc('set_session_var', { key: 'app.admin_session_active', value: 'true' });
+
         const { error } = await supabase
           .from('department_staff_assignments')
           .insert({
@@ -142,6 +144,8 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
       }
 
       try {
+        await supabase.rpc('set_session_var', { key: 'app.admin_session_active', value: 'true' });
+
         const { data: newStaff, error: staffError } = await supabase
           .from('platform_staff')
           .insert({
