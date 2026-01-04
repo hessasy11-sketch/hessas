@@ -21,17 +21,32 @@ interface QRStatistics {
   health_score: number;
 }
 
+interface CleanupReport {
+  total_staff: number;
+  active_qr: number;
+  inactive_staff_with_qr: number;
+  no_department_with_qr: number;
+  orphaned_qr: number;
+  need_cleanup: number;
+  cleanup_needed: boolean;
+  health_status: string;
+}
+
 export function QRScannerValidator() {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const [statistics, setStatistics] = useState<QRStatistics | null>(null);
   const [duplicates, setDuplicates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cleanupReport, setCleanupReport] = useState<CleanupReport | null>(null);
+  const [orphanedQRs, setOrphanedQRs] = useState<any[]>([]);
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
     loadStatistics();
     loadDuplicates();
+    loadCleanupReport();
+    loadOrphanedQRs();
   }, []);
 
   const loadStatistics = async () => {
@@ -51,6 +66,26 @@ export function QRScannerValidator() {
       setDuplicates(data || []);
     } catch (error) {
       console.error('Error loading duplicates:', error);
+    }
+  };
+
+  const loadCleanupReport = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_qr_cleanup_report');
+      if (error) throw error;
+      setCleanupReport(data);
+    } catch (error) {
+      console.error('Error loading cleanup report:', error);
+    }
+  };
+
+  const loadOrphanedQRs = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_orphaned_qr_codes');
+      if (error) throw error;
+      setOrphanedQRs(data || []);
+    } catch (error) {
+      console.error('Error loading orphaned QRs:', error);
     }
   };
 
@@ -130,6 +165,46 @@ export function QRScannerValidator() {
     } catch (error) {
       console.error('Error fixing duplicates:', error);
       alert('فشل إصلاح التكرارات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cleanupOrphanedQRs = async () => {
+    if (!confirm('هل تريد تنظيف جميع QR اليتيمة؟\n- سيتم تعطيل QR للموظفين المعطّلين\n- سيتم مسح QR للموظفين بدون قسم')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('cleanup_orphaned_qr_codes');
+      if (error) throw error;
+
+      alert(data.message);
+      await loadStatistics();
+      await loadCleanupReport();
+      await loadOrphanedQRs();
+    } catch (error) {
+      console.error('Error cleaning up:', error);
+      alert('فشل التنظيف');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const syncQRStatus = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('sync_qr_with_staff_status');
+      if (error) throw error;
+
+      alert(data.message);
+      await loadStatistics();
+      await loadCleanupReport();
+      await loadOrphanedQRs();
+    } catch (error) {
+      console.error('Error syncing:', error);
+      alert('فشلت المزامنة');
     } finally {
       setLoading(false);
     }
@@ -427,6 +502,137 @@ export function QRScannerValidator() {
           )}
         </div>
       </div>
+
+      {/* Cleanup & Maintenance Section */}
+      {cleanupReport && cleanupReport.cleanup_needed && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-xl ${
+                cleanupReport.health_status === 'excellent' ? 'bg-green-100' :
+                cleanupReport.health_status === 'good' ? 'bg-blue-100' :
+                cleanupReport.health_status === 'warning' ? 'bg-yellow-100' :
+                'bg-red-100'
+              }`}>
+                <Shield className={`w-6 h-6 ${
+                  cleanupReport.health_status === 'excellent' ? 'text-green-600' :
+                  cleanupReport.health_status === 'good' ? 'text-blue-600' :
+                  cleanupReport.health_status === 'warning' ? 'text-yellow-600' :
+                  'text-red-600'
+                }`} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">صيانة تلقائية</h3>
+                <p className="text-sm text-gray-600">
+                  {cleanupReport.need_cleanup} عنصر يحتاج تنظيف
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={syncQRStatus}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    مزامنة...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    مزامنة
+                  </>
+                )}
+              </button>
+              <button
+                onClick={cleanupOrphanedQRs}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    تنظيف...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-4 h-4" />
+                    تنظيف تلقائي
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Cleanup Statistics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-2xl font-bold text-gray-900">
+                {cleanupReport.inactive_staff_with_qr}
+              </div>
+              <div className="text-sm text-gray-600">موظف معطّل بـ QR نشط</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-2xl font-bold text-gray-900">
+                {cleanupReport.no_department_with_qr}
+              </div>
+              <div className="text-sm text-gray-600">بدون قسم ولديهم QR</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-2xl font-bold text-gray-900">
+                {cleanupReport.orphaned_qr}
+              </div>
+              <div className="text-sm text-gray-600">QR يتيمة</div>
+            </div>
+            <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+              <div className="text-2xl font-bold text-blue-600">
+                {cleanupReport.health_status === 'excellent' ? 'ممتاز' :
+                 cleanupReport.health_status === 'good' ? 'جيد' :
+                 cleanupReport.health_status === 'warning' ? 'تحذير' : 'حرج'}
+              </div>
+              <div className="text-sm text-gray-600">حالة النظام</div>
+            </div>
+          </div>
+
+          {/* Orphaned QRs List */}
+          {orphanedQRs.length > 0 && (
+            <div>
+              <div className="font-bold text-gray-900 mb-3">QR تحتاج صيانة:</div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {orphanedQRs.map((qr: any) => (
+                  <div
+                    key={qr.staff_id}
+                    className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-gray-900">{qr.full_name}</div>
+                        <div className="text-sm text-gray-600">
+                          {qr.staff_code} • {qr.department || 'بدون قسم'}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {!qr.is_active && (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                            معطّل
+                          </span>
+                        )}
+                        {(!qr.department || qr.department === '') && (
+                          <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                            بلا قسم
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
