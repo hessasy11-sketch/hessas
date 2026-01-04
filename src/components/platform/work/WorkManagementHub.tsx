@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Shield, FileText, Users, Network } from 'lucide-react';
+import { Shield, FileText, Users, Network, Zap, BarChart3 } from 'lucide-react';
 import { PermissionPacksSection } from './PermissionPacksSection';
 import { TaskTemplatesSection } from './TaskTemplatesSection';
 import { StaffManagementSection } from './StaffManagementSection';
 import { TeamsStructureSection } from './TeamsStructureSection';
+import { AutoTaskAssignment } from './AutoTaskAssignment';
+import { SmartTaskGenerationHub } from './SmartTaskGenerationHub';
 
-type TabType = 'permissions' | 'tasks' | 'staff' | 'teams';
+type TabType = 'permissions' | 'tasks' | 'staff' | 'teams' | 'assign' | 'monitor';
 
 export function WorkManagementHub() {
   const [activeTab, setActiveTab] = useState<TabType>('permissions');
@@ -61,6 +63,30 @@ export function WorkManagementHub() {
             <Network className="w-5 h-5" />
             <span>الفرق والهيكل</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('assign')}
+            className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'assign'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Zap className="w-5 h-5" />
+            <span>توليد المهام</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('monitor')}
+            className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'monitor'
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5" />
+            <span>المراقبة والإحصائيات</span>
+          </button>
         </div>
       </div>
 
@@ -69,6 +95,8 @@ export function WorkManagementHub() {
         {activeTab === 'tasks' && <TaskTemplatesSection />}
         {activeTab === 'staff' && <StaffManagementSection />}
         {activeTab === 'teams' && <TeamsStructureSection />}
+        {activeTab === 'assign' && <AutoTaskAssignment />}
+        {activeTab === 'monitor' && <SmartTaskGenerationHub />}
       </div>
     </div>
   );
