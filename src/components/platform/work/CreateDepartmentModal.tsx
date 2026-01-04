@@ -41,7 +41,7 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
         p_created_by: staffData?.id || null
       });
 
-      const { data, error } = await supabase.rpc('create_department', {
+      const { data: rawData, error } = await supabase.rpc('create_department', {
         p_name_ar: formData.name_ar,
         p_name_en: formData.name_en,
         p_code: formData.code.toUpperCase(),
@@ -52,18 +52,24 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
         p_created_by: staffData?.id || null
       });
 
-      console.log('Department creation result:', { data, error });
+      console.log('Department creation result:', { rawData, error });
 
       if (error) {
         console.error('RPC Error:', error);
         throw error;
       }
 
-      if (!data || !data.success) {
-        throw new Error('فشل إنشاء القسم - لا توجد نتيجة صحيحة');
+      if (!rawData) {
+        throw new Error('فشل إنشاء القسم - لا توجد نتيجة');
       }
 
-      console.log('Department created successfully:', data);
+      const resultData = (rawData as any);
+
+      if (!resultData.success) {
+        throw new Error(resultData.message || 'فشل إنشاء القسم');
+      }
+
+      console.log('Department created successfully:', resultData);
       alert('✅ تم إنشاء القسم بنجاح مع ربط الأنظمة تلقائياً!');
 
       setTimeout(() => {
