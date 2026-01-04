@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+import { InvestorAuthProvider } from './contexts/InvestorAuthContext';
 
 // Filter Stackblitz environment errors
 const originalError = console.error;
@@ -43,7 +44,9 @@ console.log = (...args) => {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <InvestorAuthProvider>
+        <App />
+      </InvestorAuthProvider>
     </BrowserRouter>
   </StrictMode>
 );
