@@ -57,8 +57,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
     full_name: '',
     staff_code: '',
     role: 'employee',
-    phone: '',
-    email: ''
+    phone_number: ''
   });
 
   useEffect(() => {
@@ -149,8 +148,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
             full_name: newStaffData.full_name,
             staff_code: newStaffData.staff_code,
             role: newStaffData.role,
-            phone: newStaffData.phone || null,
-            email: newStaffData.email || null,
+            phone_number: newStaffData.phone_number || null,
             department: department.code,
             is_active: true
           })
@@ -175,8 +173,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
           full_name: '',
           staff_code: '',
           role: 'employee',
-          phone: '',
-          email: ''
+          phone_number: ''
         });
         loadData();
         alert('تم إنشاء الموظف وإضافته للقسم بنجاح');
@@ -429,8 +426,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
                     full_name: '',
                     staff_code: '',
                     role: 'employee',
-                    phone: '',
-                    email: ''
+                    phone_number: ''
                   });
                 }}
                 className="p-2 hover:bg-white/10 rounded-lg transition-all"
@@ -517,22 +513,9 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
                     </label>
                     <input
                       type="tel"
-                      value={newStaffData.phone}
-                      onChange={(e) => setNewStaffData({ ...newStaffData, phone: e.target.value })}
+                      value={newStaffData.phone_number}
+                      onChange={(e) => setNewStaffData({ ...newStaffData, phone_number: e.target.value })}
                       placeholder="05xxxxxxxx"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
-                      البريد الإلكتروني (اختياري)
-                    </label>
-                    <input
-                      type="email"
-                      value={newStaffData.email}
-                      onChange={(e) => setNewStaffData({ ...newStaffData, email: e.target.value })}
-                      placeholder="example@domain.com"
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 transition-all"
                     />
                   </div>
@@ -573,8 +556,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
                       full_name: '',
                       staff_code: '',
                       role: 'employee',
-                      phone: '',
-                      email: ''
+                      phone_number: ''
                     });
                   }}
                   className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-bold transition-all"
