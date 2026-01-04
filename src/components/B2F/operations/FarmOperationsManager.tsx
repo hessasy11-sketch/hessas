@@ -66,12 +66,12 @@ export default function FarmOperationsManager({ onSelectFarm }: FarmOperationsMa
           // إجمالي الأشجار والمستثمرين
           const { data: contractsData } = await supabase
             .from('b2f_contracts')
-            .select('trees_count, investor_id')
+            .select('trees_count, investor_phone')
             .eq('farm_id', farm.id)
             .eq('status', 'active');
 
           const contractTrees = contractsData?.reduce((sum, c) => sum + (c.trees_count || 0), 0) || 0;
-          const uniqueInvestors = new Set(contractsData?.map(c => c.investor_id)).size;
+          const uniqueInvestors = new Set(contractsData?.map(c => c.investor_phone).filter(Boolean)).size;
 
           // التحقق من وجود تشغيل نشط
           const { data: operationData } = await supabase
