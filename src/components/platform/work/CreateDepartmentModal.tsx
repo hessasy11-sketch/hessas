@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
-import { X, Building2, Check, Hash } from 'lucide-react';
+import { X, Building2, Check, Hash, Layers, List } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+
+interface MainSection {
+  id: string;
+  code: string;
+  name_ar: string;
+  name_en: string;
+  icon: string;
+  base_route: string;
+}
+
+interface SubSection {
+  id: string;
+  code: string;
+  name_ar: string;
+  name_en: string;
+  icon: string;
+  tab_name: string;
+  route_path: string;
+}
 
 interface Props {
   onClose: () => void;
@@ -15,13 +34,19 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
     description: '',
     linked_system: 'none',
     system_access_level: 'read',
-    color: '#3b82f6'
+    color: '#3b82f6',
+    main_section_code: '',
+    sub_section_id: ''
   });
   const [loading, setLoading] = useState(false);
   const [suggestedCode, setSuggestedCode] = useState<string>('');
+  const [mainSections, setMainSections] = useState<MainSection[]>([]);
+  const [subSections, setSubSections] = useState<SubSection[]>([]);
+  const [loadingSubSections, setLoadingSubSections] = useState(false);
 
   useEffect(() => {
     fetchNextCode();
+    fetchMainSections();
   }, []);
 
   const fetchNextCode = async () => {
@@ -35,6 +60,53 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
       console.error('Error fetching next code:', err);
     }
   };
+
+  const fetchMainSections = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('main_sections')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (!error && data) {
+        setMainSections(data);
+      }
+    } catch (err) {
+      console.error('Error fetching main sections:', err);
+    }
+  };
+
+  const fetchSubSections = async (mainSectionCode: string) => {
+    if (!mainSectionCode) {
+      setSubSections([]);
+      return;
+    }
+
+    setLoadingSubSections(true);
+    try {
+      const { data, error } = await supabase.rpc('get_sub_sections_by_main', {
+        main_section_code: mainSectionCode
+      });
+
+      if (!error && data) {
+        setSubSections(data);
+      }
+    } catch (err) {
+      console.error('Error fetching sub sections:', err);
+    } finally {
+      setLoadingSubSections(false);
+    }
+  };
+
+  useEffect(() => {
+    if (formData.main_section_code) {
+      fetchSubSections(formData.main_section_code);
+      setFormData(prev => ({ ...prev, sub_section_id: '' }));
+    } else {
+      setSubSections([]);
+    }
+  }, [formData.main_section_code]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +138,8 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
         p_linked_system: formData.linked_system,
         p_system_access_level: formData.system_access_level,
         p_color: formData.color,
-        p_created_by: staffData?.id || null
+        p_created_by: staffData?.id || null,
+        p_sub_section_id: formData.sub_section_id || null
       });
 
       console.log('Department creation result:', { rawData, error });
@@ -206,38 +279,92 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
 
           {/* System Integration */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white">الربط مع الأنظمة</h3>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Layers className="w-5 h-5 text-blue-400" />
+              التوجيه الهرمي للأقسام
+            </h3>
 
+            {/* Main Section Selection */}
             <div>
               <label className="block text-sm font-bold text-gray-300 mb-2">
-                النظام المرتبط
+                القسم الرئيسي
               </label>
               <select
-                value={formData.linked_system}
-                onChange={(e) => setFormData({ ...formData, linked_system: e.target.value })}
+                value={formData.main_section_code}
+                onChange={(e) => setFormData({ ...formData, main_section_code: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
               >
-                <option value="none">لا يوجد - قسم عام</option>
-                <option value="b2b">مزادات الشركات (B2B)</option>
-                <option value="b2f">استثمار المزارع (B2F)</option>
-                <option value="both">كلا النظامين</option>
+                <option value="">اختر القسم الرئيسي (اختياري)</option>
+                {mainSections.map(section => (
+                  <option key={section.id} value={section.code}>
+                    {section.icon} {section.name_ar}
+                  </option>
+                ))}
               </select>
+              <p className="text-xs text-gray-500 mt-1">القسم الرئيسي الذي سيعمل فيه هذا الفريق</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                مستوى الوصول
-              </label>
-              <select
-                value={formData.system_access_level}
-                onChange={(e) => setFormData({ ...formData, system_access_level: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="none">بدون وصول</option>
-                <option value="read">قراءة فقط</option>
-                <option value="write">قراءة وكتابة</option>
-                <option value="full">صلاحيات كاملة</option>
-              </select>
+            {/* Sub Section Selection */}
+            {formData.main_section_code && (
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2 flex items-center gap-2">
+                  <List className="w-4 h-4" />
+                  القسم الفرعي (التاب المحدد)
+                </label>
+                <select
+                  value={formData.sub_section_id}
+                  onChange={(e) => setFormData({ ...formData, sub_section_id: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
+                  disabled={loadingSubSections}
+                >
+                  <option value="">اختر القسم الفرعي (اختياري)</option>
+                  {subSections.map(section => (
+                    <option key={section.id} value={section.id}>
+                      {section.icon} {section.name_ar}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  سيتم توجيه موظفي هذا القسم مباشرة للتاب المحدد عند المسح
+                </p>
+              </div>
+            )}
+
+            {/* Old System Integration - Keep for backward compatibility */}
+            <div className="pt-4 border-t border-white/10">
+              <h3 className="text-sm font-bold text-gray-400 mb-3">إعدادات النظام القديم</h3>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  النظام المرتبط
+                </label>
+                <select
+                  value={formData.linked_system}
+                  onChange={(e) => setFormData({ ...formData, linked_system: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="none">لا يوجد - قسم عام</option>
+                  <option value="b2b">مزادات الشركات (B2B)</option>
+                  <option value="b2f">استثمار المزارع (B2F)</option>
+                  <option value="both">كلا النظامين</option>
+                </select>
+              </div>
+
+              <div className="mt-3">
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  مستوى الوصول
+                </label>
+                <select
+                  value={formData.system_access_level}
+                  onChange={(e) => setFormData({ ...formData, system_access_level: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="none">بدون وصول</option>
+                  <option value="read">قراءة فقط</option>
+                  <option value="write">قراءة وكتابة</option>
+                  <option value="full">صلاحيات كاملة</option>
+                </select>
+              </div>
             </div>
           </div>
 
