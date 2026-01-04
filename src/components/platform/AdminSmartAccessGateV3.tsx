@@ -42,13 +42,28 @@ export function AdminSmartAccessGateV3() {
     setErrorMessage('');
     setStaffInfo(null);
 
+    console.log('🔍 QR Scanned:', decodedText);
+
     const result = await verifyQRToken(decodedText);
+
+    console.log('📋 Verification Result:', {
+      success: result.success,
+      requires_pin: result.requires_pin,
+      staff: result.staff,
+      landing_route: result.landing_route
+    });
 
     if (result.success && result.staff && deviceInfo) {
       setStaffInfo(result.staff);
-      setDefaultRoute(result.landing_route || result.staff.landing_route || result.default_route || '/hq');
+      const landingRoute = result.landing_route || result.staff.landing_route || result.default_route || '/hq';
+      setDefaultRoute(landingRoute);
+
+      console.log('✅ Staff Info Set:', result.staff);
+      console.log('🎯 Landing Route:', landingRoute);
+      console.log('🔐 Requires PIN:', result.requires_pin);
 
       if (!result.requires_pin) {
+        console.log('✨ Creating session without PIN...');
         adminSessionManager.createSession({
           staff_id: result.staff.id,
           user_id: result.staff.user_id || '',
@@ -72,15 +87,20 @@ export function AdminSmartAccessGateV3() {
       );
 
       if (result.requires_pin) {
+        console.log('🔑 PIN Required - Showing PIN Modal');
         setScanStatus('needsPin');
-        setShowPinModal(true);
+        setTimeout(() => {
+          setShowPinModal(true);
+        }, 100);
       } else {
+        console.log('🚀 No PIN Required - Navigating to:', landingRoute);
         setScanStatus('valid');
         setTimeout(() => {
-          navigate(result.landing_route || result.staff.landing_route || result.default_route || '/hq');
+          navigate(landingRoute);
         }, 2000);
       }
     } else {
+      console.error('❌ Verification Failed:', result.message);
       setErrorMessage(result.message);
       setScanStatus('rejected');
 
@@ -278,6 +298,20 @@ export function AdminSmartAccessGateV3() {
                   </div>
                 )}
 
+                {scanStatus === 'needsPin' && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 backdrop-blur-sm">
+                    <div className="text-center px-6">
+                      <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/50 animate-pulse">
+                        <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <p className="text-blue-400 font-bold text-xl mb-2" dir="rtl">يتطلب رمز PIN</p>
+                      <p className="text-blue-300 text-sm" dir="rtl">جاري فتح نافذة إدخال الرمز السري...</p>
+                    </div>
+                  </div>
+                )}
+
                 {scanStatus === 'rejected' && (
                   <div className="absolute inset-0 flex items-center justify-center bg-red-500/10 backdrop-blur-sm">
                     <div className="text-center px-6">
@@ -344,7 +378,7 @@ export function AdminSmartAccessGateV3() {
 
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
 
-      {showPinModal && staffInfo && (
+      {(showPinModal || scanStatus === 'needsPin') && staffInfo && (
         <PinInputModal
           staffId={staffInfo.id}
           staffName={staffInfo.full_name}

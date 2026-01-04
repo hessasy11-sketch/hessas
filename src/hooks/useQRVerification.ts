@@ -60,11 +60,13 @@ export function useQRVerification() {
 
       const rawResult = await response.json();
 
+      console.log('🔍 Raw Result from Edge Function:', rawResult);
+
       const result: VerificationResult = {
         ...rawResult,
         default_route: rawResult.staff?.landing_route || rawResult.redirect_to || rawResult.default_route || '/hq',
-        landing_route: rawResult.staff?.landing_route || '/hq',
-        requires_pin: rawResult.staff?.requires_pin || false,
+        landing_route: rawResult.staff?.landing_route || rawResult.landing_route || '/hq',
+        requires_pin: rawResult.requires_pin || rawResult.staff?.requires_pin || false,
         staff: rawResult.staff ? {
           id: rawResult.staff.id,
           user_id: rawResult.staff.user_id,
@@ -78,6 +80,12 @@ export function useQRVerification() {
           landing_route: rawResult.staff.landing_route || '/hq',
         } : undefined,
       };
+
+      console.log('✅ Processed Result:', {
+        requires_pin: result.requires_pin,
+        landing_route: result.landing_route,
+        staff_name: result.staff?.full_name
+      });
 
       setVerificationResult(result);
       setIsVerifying(false);

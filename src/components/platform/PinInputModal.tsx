@@ -34,8 +34,9 @@ export function PinInputModal({
   ];
 
   useEffect(() => {
+    console.log('🔑 PIN Modal Mounted:', { staffId, staffName });
     inputRefs[0].current?.focus();
-  }, []);
+  }, [staffId, staffName]);
 
   const handleInputChange = async (index: number, value: string) => {
     if (isVerifying || isLocked) return;
