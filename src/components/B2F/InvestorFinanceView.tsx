@@ -814,10 +814,12 @@ export default function InvestorFinanceView() {
           onClose={() => {
             setShowUploadModal(false);
             setSelectedRequest(null);
-            setTimeout(() => {
-              loadPaymentRequests();
-              refresh();
-            }, 500);
+          }}
+          onSuccess={() => {
+            // إعادة تحميل البيانات فوراً عند النجاح
+            loadPaymentRequests();
+            loadInvoices();
+            refresh();
           }}
           investorPhone={account.contact_phone}
           investorName={account.contact_name}

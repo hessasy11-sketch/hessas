@@ -8,6 +8,7 @@ interface UploadPaymentDocumentModalProps {
   investorPhone: string;
   investorName: string;
   salesRequestId?: string;
+  onSuccess?: () => void;
 }
 
 export default function UploadPaymentDocumentModal({
@@ -15,7 +16,8 @@ export default function UploadPaymentDocumentModal({
   onClose,
   investorPhone,
   investorName,
-  salesRequestId
+  salesRequestId,
+  onSuccess
 }: UploadPaymentDocumentModalProps) {
   const [operationType, setOperationType] = useState('investment_trees');
   const [expectedAmount, setExpectedAmount] = useState('');
@@ -103,6 +105,16 @@ export default function UploadPaymentDocumentModal({
         invoice_id: uploadResult.invoice_id,
         transaction_id: uploadResult.transaction_id
       });
+
+      // استدعاء onSuccess لإعلام الصفحة الرئيسية
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // إغلاق الـ Modal تلقائياً بعد 2.5 ثانية
+      setTimeout(() => {
+        onClose();
+      }, 2500);
 
     } catch (err) {
       console.error('Error uploading document:', err);
