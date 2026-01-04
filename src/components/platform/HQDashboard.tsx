@@ -1,10 +1,11 @@
-import { Shield, Activity, TrendingUp, AlertTriangle, LogOut, FileText, Crown } from 'lucide-react';
+import { Shield, Activity, TrendingUp, AlertTriangle, LogOut, FileText, Crown, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import SmartDashboardView from './SmartDashboardView';
 import CriticalAlertsView from './CriticalAlertsView';
 import ReportsView from './ReportsView';
+import { WorkManagementHub } from './work/WorkManagementHub';
 import { SessionTracker } from './SessionTracker';
 import { adminSessionManager } from '../../utils/adminSessionManager';
 import { PageGuard } from './PermissionGuard';
@@ -15,7 +16,7 @@ const ADMIN_GATES = {
   settings: '/admin/settings',
 } as const;
 
-type TabType = 'overview' | 'dashboard' | 'alerts' | 'reports';
+type TabType = 'overview' | 'dashboard' | 'work' | 'alerts' | 'reports';
 
 export function HQDashboard() {
   const navigate = useNavigate();
@@ -163,6 +164,17 @@ export function HQDashboard() {
               لوحة القيادة
             </button>
             <button
+              onClick={() => setActiveTab('work')}
+              className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'work'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Briefcase className="w-5 h-5" />
+              مركز توليد المهام
+            </button>
+            <button
               onClick={() => setActiveTab('reports')}
               className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'reports'
@@ -285,6 +297,8 @@ export function HQDashboard() {
             onNavigateToAuctions={() => navigate('/admin/auctions')}
           />
         )}
+
+        {activeTab === 'work' && <WorkManagementHub />}
 
         {activeTab === 'reports' && <ReportsView />}
 
