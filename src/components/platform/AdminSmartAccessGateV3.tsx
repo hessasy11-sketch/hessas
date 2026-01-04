@@ -72,7 +72,11 @@ export function AdminSmartAccessGateV3() {
 
       console.log('  - Staff Info Set:', result.staff.full_name);
       console.log('  - Staff ID:', result.staff.id);
-      console.log('  - Landing Route:', landingRoute);
+      console.log('  🎯🎯 LANDING ROUTE CALCULATION:');
+      console.log('    - result.landing_route:', result.landing_route);
+      console.log('    - result.staff.landing_route:', result.staff.landing_route);
+      console.log('    - result.default_route:', result.default_route);
+      console.log('    - FINAL landingRoute:', landingRoute);
       console.log('  - Requires PIN:', result.requires_pin);
       console.log('  - Device Info:', deviceInfo);
 
@@ -155,10 +159,15 @@ export function AdminSmartAccessGateV3() {
   };
 
   const handlePinSuccess = async () => {
+    console.log('✅ PIN SUCCESS - Starting handlePinSuccess');
+    console.log('  - staffInfo:', staffInfo);
+    console.log('  - defaultRoute:', defaultRoute);
+
     setShowPinModal(false);
     setScanStatus('valid');
 
     if (staffInfo && deviceInfo) {
+      console.log('  - Creating admin session...');
       adminSessionManager.createSession({
         staff_id: staffInfo.id,
         user_id: staffInfo.user_id || '',
@@ -169,6 +178,9 @@ export function AdminSmartAccessGateV3() {
         is_super_admin: staffInfo.role === 'super_admin',
         is_platform_owner: staffInfo.role === 'platform_owner',
       });
+
+      const savedSession = adminSessionManager.getSession();
+      console.log('  - Session saved:', savedSession);
 
       await registerDeviceAccess(
         staffInfo.id,
@@ -181,6 +193,7 @@ export function AdminSmartAccessGateV3() {
       );
     }
 
+    console.log('🎯 Navigating after PIN success to:', defaultRoute || '/hq');
     setTimeout(() => {
       navigate(defaultRoute || '/hq');
     }, 2000);
