@@ -48,38 +48,57 @@ export function useQRVerification() {
       // استدعاء الدالة مباشرة من Supabase
       const { supabase } = await import('../lib/supabase');
 
+      console.log('Calling RPC with token:', qrToken);
+
       const { data: rawResult, error } = await supabase.rpc('verify_qr_access', {
-        p_qr_token: qrToken,
+        p_qr_token: qrToken.trim(),
       });
 
       console.log('📞 RPC Call Result:');
       console.log('  Error:', error);
-      console.log('  Data:', rawResult);
+      console.log('  Data:', JSON.stringify(rawResult, null, 2));
 
       if (error) {
         console.error('❌ RPC Error:', error);
-        throw new Error(error.message);
+        const errorResult: VerificationResult = {
+          success: false,
+          message: 'خطأ في الاتصال بقاعدة البيانات',
+          reason: 'rpc_error',
+        };
+        setVerificationResult(errorResult);
+        setIsVerifying(false);
+        return errorResult;
       }
 
       if (!rawResult) {
         console.error('❌ No result returned');
-        throw new Error('No result from verification');
+        const errorResult: VerificationResult = {
+          success: false,
+          message: 'لم يتم إرجاع نتيجة',
+          reason: 'no_result',
+        };
+        setVerificationResult(errorResult);
+        setIsVerifying(false);
+        return errorResult;
       }
 
-      console.log('═══════════════════════════════════════════');
-      console.log('🔍 RAW RESULT FROM EDGE FUNCTION:');
-      console.log('═══════════════════════════════════════════');
-      console.log(JSON.stringify(rawResult, null, 2));
+      console.log('✅ Raw result received:', rawResult);
+      console.log('  success:', rawResult.success);
+      console.log('  requires_pin:', rawResult.requires_pin);
+      console.log('  staff:', rawResult.staff);
 
+      // إنشاء النتيجة النهائية مباشرة من البيانات المستلمة
       const result: VerificationResult = {
-        ...rawResult,
-        default_route: rawResult.staff?.landing_route || rawResult.redirect_to || rawResult.default_route || '/hq',
-        landing_route: rawResult.staff?.landing_route || rawResult.landing_route || '/hq',
-        requires_pin: rawResult.requires_pin || rawResult.staff?.requires_pin || false,
+        success: rawResult.success === true,
+        message: rawResult.message || '',
+        reason: rawResult.reason,
+        requires_pin: rawResult.requires_pin === true,
+        default_route: rawResult.default_route || '/hq',
+        landing_route: rawResult.landing_route || '/hq',
         staff: rawResult.staff ? {
           id: rawResult.staff.id,
-          user_id: rawResult.staff.user_id,
-          full_name: rawResult.staff.display_name || rawResult.staff.full_name || 'مستخدم',
+          user_id: rawResult.staff.user_id || null,
+          full_name: rawResult.staff.full_name || 'مستخدم',
           phone: rawResult.staff.phone_number || rawResult.staff.phone || '',
           role: rawResult.staff.role || '',
           role_title: rawResult.staff.job_title || rawResult.staff.role_title || '',
@@ -91,15 +110,12 @@ export function useQRVerification() {
       };
 
       console.log('═══════════════════════════════════════════');
-      console.log('✅ PROCESSED RESULT:');
-      console.log('═══════════════════════════════════════════');
+      console.log('✅ FINAL RESULT:');
       console.log('  Success:', result.success);
       console.log('  Requires PIN:', result.requires_pin);
       console.log('  Landing Route:', result.landing_route);
       console.log('  Staff Name:', result.staff?.full_name);
       console.log('  Staff ID:', result.staff?.id);
-      console.log('  Raw requires_pin:', rawResult.requires_pin);
-      console.log('  Staff.requires_pin:', rawResult.staff?.requires_pin);
       console.log('═══════════════════════════════════════════');
 
       setVerificationResult(result);
@@ -107,12 +123,12 @@ export function useQRVerification() {
 
       return result;
     } catch (error) {
-      console.error('Error verifying QR token:', error);
+      console.error('❌ Exception in verifyQRToken:', error);
 
       const errorResult: VerificationResult = {
         success: false,
         message: 'خطأ في الاتصال بالخادم',
-        reason: 'network_error',
+        reason: 'exception',
       };
 
       setVerificationResult(errorResult);
