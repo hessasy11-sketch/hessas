@@ -274,7 +274,7 @@ export default function CollectionQueueView() {
         setActionLoading(true);
         try {
           const { error } = await supabase.rpc('open_payment_for_requests', {
-            p_request_ids: selectedRequests
+            request_ids: selectedRequests
           });
 
           if (error) throw error;
@@ -313,7 +313,7 @@ export default function CollectionQueueView() {
         setActionLoading(true);
         try {
           const { error } = await supabase.rpc('open_payment_for_farm', {
-            p_farm_id: farmId
+            farm_uuid: farmId
           });
 
           if (error) throw error;
