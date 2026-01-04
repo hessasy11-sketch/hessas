@@ -40,25 +40,31 @@ export function useQRVerification() {
     setVerificationResult(null);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      console.log('═══════════════════════════════════════════');
+      console.log('🔍 STARTING QR VERIFICATION');
+      console.log('QR Token:', qrToken);
+      console.log('═══════════════════════════════════════════');
 
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Missing Supabase configuration');
-      }
+      // استدعاء الدالة مباشرة من Supabase
+      const { supabase } = await import('../lib/supabase');
 
-      const apiUrl = `${supabaseUrl}/functions/v1/verify-qr-access`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ qr_token: qrToken }),
+      const { data: rawResult, error } = await supabase.rpc('verify_qr_access', {
+        p_qr_token: qrToken,
       });
 
-      const rawResult = await response.json();
+      console.log('📞 RPC Call Result:');
+      console.log('  Error:', error);
+      console.log('  Data:', rawResult);
+
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw new Error(error.message);
+      }
+
+      if (!rawResult) {
+        console.error('❌ No result returned');
+        throw new Error('No result from verification');
+      }
 
       console.log('═══════════════════════════════════════════');
       console.log('🔍 RAW RESULT FROM EDGE FUNCTION:');
