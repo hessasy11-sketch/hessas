@@ -31,7 +31,7 @@ interface Contract {
   investor_phone: string;
   trees_count: number;
   investor_account?: {
-    full_name: string;
+    contact_name: string;
   };
 }
 
@@ -135,7 +135,7 @@ export default function FarmOperationPage({ farmId, onBack }: FarmOperationPageP
         .from('b2f_contracts')
         .select(`
           *,
-          investor_account:b2f_investor_accounts(full_name)
+          investor_account:b2f_investor_accounts(contact_name)
         `)
         .eq('farm_id', farmId)
         .eq('status', 'active')
@@ -681,7 +681,7 @@ export default function FarmOperationPage({ farmId, onBack }: FarmOperationPageP
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-900 mb-1">
-                            {contract.investor_account?.full_name || 'مستثمر'}
+                            {contract.investor_account?.contact_name || 'مستثمر'}
                           </h4>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span>رقم العقد: {contract.contract_number}</span>
