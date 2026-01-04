@@ -94,14 +94,7 @@ export default function UploadPaymentDocumentModal({
         throw new Error(uploadResult?.message || 'فشل تسجيل الإيصال');
       }
 
-      // تحديث حالة الطلب
-      await supabase
-        .from('b2f_sales_requests')
-        .update({
-          payment_receipt_url: publicUrl,
-          status: 'receipt_under_review'
-        })
-        .eq('id', salesRequestId);
+      // لا حاجة لتحديث الطلب - الدالة تقوم بذلك تلقائياً
 
       setResult({
         success: true,
