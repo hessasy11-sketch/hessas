@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Users, Plus, Trash2, Shield, Award } from 'lucide-react';
+import { ArrowLeft, Users, Plus, Trash2, Shield, Award, X } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface Department {
@@ -34,11 +34,24 @@ interface Permission {
   granted_at: string;
 }
 
+interface AvailableStaff {
+  id: string;
+  full_name: string;
+  staff_code: string;
+  role: string;
+}
+
 export function DepartmentDetailsView({ department, onBack }: Props) {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [activeTab, setActiveTab] = useState<'staff' | 'permissions'>('staff');
   const [loading, setLoading] = useState(true);
+  const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+  const [showAddPermissionModal, setShowAddPermissionModal] = useState(false);
+  const [availableStaff, setAvailableStaff] = useState<AvailableStaff[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [newPermissionKey, setNewPermissionKey] = useState('');
+  const [newPermissionNameAr, setNewPermissionNameAr] = useState('');
 
   useEffect(() => {
     loadData();
@@ -66,6 +79,82 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAvailableStaff = async () => {
+    try {
+      const assignedStaffIds = staff.map(s => s.staff_id);
+
+      let query = supabase
+        .from('platform_staff')
+        .select('id, full_name, staff_code, role')
+        .order('full_name');
+
+      if (assignedStaffIds.length > 0) {
+        query = query.not('id', 'in', `(${assignedStaffIds.join(',')})`);
+      }
+
+      const { data } = await query;
+      if (data) setAvailableStaff(data);
+    } catch (error) {
+      console.error('Error loading available staff:', error);
+    }
+  };
+
+  const handleAddStaff = async () => {
+    if (!selectedStaffId) {
+      alert('الرجاء اختيار موظف');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('department_staff_assignments')
+        .insert({
+          department_id: department.id,
+          staff_id: selectedStaffId,
+          role_id: null,
+          start_date: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setShowAddStaffModal(false);
+      setSelectedStaffId('');
+      loadData();
+      alert('تم إضافة الموظف بنجاح');
+    } catch (error: any) {
+      alert('خطأ: ' + error.message);
+    }
+  };
+
+  const handleAddPermission = async () => {
+    if (!newPermissionKey || !newPermissionNameAr) {
+      alert('الرجاء إدخال جميع البيانات');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('department_permissions')
+        .insert({
+          department_id: department.id,
+          permission_key: newPermissionKey,
+          permission_name_ar: newPermissionNameAr,
+          is_granted: true,
+          granted_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setShowAddPermissionModal(false);
+      setNewPermissionKey('');
+      setNewPermissionNameAr('');
+      loadData();
+      alert('تم إضافة الصلاحية بنجاح');
+    } catch (error: any) {
+      alert('خطأ: ' + error.message);
     }
   };
 
@@ -157,7 +246,13 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">موظفي القسم</h3>
-              <button className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg font-bold transition-all flex items-center gap-2">
+              <button
+                onClick={() => {
+                  loadAvailableStaff();
+                  setShowAddStaffModal(true);
+                }}
+                className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg font-bold transition-all flex items-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 إضافة موظف
               </button>
@@ -205,7 +300,10 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">صلاحيات القسم</h3>
-              <button className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg font-bold transition-all flex items-center gap-2">
+              <button
+                onClick={() => setShowAddPermissionModal(true)}
+                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg font-bold transition-all flex items-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 إضافة صلاحية
               </button>
@@ -258,6 +356,132 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
           </div>
         )}
       </div>
+
+      {/* Add Staff Modal */}
+      {showAddStaffModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">إضافة موظف جديد</h3>
+              <button
+                onClick={() => {
+                  setShowAddStaffModal(false);
+                  setSelectedStaffId('');
+                }}
+                className="p-2 hover:bg-white/10 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  اختر الموظف
+                </label>
+                <select
+                  value={selectedStaffId}
+                  onChange={(e) => setSelectedStaffId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-all"
+                >
+                  <option value="">-- اختر موظف --</option>
+                  {availableStaff.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} - {s.staff_code} ({s.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleAddStaff}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl font-bold transition-all"
+                >
+                  إضافة
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddStaffModal(false);
+                    setSelectedStaffId('');
+                  }}
+                  className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-bold transition-all"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Permission Modal */}
+      {showAddPermissionModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">إضافة صلاحية جديدة</h3>
+              <button
+                onClick={() => {
+                  setShowAddPermissionModal(false);
+                  setNewPermissionKey('');
+                  setNewPermissionNameAr('');
+                }}
+                className="p-2 hover:bg-white/10 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  مفتاح الصلاحية (بالإنجليزية)
+                </label>
+                <input
+                  type="text"
+                  value={newPermissionKey}
+                  onChange={(e) => setNewPermissionKey(e.target.value)}
+                  placeholder="مثال: view_reports"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  اسم الصلاحية (بالعربية)
+                </label>
+                <input
+                  type="text"
+                  value={newPermissionNameAr}
+                  onChange={(e) => setNewPermissionNameAr(e.target.value)}
+                  placeholder="مثال: عرض التقارير"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-all"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleAddPermission}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl font-bold transition-all"
+                >
+                  إضافة
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddPermissionModal(false);
+                    setNewPermissionKey('');
+                    setNewPermissionNameAr('');
+                  }}
+                  className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-bold transition-all"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
