@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My QR Code - بطاقتي</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      text-align: center;
+      color: white;
+    }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .name {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .qr-container {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .qr-code {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      display: inline-block;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .qr-code img {
+      display: block;
+      width: 250px;
+      height: 250px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .status.active {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 15px;
+    }
+
+    .info-item {
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .info-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .info-icon.blue { background: #e3f2fd; }
+    .info-icon.purple { background: #f3e5f5; }
+    .info-icon.green { background: #e8f5e9; }
+
+    .info-text {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: #6c757d;
+      margin-bottom: 3px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: bold;
+      color: #212529;
+    }
+
+    .button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      transition: transform 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .instructions {
+      background: #e3f2fd;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      border: 2px solid #2196f3;
+    }
+
+    .instructions h3 {
+      color: #1976d2;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .instructions li {
+      color: #1565c0;
+      margin-bottom: 10px;
+      padding-right: 20px;
+      position: relative;
+    }
+
+    .instructions li:before {
+      content: "•";
+      position: absolute;
+      right: 0;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .error-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .error h2 {
+      color: #dc3545;
+      margin-bottom: 10px;
+    }
+
+    .error p {
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p>جاري التحميل...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://krcuodckfvcynumqxqxi.supabase.co';
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtyY3VvZGNrZnZjeW51bXF4cXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEyMzk1NzAsImV4cCI6MjA0NjgxNTU3MH0.UOjVMvRIKDh2G2TfwPFVtFbZOgdoGX_YAk-1NDFQ_hQ';
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function loadMyQR() {
+      try {
+        const staffId = localStorage.getItem('admin_session_staff_id');
+
+        if (!staffId) {
+          showError('لم يتم العثور على بيانات الجلسة', 'الرجاء تسجيل الدخول أولاً');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('platform_staff')
+          .select('id, full_name, staff_code, job_title, department, role, qr_code, qr_is_active')
+          .eq('id', staffId)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!data) throw new Error('لم يتم العثور على بياناتك');
+
+        renderQRCard(data);
+      } catch (error) {
+        console.error('Error:', error);
+        showError('خطأ في التحميل', error.message || 'حدث خطأ غير متوقع');
+      }
+    }
+
+    function renderQRCard(staff) {
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+        <div class="card">
+          <div class="header">
+            <div class="avatar">👤</div>
+            <div class="name">${staff.full_name}</div>
+            <div class="title">${staff.job_title || 'موظف'}</div>
+          </div>
+
+          <div class="content">
+            <div class="qr-container">
+              <div class="qr-code">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(staff.qr_code)}" alt="QR Code">
+              </div>
+              <div class="status ${staff.qr_is_active ? 'active' : 'inactive'}">
+                ${staff.qr_is_active ? '✓ مفعّل ونشط' : '✗ معطّل'}
+              </div>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-icon blue">#</div>
+                <div class="info-text">
+                  <div class="info-label">رقم الموظف</div>
+                  <div class="info-value">${staff.staff_code}</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon purple">🏢</div>
+                <div class="info-text">
+                  <div class="info-label">القسم</div>
+                  <div class="info-value">${staff.department || 'عام'}</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon green">🛡️</div>
+                <div class="info-text">
+                  <div class="info-label">الدور الوظيفي</div>
+                  <div class="info-value">${staff.role || 'موظف'}</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="button" onclick="downloadQR('${staff.qr_code}', '${staff.staff_code}')">
+              ⬇️ تحميل QR Code
+            </button>
+
+            <div class="instructions">
+              <h3>📱 كيفية الاستخدام</h3>
+              <ul>
+                <li>قم بمسح QR Code عند نقطة الدخول</li>
+                <li>سيتم التحقق من صلاحياتك تلقائياً</li>
+                <li>إذا كان لديك PIN، أدخله بعد المسح</li>
+                <li>احتفظ بهذا الرمز سرياً</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showError(title, message) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="error">
+          <div class="error-icon">❌</div>
+          <h2>${title}</h2>
+          <p>${message}</p>
+        </div>
+      `;
+    }
+
+    window.downloadQR = function(qrCode, staffCode) {
+      const link = document.createElement('a');
+      link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrCode)}`;
+      link.download = `My-QR-${staffCode}.png`;
+      link.click();
+    };
+
+    loadMyQR();
+  </script>
+</body>
+</html>
