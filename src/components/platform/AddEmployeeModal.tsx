@@ -189,27 +189,27 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     setLoading(true);
     const maxRetries = 3;
 
+    const { data: existing } = await supabase
+      .from('platform_staff')
+      .select('id')
+      .eq('phone_number', formData.phone_number)
+      .maybeSingle();
+
+    if (existing) {
+      alert('رقم الجوال مسجل مسبقاً لموظف آخر');
+      setLoading(false);
+      return;
+    }
+
+    const qrToken = formData.enable_qr ? generateQRToken() : null;
+    const pinCode = formData.requires_pin && formData.pin_code ? formData.pin_code : null;
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         console.log(`🔄 Attempt ${attempt + 1} to create staff member...`);
 
-        const { data: existing } = await supabase
-          .from('platform_staff')
-          .select('id')
-          .eq('phone_number', formData.phone_number)
-          .maybeSingle();
-
-        if (existing) {
-          alert('رقم الجوال مسجل مسبقاً لموظف آخر');
-          setLoading(false);
-          return;
-        }
-
-        const qrToken = formData.enable_qr ? generateQRToken() : null;
         const staffCode = await generateStaffCode();
-        const pinCode = formData.requires_pin && formData.pin_code ? formData.pin_code : null;
-
-        console.log(`📝 Inserting staff with code: ${staffCode}`);
+        console.log(`📝 Generated staff code: ${staffCode}`);
 
         const { data: staffData, error: staffError } = await supabase
           .from('platform_staff')
@@ -231,8 +231,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
         if (staffError) {
           if (staffError.code === '23505' && attempt < maxRetries - 1) {
-            console.warn(`⚠️ Duplicate staff_code on attempt ${attempt + 1}, retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 200));
+            console.warn(`⚠️ Duplicate staff_code detected, generating new one...`);
+            await new Promise(resolve => setTimeout(resolve, 100));
             continue;
           }
           throw staffError;
