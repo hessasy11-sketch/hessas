@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - المدير العام</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        h1 {
+            color: #1a202c;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        .qr-container {
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #qrcode {
+            display: inline-block;
+        }
+
+        #qrcode canvas {
+            border-radius: 12px;
+        }
+
+        .info-box {
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: right;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #cbd5e0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #718096;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #1a202c;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .qr-code-text {
+            color: #667eea;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .instructions {
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+            text-align: right;
+        }
+
+        .instructions-title {
+            color: #c53030;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions-text {
+            color: #742a2a;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+        }
+
+        .print-btn:active {
+            transform: translateY(0);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .card {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .print-btn {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 32px 24px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .qr-container {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge">رمز QR رسمي</div>
+
+        <h1>المدير العام</h1>
+        <p class="subtitle">الوصول الكامل لنظام المنصة</p>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-item">
+                <span class="info-label">الاسم:</span>
+                <span class="info-value">المدير العام</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">الرقم الوظيفي:</span>
+                <span class="info-value">GM-001</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">رقم الهاتف:</span>
+                <span class="info-value">0500000000</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">الصلاحية:</span>
+                <span class="info-value">مدير عام</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">رمز QR:</span>
+                <span class="info-value qr-code-text" id="qr-text">GM-QR-2026-001</span>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <div class="instructions-title">
+                <span>⚠️</span>
+                <span>تعليمات مهمة</span>
+            </div>
+            <div class="instructions-text">
+                <strong>هذا الحساب يتطلب رمز PIN للدخول!</strong><br>
+                1. امسح QR Code باستخدام الكاميرا أو تطبيق الماسح الضوئي<br>
+                2. سيُطلب منك إدخال رمز PIN المكون من 6 أرقام<br>
+                3. رمز PIN الافتراضي: <strong>123456</strong><br>
+                4. احفظ هذا الرمز في مكان آمن
+            </div>
+        </div>
+
+        <button class="print-btn" onclick="window.print()">
+            طباعة البطاقة
+        </button>
+    </div>
+
+    <script>
+        const qrCode = 'GM-QR-2026-001';
+
+        document.getElementById('qr-text').textContent = qrCode;
+
+        const qrCodeElement = new QRCode(document.getElementById('qrcode'), {
+            text: qrCode,
+            width: 256,
+            height: 256,
+            colorDark: '#667eea',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>
