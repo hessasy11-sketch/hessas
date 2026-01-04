@@ -32,7 +32,10 @@ Deno.serve(async (req: Request) => {
 
     const { qr_token }: VerifyRequest = await req.json();
 
+    console.log('🔍 Received QR token:', qr_token);
+
     if (!qr_token || qr_token.trim() === '') {
+      console.error('❌ Missing or empty QR token');
       return new Response(
         JSON.stringify({
           success: false,
@@ -46,17 +49,19 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log('📞 Calling verify_qr_access function...');
     const { data, error } = await supabase.rpc('verify_qr_access', {
       p_qr_token: qr_token,
     });
 
     if (error) {
-      console.error('Error verifying QR access:', error);
+      console.error('❌ Error from RPC:', error);
       return new Response(
         JSON.stringify({
           success: false,
           message: 'خطأ في التحقق من الصلاحية',
           reason: 'verification_error',
+          error: error.message,
         }),
         {
           status: 500,
@@ -65,26 +70,37 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log('✅ RPC result:', JSON.stringify(data, null, 2));
+
     const verificationResult = data as {
       success: boolean;
       message: string;
       reason?: string;
       staff?: any;
+      requires_pin?: boolean;
+      landing_route?: string;
+      default_route?: string;
     };
 
     const statusCode = verificationResult.success ? 200 : 403;
+
+    console.log('🚀 Returning result with status:', statusCode);
+    console.log('  Success:', verificationResult.success);
+    console.log('  Requires PIN:', verificationResult.requires_pin);
+    console.log('  Landing route:', verificationResult.landing_route);
 
     return new Response(JSON.stringify(verificationResult), {
       status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Unexpected error:', err);
+    console.error('💥 Unexpected error:', err);
     return new Response(
       JSON.stringify({
         success: false,
         message: 'حدث خطأ غير متوقع',
         reason: 'server_error',
+        error: String(err),
       }),
       {
         status: 500,
