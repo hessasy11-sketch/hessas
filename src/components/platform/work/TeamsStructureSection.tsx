@@ -19,14 +19,14 @@ interface TeamMember {
   role_in_team: string;
   staff?: {
     full_name: string;
-    role_title: string;
+    job_title: string;
   };
 }
 
 interface Staff {
   id: string;
   full_name: string;
-  role_title: string;
+  job_title: string;
   department: string;
   reports_to_staff_id: string;
 }
@@ -56,13 +56,13 @@ export function TeamsStructureSection() {
               id,
               staff_id,
               role_in_team,
-              staff:platform_staff(full_name, role_title)
+              staff:platform_staff(full_name, job_title)
             )
           `)
           .order('created_at', { ascending: false }),
         supabase
           .from('platform_staff')
-          .select('id, full_name, role_title, department, reports_to_staff_id')
+          .select('id, full_name, job_title, department, reports_to_staff_id')
           .eq('is_active', true)
           .order('full_name')
       ]);
@@ -158,7 +158,7 @@ export function TeamsStructureSection() {
                               {member.staff?.full_name}
                             </div>
                             <div className="text-gray-400 text-xs">
-                              {member.role_in_team || member.staff?.role_title}
+                              {member.role_in_team || member.staff?.job_title}
                             </div>
                           </div>
                         </div>
@@ -266,7 +266,7 @@ function HierarchyNode({ staff, children }: any) {
         <UsersIcon className="w-4 h-4 text-teal-400" />
         <div className="flex-1">
           <div className="text-white font-bold text-sm">{staff.full_name}</div>
-          <div className="text-gray-400 text-xs">{staff.role_title}</div>
+          <div className="text-gray-400 text-xs">{staff.job_title}</div>
         </div>
         {children.length > 0 && (
           <span className="text-xs text-gray-500 px-2 py-1 bg-white/5 rounded">
@@ -388,7 +388,7 @@ function CreateTeamModal({ team, allStaff, onClose, onSuccess }: CreateTeamModal
               <option value="">اختر قائد الفريق</option>
               {allStaff.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.full_name} - {s.role_title}
+                  {s.full_name} - {s.job_title}
                 </option>
               ))}
             </select>
@@ -479,7 +479,7 @@ function AddMemberModal({ teamId, allStaff, currentMembers, onClose, onSuccess }
               <option value="">اختر موظف</option>
               {availableStaff.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.full_name} - {s.role_title}
+                  {s.full_name} - {s.job_title}
                 </option>
               ))}
             </select>

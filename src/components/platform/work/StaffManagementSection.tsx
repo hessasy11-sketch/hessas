@@ -5,14 +5,14 @@ import { supabase } from '../../../lib/supabase';
 interface Staff {
   id: string;
   full_name: string;
-  phone: string;
+  phone_number: string;
+  staff_code: string;
   role: string;
-  role_title: string;
+  job_title: string;
   department: string;
   pack_id: string;
   reports_to_staff_id: string;
   qr_code: string;
-  qr_image_url: string;
   pin_code: string;
   requires_pin: boolean;
   is_active: boolean;
@@ -118,7 +118,7 @@ export function StaffManagementSection() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <h3 className="text-white font-bold text-lg mb-1">{member.full_name}</h3>
-                <p className="text-gray-400 text-sm">{member.role_title}</p>
+                <p className="text-gray-400 text-sm">{member.job_title}</p>
               </div>
               {member.requires_pin && (
                 <Lock className="w-5 h-5 text-red-400" />
@@ -212,11 +212,12 @@ interface CreateStaffModalProps {
 
 function CreateStaffModal({ staff, packs, allStaff, onClose, onSuccess }: CreateStaffModalProps) {
   const [formData, setFormData] = useState({
+    staff_code: staff?.staff_code || '',
     full_name: staff?.full_name || '',
-    phone: staff?.phone || '',
-    role: staff?.role || 'staff',
-    role_title: staff?.role_title || '',
-    department: staff?.department || '',
+    phone_number: staff?.phone_number || '',
+    role: staff?.role || 'agent',
+    job_title: staff?.job_title || '',
+    department: staff?.department || 'HQ',
     pack_id: staff?.pack_id || '',
     reports_to_staff_id: staff?.reports_to_staff_id || '',
     is_active: staff?.is_active ?? true
@@ -232,8 +233,13 @@ function CreateStaffModal({ staff, packs, allStaff, onClose, onSuccess }: Create
   };
 
   const handleSave = async () => {
-    if (!formData.full_name.trim() || !formData.phone.trim()) {
+    if (!formData.full_name.trim() || !formData.phone_number.trim()) {
       alert('يرجى إدخال الاسم ورقم الهاتف');
+      return;
+    }
+
+    if (!formData.staff_code.trim()) {
+      alert('يرجى إدخال الرمز الوظيفي');
       return;
     }
 
@@ -293,6 +299,18 @@ function CreateStaffModal({ staff, packs, allStaff, onClose, onSuccess }: Create
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label className="block text-white font-bold mb-2">الرمز الوظيفي</label>
+              <input
+                type="text"
+                value={formData.staff_code}
+                onChange={(e) => setFormData({ ...formData, staff_code: e.target.value })}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
+                placeholder="EMP-001"
+                disabled={!!staff}
+              />
+            </div>
+
+            <div>
               <label className="block text-white font-bold mb-2">الاسم الكامل</label>
               <input
                 type="text"
@@ -302,41 +320,45 @@ function CreateStaffModal({ staff, packs, allStaff, onClose, onSuccess }: Create
                 placeholder="محمد أحمد"
               />
             </div>
-
-            <div>
-              <label className="block text-white font-bold mb-2">رقم الهاتف</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
-                placeholder="05xxxxxxxx"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-white font-bold mb-2">المسمى الوظيفي</label>
+              <label className="block text-white font-bold mb-2">رقم الهاتف</label>
               <input
-                type="text"
-                value={formData.role_title}
-                onChange={(e) => setFormData({ ...formData, role_title: e.target.value })}
+                type="tel"
+                value={formData.phone_number}
+                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
-                placeholder="مثال: مدير المزادات"
+                placeholder="05xxxxxxxx"
               />
             </div>
 
             <div>
-              <label className="block text-white font-bold mb-2">القسم</label>
+              <label className="block text-white font-bold mb-2">المسمى الوظيفي</label>
               <input
                 type="text"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                value={formData.job_title}
+                onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
-                placeholder="مثال: b2b"
+                placeholder="مثال: مدير المزادات"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-white font-bold mb-2">القسم</label>
+            <select
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
+            >
+              <option value="HQ">المقر الرئيسي (HQ)</option>
+              <option value="B2B">المزادات (B2B)</option>
+              <option value="B2F">المزارع (B2F)</option>
+              <option value="Finance">المالية (Finance)</option>
+              <option value="Support">الدعم (Support)</option>
+            </select>
           </div>
 
           <div>
@@ -367,7 +389,7 @@ function CreateStaffModal({ staff, packs, allStaff, onClose, onSuccess }: Create
                 .filter(s => s.id !== staff?.id)
                 .map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.full_name} - {s.role_title}
+                    {s.full_name} - {s.job_title}
                   </option>
                 ))}
             </select>
@@ -444,8 +466,11 @@ function AccessCardModal({ staff, onClose }: AccessCardModalProps) {
 
           <div className="space-y-2">
             <div className="text-2xl font-bold text-gray-800">{staff.full_name}</div>
-            <div className="text-lg text-gray-600">{staff.role_title}</div>
+            <div className="text-lg text-gray-600">{staff.job_title}</div>
             <div className="text-sm text-gray-500">{staff.department}</div>
+            {staff.staff_code && (
+              <div className="text-xs text-gray-400">الرمز: {staff.staff_code}</div>
+            )}
           </div>
 
           {staff.requires_pin && staff.pin_code && (
