@@ -64,7 +64,6 @@ interface Contract {
   end_date: string;
   duration_months: number;
   status: string;
-  document_url: string;
   created_at: string;
   current_beneficiary_phone: string;
   current_beneficiary_name: string;
@@ -186,7 +185,7 @@ export default function ContractsTab() {
       .select(`
         id, contract_number, investor_phone, farm_id, trees_count,
         amount_total, start_date, end_date, duration_months, status,
-        document_url, created_at, current_beneficiary_phone,
+        created_at, current_beneficiary_phone,
         current_beneficiary_name, original_beneficiary_phone,
         original_beneficiary_name, is_transferred, transfer_count,
         contract_content, pdf_url
