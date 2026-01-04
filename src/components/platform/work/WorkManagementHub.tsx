@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Shield, FileText, Users, Network, Zap, BarChart3 } from 'lucide-react';
+import { Shield, FileText, Users, Network, Zap, BarChart3, Activity, Settings } from 'lucide-react';
 import { PermissionPacksSection } from './PermissionPacksSection';
 import { TaskTemplatesSection } from './TaskTemplatesSection';
 import { StaffManagementSection } from './StaffManagementSection';
 import { TeamsStructureSection } from './TeamsStructureSection';
 import { AutoTaskAssignment } from './AutoTaskAssignment';
 import { SmartTaskGenerationHub } from './SmartTaskGenerationHub';
+import { LiveTaskDashboard } from './LiveTaskDashboard';
+import { AutoTaskRulesManager } from './AutoTaskRulesManager';
 
-type TabType = 'permissions' | 'tasks' | 'staff' | 'teams' | 'assign' | 'monitor';
+type TabType = 'permissions' | 'tasks' | 'staff' | 'teams' | 'assign' | 'monitor' | 'live' | 'rules';
 
 export function WorkManagementHub() {
   const [activeTab, setActiveTab] = useState<TabType>('permissions');
@@ -85,7 +87,31 @@ export function WorkManagementHub() {
             }`}
           >
             <BarChart3 className="w-5 h-5" />
-            <span>المراقبة والإحصائيات</span>
+            <span>الإحصائيات</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('live')}
+            className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'live'
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Activity className="w-5 h-5" />
+            <span>مباشر</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('rules')}
+            className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'rules'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span>قواعد التوليد</span>
           </button>
         </div>
       </div>
@@ -97,6 +123,8 @@ export function WorkManagementHub() {
         {activeTab === 'teams' && <TeamsStructureSection />}
         {activeTab === 'assign' && <AutoTaskAssignment />}
         {activeTab === 'monitor' && <SmartTaskGenerationHub />}
+        {activeTab === 'live' && <LiveTaskDashboard />}
+        {activeTab === 'rules' && <AutoTaskRulesManager />}
       </div>
     </div>
   );
