@@ -163,13 +163,15 @@ export function usePermissionCheck(platformRole: string | null) {
 
     const pagePermissions: Record<string, string[]> = {
       'hq': ['platform_owner', 'super_admin', 'general_manager'],
-      'farms': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager'],
-      'operations': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor', 'operations_supervisor'],
-      'tasks': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor', 'operations_supervisor', 'task_executor'],
-      'reports': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor'],
+      'farms': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'manager'],
+      'operations': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor', 'operations_supervisor', 'manager', 'supervisor'],
+      'tasks': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor', 'operations_supervisor', 'task_executor', 'manager', 'supervisor'],
+      'reports': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'farm_supervisor', 'manager'],
       'permissions': ['platform_owner', 'super_admin'],
       'staff': ['platform_owner', 'super_admin', 'general_manager'],
-      'auctions': ['platform_owner', 'super_admin', 'general_manager', 'section_manager']
+      'auctions': ['platform_owner', 'super_admin', 'general_manager', 'section_manager'],
+      'b2f': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'manager', 'supervisor', 'accountant'],
+      'b2f_dashboard': ['platform_owner', 'super_admin', 'general_manager', 'section_manager', 'farm_manager', 'manager', 'supervisor', 'accountant']
     };
 
     return pagePermissions[pageKey]?.includes(platformRole) || false;
