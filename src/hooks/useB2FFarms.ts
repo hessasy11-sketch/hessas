@@ -46,18 +46,20 @@ export function useB2FFarms() {
   const addFarm = async (farmData: Omit<B2FFarm, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const session = adminSessionManager.getSession();
-      if (!session?.user_id) {
+      if (!session?.staff_id) {
         return { success: false, error: 'يجب تسجيل الدخول أولاً' };
       }
 
-      const { data, error: rpcError } = await supabase.rpc('add_farm_as_admin', {
-        p_user_id: session.user_id,
+      const { data, error: rpcError } = await supabase.rpc('admin_add_farm', {
+        p_staff_id: session.staff_id,
         p_name: farmData.name,
         p_location: farmData.location,
-        p_total_trees_available: farmData.total_trees_available,
-        p_description: farmData.description,
-        p_city: farmData.city,
-        p_is_active: farmData.is_active
+        p_city: farmData.city || '',
+        p_total_trees_available: farmData.total_trees_available || 0,
+        p_description: farmData.description || null,
+        p_tree_type: null,
+        p_area_size: null,
+        p_area_unit: 'acre'
       });
 
       if (rpcError) {
@@ -66,7 +68,7 @@ export function useB2FFarms() {
       }
 
       if (data && !data.success) {
-        return { success: false, error: data.error || 'فشل إضافة المزرعة' };
+        return { success: false, error: data.message || 'فشل إضافة المزرعة' };
       }
 
       await loadFarms();
@@ -82,18 +84,39 @@ export function useB2FFarms() {
 
   const updateFarm = async (id: string, farmData: Partial<B2FFarm>) => {
     try {
-      const { error: updateError } = await supabase
-        .from('b2f_farms')
-        .update(farmData)
-        .eq('id', id);
+      const session = adminSessionManager.getSession();
+      if (!session?.staff_id) {
+        return { success: false, error: 'يجب تسجيل الدخول أولاً' };
+      }
 
-      if (updateError) throw updateError;
+      const { data, error: rpcError } = await supabase.rpc('admin_update_farm', {
+        p_staff_id: session.staff_id,
+        p_farm_id: id,
+        p_name: farmData.name || null,
+        p_location: farmData.location || null,
+        p_city: farmData.city || null,
+        p_total_trees_available: farmData.total_trees_available || null,
+        p_description: farmData.description || null,
+        p_tree_type: null,
+        p_area_size: null,
+        p_area_unit: null,
+        p_is_active: farmData.is_active !== undefined ? farmData.is_active : null
+      });
+
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
+        throw rpcError;
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.message || 'فشل تحديث المزرعة' };
+      }
 
       await loadFarms();
       return { success: true };
-    } catch (err) {
-      console.error('Error updating B2F farm:', err);
-      return { success: false, error: 'فشل تحديث المزرعة' };
+    } catch (err: any) {
+      console.error('Error updating B2B farm:', err);
+      return { success: false, error: err.message || 'فشل تحديث المزرعة' };
     }
   };
 
