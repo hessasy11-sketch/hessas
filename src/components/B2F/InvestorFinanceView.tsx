@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   DollarSign, TrendingUp, Clock, CheckCircle, AlertCircle, Upload,
   XCircle, Calendar, CreditCard, Copy, Check, Smartphone, Wallet,
-  Building2, CircleDollarSign, FileText, Download, Printer
+  Building2, CircleDollarSign, FileText, Download, Printer, RefreshCw
 } from 'lucide-react';
 import { useInvestorAuth } from '../../contexts/InvestorAuthContext';
 import { useFinancialSummary } from '../../hooks/useFinancialSummary';
@@ -54,6 +54,7 @@ export default function InvestorFinanceView() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // بيانات الحساب البنكي الثابتة
   const [bankAccount] = useState<BankAccount>({
@@ -65,8 +66,14 @@ export default function InvestorFinanceView() {
 
   useEffect(() => {
     if (account) {
+      console.log('🔵 useEffect - تم تحميل الحساب:', {
+        phone: account.contact_phone,
+        name: account.contact_name
+      });
       loadPaymentRequests();
       loadInvoices();
+    } else {
+      console.log('🔴 useEffect - لا يوجد حساب مستثمر');
     }
   }, [account]);
 
@@ -91,22 +98,48 @@ export default function InvestorFinanceView() {
   };
 
   const loadInvoices = async () => {
-    if (!account) return;
+    if (!account) {
+      console.log('❌ لا يوجد حساب مستثمر - لا يمكن تحميل الفواتير');
+      return;
+    }
 
     try {
       setLoadingInvoices(true);
+      console.log('🔄 جاري تحميل الفواتير لرقم الهاتف:', account.contact_phone);
+
       const { data, error } = await supabase
         .from('b2f_invoices')
         .select('*')
         .eq('investor_phone', account.contact_phone)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ خطأ في تحميل الفواتير:', error);
+        throw error;
+      }
+
+      console.log('✅ تم تحميل الفواتير بنجاح:', data);
       setInvoices(data || []);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      console.error('❌ استثناء في تحميل الفواتير:', error);
     } finally {
       setLoadingInvoices(false);
+    }
+  };
+
+  const handleRefreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        loadPaymentRequests(),
+        loadInvoices(),
+        refresh()
+      ]);
+      console.log('✅ تم تحديث جميع البيانات');
+    } catch (error) {
+      console.error('❌ خطأ في التحديث:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -303,14 +336,26 @@ export default function InvestorFinanceView() {
       <div className="space-y-4">
         {/* Header - الملخص المالي */}
         <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black">الملخص المالي</h3>
+                <p className="text-sm text-emerald-50">حالة المدفوعات والمبالغ</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black">الملخص المالي</h3>
-              <p className="text-sm text-emerald-50">حالة المدفوعات والمبالغ</p>
-            </div>
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshing}
+              className={`bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                refreshing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-bold">تحديث</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
