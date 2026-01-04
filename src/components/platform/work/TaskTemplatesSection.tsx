@@ -285,9 +285,10 @@ function CreateTemplateModal({ template, onClose, onSuccess }: CreateTemplateMod
       }
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving template:', error);
-      alert('حدث خطأ أثناء الحفظ');
+      const errorMessage = error?.message || 'حدث خطأ غير معروف';
+      alert(`حدث خطأ أثناء الحفظ:\n${errorMessage}\n\nتأكد من أنك مسجل دخول كمدير نظام`);
     } finally {
       setSaving(false);
     }
