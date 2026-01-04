@@ -117,8 +117,14 @@ export function PinInputModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full p-8">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      style={{ zIndex: 9999, pointerEvents: 'auto' }}
+    >
+      <div
+        className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full p-8"
+        style={{ pointerEvents: 'auto' }}
+      >
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-600/20 border border-blue-500/30 mb-4">
             <Lock className="w-8 h-8 text-blue-400" />

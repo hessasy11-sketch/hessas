@@ -41,6 +41,7 @@ export function AdminSmartAccessGateV3() {
     setScanStatus('verifying');
     setErrorMessage('');
     setStaffInfo(null);
+    setDefaultRoute('');
     setShowPinModal(false);
 
     console.log('🔍 Step 1: QR Scanned:', decodedText);
@@ -100,7 +101,7 @@ export function AdminSmartAccessGateV3() {
         setScanStatus('needsPin');
 
         console.log('  - Registering device access with requires_pin=true');
-        await registerDeviceAccess(
+        registerDeviceAccess(
           result.staff.id,
           deviceInfo.fingerprint,
           deviceInfo.type,
@@ -108,10 +109,13 @@ export function AdminSmartAccessGateV3() {
           accessMethod === 'camera' ? 'camera_scan' : 'image_upload',
           true,
           false
-        );
+        ).catch(err => console.error('Device registration error:', err));
 
-        console.log('🔑🔑🔑 SETTING showPinModal = TRUE IMMEDIATELY 🔑🔑🔑');
-        setShowPinModal(true);
+        console.log('🔑🔑🔑 SHOWING PIN MODAL IN 100ms 🔑🔑🔑');
+        setTimeout(() => {
+          console.log('🔑 NOW SETTING showPinModal = TRUE');
+          setShowPinModal(true);
+        }, 100);
       }
     } else {
       console.error('❌ Step 3: VERIFICATION FAILED');
@@ -386,15 +390,31 @@ export function AdminSmartAccessGateV3() {
 
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
 
-      {showPinModal && staffInfo && (
-        <PinInputModal
-          staffId={staffInfo.id}
-          staffName={staffInfo.full_name}
-          onSuccess={handlePinSuccess}
-          onCancel={handlePinCancel}
-          onPinVerification={verifyStaffPin}
-        />
-      )}
+      {(() => {
+        console.log('🎯 MODAL RENDER CHECK:', {
+          showPinModal,
+          hasStaffInfo: !!staffInfo,
+          staffId: staffInfo?.id,
+          staffName: staffInfo?.full_name,
+          shouldRender: showPinModal && !!staffInfo
+        });
+
+        if (showPinModal && staffInfo) {
+          console.log('✅✅✅ RENDERING PIN MODAL NOW! ✅✅✅');
+          return (
+            <PinInputModal
+              staffId={staffInfo.id}
+              staffName={staffInfo.full_name}
+              onSuccess={handlePinSuccess}
+              onCancel={handlePinCancel}
+              onPinVerification={verifyStaffPin}
+            />
+          );
+        }
+
+        console.log('❌ NOT RENDERING MODAL');
+        return null;
+      })()}
     </div>
   );
 }
