@@ -31,21 +31,7 @@ export function AdminSmartAccessGateV3() {
       setIsLoading(false);
     };
     checkDevice();
-
-    if (adminSessionManager.isAuthenticated()) {
-      const session = adminSessionManager.getSession();
-      const role = session?.role;
-
-      let redirectRoute = '/hq';
-      if (role === 'manager' || role === 'supervisor' || role === 'accountant' || role === 'farm_manager') {
-        redirectRoute = '/admin/b2f';
-      } else if (role === 'super_admin' || role === 'general_manager' || role === 'platform_owner') {
-        redirectRoute = '/hq';
-      }
-
-      navigate(redirectRoute, { replace: true });
-    }
-  }, [navigate]);
+  }, []);
 
   const handleScanSuccess = async (decodedText: string) => {
     console.log('═══════════════════════════════════════════');
