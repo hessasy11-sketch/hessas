@@ -49,7 +49,7 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
       const [staffData, permData] = await Promise.all([
         supabase
           .from('department_staff_assignments')
-          .select('*, staff:platform_staff(full_name, staff_code, role)')
+          .select('*, staff:platform_staff!staff_id(full_name, staff_code, role)')
           .eq('department_id', department.id)
           .order('created_at', { ascending: false }),
 

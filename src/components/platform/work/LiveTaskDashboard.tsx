@@ -59,21 +59,21 @@ export function LiveTaskDashboard() {
       const [tasksData, achievementsData, analyticsData] = await Promise.all([
         supabase
           .from('staff_tasks')
-          .select('id, title, status, priority, started_at, staff:platform_staff(full_name, staff_code)')
+          .select('id, title, status, priority, started_at, staff:platform_staff!staff_id(full_name, staff_code)')
           .eq('status', 'in_progress')
           .order('started_at', { ascending: false })
           .limit(10),
 
         supabase
           .from('staff_achievements')
-          .select('id, achievement_type, level, unlocked_at, badge_color, staff:platform_staff(full_name)')
+          .select('id, achievement_type, level, unlocked_at, badge_color, staff:platform_staff!staff_id(full_name)')
           .not('unlocked_at', 'is', null)
           .order('unlocked_at', { ascending: false })
           .limit(5),
 
         supabase
           .from('task_analytics')
-          .select('staff_id, date, tasks_completed, efficiency_score, total_points_earned, staff:platform_staff(full_name, staff_code)')
+          .select('staff_id, date, tasks_completed, efficiency_score, total_points_earned, staff:platform_staff!staff_id(full_name, staff_code)')
           .eq('date', new Date().toISOString().split('T')[0])
           .order('efficiency_score', { ascending: false })
           .limit(5)
