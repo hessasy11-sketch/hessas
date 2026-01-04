@@ -141,11 +141,24 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
   };
 
   const generateStaffCode = async () => {
-    const { count } = await supabase
+    const { data: lastStaff } = await supabase
       .from('platform_staff')
-      .select('id', { count: 'exact', head: true });
+      .select('staff_code')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    return `A-${String((count || 0) + 1).padStart(5, '0')}`;
+    let nextNumber = 1;
+
+    if (lastStaff?.staff_code) {
+      const match = lastStaff.staff_code.match(/A-(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    const timestamp = Date.now().toString().slice(-4);
+    return `A-${String(nextNumber).padStart(5, '0')}-${timestamp}`;
   };
 
   const handleNext = () => {
