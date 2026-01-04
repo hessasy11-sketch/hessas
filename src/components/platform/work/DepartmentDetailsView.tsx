@@ -188,17 +188,23 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
   };
 
   const handleAddPermission = async () => {
-    if (!newPermissionKey || !newPermissionNameAr) {
-      alert('الرجاء إدخال جميع البيانات');
+    if (!newPermissionNameAr) {
+      alert('الرجاء إدخال اسم الصلاحية بالعربية');
       return;
     }
+
+    const permissionKey = newPermissionKey ||
+      newPermissionNameAr
+        .replace(/\s+/g, '_')
+        .replace(/[^\w\u0600-\u06FF_]/g, '')
+        .toLowerCase();
 
     try {
       const { error } = await supabase
         .from('department_permissions')
         .insert({
           department_id: department.id,
-          permission_key: newPermissionKey,
+          permission_key: permissionKey,
           permission_name_ar: newPermissionNameAr,
           is_granted: true,
           granted_at: new Date().toISOString()
@@ -594,20 +600,8 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">
-                  مفتاح الصلاحية (بالإنجليزية)
-                </label>
-                <input
-                  type="text"
-                  value={newPermissionKey}
-                  onChange={(e) => setNewPermissionKey(e.target.value)}
-                  placeholder="مثال: view_reports"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
                   اسم الصلاحية (بالعربية)
+                  <span className="text-red-400 mr-1">*</span>
                 </label>
                 <input
                   type="text"
@@ -616,6 +610,21 @@ export function DepartmentDetailsView({ department, onBack }: Props) {
                   placeholder="مثال: عرض التقارير"
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-all"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2 flex items-center gap-2">
+                  مفتاح الصلاحية (بالإنجليزية)
+                  <span className="text-gray-500 text-xs">(اختياري)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newPermissionKey}
+                  onChange={(e) => setNewPermissionKey(e.target.value)}
+                  placeholder="مثال: view_reports (اتركه فارغ للتوليد التلقائي)"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-all"
+                />
+                <p className="text-xs text-gray-500 mt-1">سيتم توليد المفتاح تلقائياً من الاسم العربي إذا ترك فارغاً</p>
               </div>
 
               <div className="flex gap-3 pt-4">

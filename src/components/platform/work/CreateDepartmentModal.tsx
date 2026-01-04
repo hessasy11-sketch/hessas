@@ -116,12 +116,12 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 flex items-center gap-2">
                 الاسم بالإنجليزية
+                <span className="text-gray-500 text-xs">(اختياري)</span>
               </label>
               <input
                 type="text"
-                required
                 value={formData.name_en}
                 onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
