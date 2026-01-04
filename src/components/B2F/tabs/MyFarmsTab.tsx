@@ -23,9 +23,13 @@ export default function MyFarmsTab() {
   }, []);
 
   const loadMyFarms = async () => {
-    if (!session?.user_id) return;
-
     setLoading(true);
+
+    if (!session?.user_id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .rpc('get_investment_manager_farms', { p_user_id: session.user_id });

@@ -29,9 +29,13 @@ export default function InvestmentApprovalsTab() {
   }, []);
 
   const loadPendingApprovals = async () => {
-    if (!session?.user_id) return;
-
     setLoading(true);
+
+    if (!session?.user_id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: farms } = await supabase
         .from('b2f_farms')
@@ -41,6 +45,7 @@ export default function InvestmentApprovalsTab() {
 
       if (!farms || farms.length === 0) {
         setTasks([]);
+        setLoading(false);
         return;
       }
 
