@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { QrCode, Download, Printer, User, Briefcase, Hash, Building2, Shield } from 'lucide-react';
+import { QrCode, Download, Printer, User, Briefcase, Hash, Building2, Shield, Scan, BadgeCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { QRScannerValidator } from './QRScannerValidator';
 
 interface StaffMember {
   id: string;
@@ -17,6 +18,7 @@ export function StaffIDCardPrinter() {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'cards' | 'scanner'>('cards');
 
   useEffect(() => {
     loadStaffList();
@@ -76,14 +78,47 @@ export function StaffIDCardPrinter() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">بطاقات الموظفين</h2>
-            <p className="text-blue-100">طباعة وتحميل QR Codes</p>
+            <p className="text-blue-100">طباعة وتحميل ومسح QR Codes</p>
           </div>
         </div>
       </div>
 
-      {/* Staff Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {staffList.map((staff) => (
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('cards')}
+            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'cards'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <BadgeCheck className="w-5 h-5" />
+            البطاقات والطباعة
+          </button>
+          <button
+            onClick={() => setActiveTab('scanner')}
+            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'scanner'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Scan className="w-5 h-5" />
+            مسح وفحص QR
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      {activeTab === 'scanner' ? (
+        <QRScannerValidator />
+      ) : (
+        <>
+          {/* Staff Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {staffList.map((staff) => (
           <div
             key={staff.id}
             className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-shadow"
@@ -162,10 +197,10 @@ export function StaffIDCardPrinter() {
             </div>
           </div>
         ))}
-      </div>
+          </div>
 
-      {/* Print Card Modal */}
-      {selectedStaff && (
+          {/* Print Card Modal */}
+          {selectedStaff && (
         <div className="hidden print:block fixed inset-0 bg-white z-50">
           <div className="w-[350px] h-[550px] mx-auto my-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl p-6 text-white shadow-2xl">
             {/* Header */}
@@ -221,10 +256,10 @@ export function StaffIDCardPrinter() {
             </div>
           </div>
         </div>
-      )}
+          )}
 
-      {/* Print Styles */}
-      <style>{`
+          {/* Print Styles */}
+          <style>{`
         @media print {
           body * {
             visibility: hidden;
@@ -240,7 +275,9 @@ export function StaffIDCardPrinter() {
             height: 100%;
           }
         }
-      `}</style>
+          `}</style>
+        </>
+      )}
     </div>
   );
 }
