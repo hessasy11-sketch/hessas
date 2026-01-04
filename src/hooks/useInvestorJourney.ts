@@ -107,7 +107,7 @@ export function useInvestorJourney(investorPhone: string | null): InvestorJourne
       // 2. جلب آخر طلب للمستثمر
       const { data: latestRequest, error: requestError } = await supabase
         .from('b2f_sales_requests')
-        .select('id, tree_type, number_of_trees, total_amount, status, contract_number, created_at')
+        .select('id, tree_type, number_of_trees, total_amount, status, created_at')
         .eq('investor_phone', investorPhone)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -133,7 +133,7 @@ export function useInvestorJourney(investorPhone: string | null): InvestorJourne
         totalTrees: account?.total_trees || 0,
         currentStage: currentStage,
         latestStatus: latestRequest?.status || 'pending',
-        contractNumber: latestRequest?.contract_number,
+        contractNumber: undefined,
         operationalStatus: undefined,
         latestRequest: latestRequest ? {
           id: latestRequest.id,

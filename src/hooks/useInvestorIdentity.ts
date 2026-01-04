@@ -86,7 +86,7 @@ export function useInvestorIdentity(accountId: string | null): InvestorIdentity 
       // جلب أحدث طلب للمستثمر للحصول على حالة المسار
       const { data: latestRequest } = await supabase
         .from('b2f_sales_requests')
-        .select('status, contract_number, transferred_to_operations, operational_status')
+        .select('status')
         .eq('investor_phone', account.contact_phone)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -115,8 +115,8 @@ export function useInvestorIdentity(accountId: string | null): InvestorIdentity 
           totalTrees: updatedAccount.total_trees || 0,
           currentStage: updatedAccount.current_stage || 'جديد',
           currentStatus: latestRequest?.status || 'pending',
-          contractNumber: latestRequest?.contract_number,
-          operationalStatus: latestRequest?.operational_status,
+          contractNumber: undefined,
+          operationalStatus: undefined,
           loading: false,
           error: null
         });
@@ -128,8 +128,8 @@ export function useInvestorIdentity(accountId: string | null): InvestorIdentity 
           totalTrees: account.total_trees || 0,
           currentStage: account.current_stage || 'جديد',
           currentStatus: latestRequest?.status || 'pending',
-          contractNumber: latestRequest?.contract_number,
-          operationalStatus: latestRequest?.operational_status,
+          contractNumber: undefined,
+          operationalStatus: undefined,
           loading: false,
           error: null
         });
