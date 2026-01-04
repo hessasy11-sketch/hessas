@@ -187,7 +187,7 @@ export default function InvestorOpportunitiesView({
                 : 'فرص استثمارية متاحة'}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
               {filteredOpportunities.map((opportunity) => (
                 <OpportunityCard3D
                   key={opportunity.id}

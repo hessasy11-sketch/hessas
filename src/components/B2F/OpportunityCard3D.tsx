@@ -60,7 +60,7 @@ export default function OpportunityCard3D({ opportunity, onDetailsClick }: Oppor
 
   return (
     <>
-      <div className="w-full bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
+      <div className="w-full bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300">
         <div className="relative">
           <button
             onClick={() => setShowImagePreview(true)}
@@ -152,7 +152,7 @@ export default function OpportunityCard3D({ opportunity, onDetailsClick }: Oppor
 
           <button
             onClick={() => onDetailsClick(opportunity)}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
           >
             اكتشف التفاصيل
           </button>
