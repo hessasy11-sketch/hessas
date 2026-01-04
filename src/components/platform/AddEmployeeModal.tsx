@@ -263,7 +263,16 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
         setLoading(false);
       }
     } catch (error: any) {
-      console.error('❌ Error creating staff member:', error);
+      // طباعة الخطأ بالكامل للمستخدم
+      console.error('❌ ============ ERROR DETAILS START ============');
+      console.error('Error Type:', typeof error);
+      console.error('Error Object:', error);
+      console.error('Error Code:', error?.code);
+      console.error('Error Message:', error?.message);
+      console.error('Error Details:', error?.details);
+      console.error('Error Hint:', error?.hint);
+      console.error('Full Error JSON:', JSON.stringify(error, null, 2));
+      console.error('❌ ============ ERROR DETAILS END ============');
 
       let errorMessage = 'فشل إضافة الموظف';
 
