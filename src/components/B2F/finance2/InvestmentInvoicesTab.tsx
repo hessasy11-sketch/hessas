@@ -3,24 +3,29 @@ import { FileText, Search, Calendar, DollarSign, User, CheckCircle, XCircle, Ale
 import { supabase } from '../../../lib/supabase';
 
 interface Invoice {
+  invoice_id: string;
+  invoice_number: string;
   request_id: string;
   investor_name: string;
   investor_phone: string;
-  investor_email: string;
-  number_of_trees: number;
   tree_type: string;
+  number_of_trees: number;
   total_amount: number;
+  invoice_status: string;
+  payment_method: string | null;
+  notes: string | null;
+  issued_at: string;
+  paid_at: string | null;
+  invoice_created_at: string;
   request_status: string;
   request_created_at: string;
-  farm_name: string;
-  payment_document_id: string;
-  finance_status: string;
-  receipt_url: string;
-  amount_detected: number | null;
-  ai_confidence: number | null;
-  ai_decision: string | null;
-  receipt_uploaded_at: string;
-  reviewed_at: string | null;
+  farm_name: string | null;
+  farm_id: string | null;
+  opportunity_title: string | null;
+  payment_receipt_id: string | null;
+  receipt_url: string | null;
+  receipt_status: string | null;
+  receipt_uploaded_at: string | null;
 }
 
 export default function InvestmentInvoicesTab() {
@@ -39,9 +44,10 @@ export default function InvestmentInvoicesTab() {
       const { data, error } = await supabase
         .from('v_b2f_investment_invoices')
         .select('*')
-        .order('receipt_uploaded_at', { ascending: false });
+        .order('invoice_created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('✅ تم تحميل الفواتير:', data);
       setInvoices(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -52,39 +58,29 @@ export default function InvestmentInvoicesTab() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
-      'pending_review': {
-        label: 'قيد المراجعة',
+      'pending': {
+        label: 'بانتظار الدفع',
         className: 'bg-blue-100 text-blue-700',
-        icon: AlertCircle
+        icon: Clock
       },
-      'auto_approved': {
-        label: 'تم القبول آلياً',
-        className: 'bg-cyan-100 text-cyan-700',
-        icon: CheckCircle
-      },
-      'manually_approved': {
-        label: 'معتمد يدوياً',
+      'paid': {
+        label: 'مدفوعة',
         className: 'bg-green-100 text-green-700',
         icon: CheckCircle
       },
-      'approved_for_contract': {
-        label: 'جاهز للعقود',
-        className: 'bg-emerald-100 text-emerald-700',
-        icon: CheckCircle
-      },
-      'rejected_final': {
-        label: 'مرفوض',
+      'cancelled': {
+        label: 'ملغية',
         className: 'bg-red-100 text-red-700',
         icon: XCircle
       },
-      'auto_rejected': {
-        label: 'مرفوض آلياً',
-        className: 'bg-rose-100 text-rose-700',
-        icon: XCircle
+      'refunded': {
+        label: 'مستردة',
+        className: 'bg-orange-100 text-orange-700',
+        icon: AlertCircle
       }
     };
 
-    const config = statusConfig[status] || statusConfig['pending_review'];
+    const config = statusConfig[status] || statusConfig['pending'];
     const Icon = config.icon;
 
     return (
@@ -100,18 +96,18 @@ export default function InvestmentInvoicesTab() {
       inv.investor_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.investor_phone.includes(searchQuery);
 
-    const matchesStatus = statusFilter === 'all' || inv.finance_status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || inv.invoice_status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
     total: invoices.length,
-    approved: invoices.filter(i => i.finance_status === 'manually_approved' || i.finance_status === 'approved_for_contract').length,
-    pending: invoices.filter(i => i.finance_status === 'pending_review').length,
-    rejected: invoices.filter(i => i.finance_status === 'rejected_final').length,
+    approved: invoices.filter(i => i.invoice_status === 'paid').length,
+    pending: invoices.filter(i => i.invoice_status === 'pending').length,
+    rejected: invoices.filter(i => i.invoice_status === 'cancelled').length,
     totalAmount: invoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount.toString()), 0),
-    approvedAmount: invoices.filter(i => i.finance_status === 'manually_approved' || i.finance_status === 'approved_for_contract').reduce((sum, inv) => sum + parseFloat(inv.total_amount.toString()), 0)
+    approvedAmount: invoices.filter(i => i.invoice_status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.total_amount.toString()), 0)
   };
 
   return (
@@ -179,34 +175,34 @@ export default function InvestmentInvoicesTab() {
             الكل ({invoices.length})
           </button>
           <button
-            onClick={() => setStatusFilter('manually_approved')}
+            onClick={() => setStatusFilter('paid')}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-              statusFilter === 'manually_approved'
+              statusFilter === 'paid'
                 ? 'bg-green-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            معتمدة ({stats.approved})
+            مدفوعة ({stats.approved})
           </button>
           <button
-            onClick={() => setStatusFilter('pending_review')}
+            onClick={() => setStatusFilter('pending')}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-              statusFilter === 'pending_review'
+              statusFilter === 'pending'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            قيد المراجعة ({stats.pending})
+            بانتظار الدفع ({stats.pending})
           </button>
           <button
-            onClick={() => setStatusFilter('rejected_final')}
+            onClick={() => setStatusFilter('cancelled')}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-              statusFilter === 'rejected_final'
+              statusFilter === 'cancelled'
                 ? 'bg-red-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            مرفوضة ({stats.rejected})
+            ملغية ({stats.rejected})
           </button>
         </div>
       </div>
@@ -220,21 +216,17 @@ export default function InvestmentInvoicesTab() {
           </div>
         ) : (
           filteredInvoices.map((invoice) => (
-            <div key={invoice.payment_document_id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div key={invoice.invoice_id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-black text-gray-900">{invoice.investor_name}</h3>
-                    {getStatusBadge(invoice.finance_status)}
+                    {getStatusBadge(invoice.invoice_status)}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span className="font-bold">فاتورة: {invoice.invoice_number}</span>
+                    <span>•</span>
                     <span>{invoice.investor_phone}</span>
-                    {invoice.investor_email && (
-                      <>
-                        <span>•</span>
-                        <span>{invoice.investor_email}</span>
-                      </>
-                    )}
                   </div>
                 </div>
                 <div className="text-left">
