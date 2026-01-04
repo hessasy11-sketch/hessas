@@ -509,7 +509,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {section.tabs.map((tab, tabIndex) => {
                   const Icon = tab.icon;
                   const globalIndex = sectionIndex * 10 + tabIndex;
