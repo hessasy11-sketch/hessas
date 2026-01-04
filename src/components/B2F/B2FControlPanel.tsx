@@ -495,24 +495,30 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           <p className="text-sm text-gray-600">جميع أدوات وأقسام إدارة نظام استثمار أشجار المزارع - منظمة بشكل احترافي</p>
         </div>
 
-        {tabSections.map((section, sectionIndex) => {
-          const SectionIcon = section.icon;
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {tabSections.map((section, sectionIndex) => {
+            const SectionIcon = section.icon;
+            let globalIndex = 0;
+            for (let i = 0; i < sectionIndex; i++) {
+              globalIndex += tabSections[i].tabs.length;
+            }
 
-          return (
-            <div key={sectionIndex} className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${section.color} flex items-center justify-center shadow-lg`}>
-                  <SectionIcon className="w-5 h-5 text-white" />
+            return (
+              <>
+                <div key={`section-${sectionIndex}`} className="col-span-1 lg:col-span-3">
+                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${section.color} flex items-center justify-center shadow-lg`}>
+                      <SectionIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black text-gray-900">{section.title}</h3>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base md:text-lg font-black text-gray-900">{section.title}</h3>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {section.tabs.map((tab, tabIndex) => {
                   const Icon = tab.icon;
-                  const globalIndex = sectionIndex * 10 + tabIndex;
+                  const currentGlobalIndex = globalIndex + tabIndex;
 
                   return (
                     <button
@@ -520,7 +526,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
                       onClick={() => setActiveTab(tab.id)}
                       className="group relative bg-white rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:scale-[1.02] active:scale-[0.98]"
                       style={{
-                        animationDelay: `${globalIndex * 50}ms`
+                        animationDelay: `${currentGlobalIndex * 50}ms`
                       }}
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${tab.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
@@ -552,10 +558,10 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
                     </button>
                   );
                 })}
-              </div>
-            </div>
-          );
-        })}
+              </>
+            );
+          })}
+        </div>
 
         <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-blue-100 shadow-lg">
           <div className="flex items-start gap-3 md:gap-4">
