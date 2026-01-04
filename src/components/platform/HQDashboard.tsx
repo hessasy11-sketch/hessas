@@ -1,4 +1,4 @@
-import { Shield, Activity, TrendingUp, AlertTriangle, LogOut, FileText, Crown, Briefcase } from 'lucide-react';
+import { Shield, Activity, TrendingUp, AlertTriangle, LogOut, FileText, Crown, Briefcase, Sprout } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,7 @@ import { WorkManagementHub } from './work/WorkManagementHub';
 import { SessionTracker } from './SessionTracker';
 import { adminSessionManager } from '../../utils/adminSessionManager';
 import { PageGuard } from './PermissionGuard';
+import ComprehensiveFarmManagement from './ComprehensiveFarmManagement';
 
 const ADMIN_GATES = {
   auctions: '/admin/auctions',
@@ -16,7 +17,7 @@ const ADMIN_GATES = {
   settings: '/admin/settings',
 } as const;
 
-type TabType = 'overview' | 'dashboard' | 'work' | 'alerts' | 'reports';
+type TabType = 'overview' | 'dashboard' | 'work' | 'farms' | 'alerts' | 'reports';
 
 export function HQDashboard() {
   const navigate = useNavigate();
@@ -179,6 +180,17 @@ export function HQDashboard() {
               مركز توليد المهام
             </button>
             <button
+              onClick={() => setActiveTab('farms')}
+              className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'farms'
+                  ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Sprout className="w-5 h-5" />
+              إدارة المزارع
+            </button>
+            <button
               onClick={() => setActiveTab('reports')}
               className={`flex-1 min-w-[150px] px-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'reports'
@@ -303,6 +315,21 @@ export function HQDashboard() {
         )}
 
         {activeTab === 'work' && <WorkManagementHub />}
+
+        {activeTab === 'farms' && (
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
+                <Sprout className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">إدارة المزارع الشاملة</h2>
+                <p className="text-gray-400 text-sm mt-1">إدارة مديري المزارع، الهيكل التنظيمي، التشغيل والاعتمادات</p>
+              </div>
+            </div>
+            <ComprehensiveFarmManagement />
+          </div>
+        )}
 
         {activeTab === 'reports' && <ReportsView />}
 
