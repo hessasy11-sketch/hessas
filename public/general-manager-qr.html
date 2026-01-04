@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>رمز QR - المدير العام</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 32px;
+      color: #1a202c;
+      margin-bottom: 10px;
+    }
+    .role {
+      color: #718096;
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+      padding: 20px;
+      background: #f7fafc;
+      border-radius: 16px;
+    }
+    .info {
+      background: #edf2f7;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #cbd5e0;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: #4a5568;
+      font-weight: 600;
+    }
+    .info-value {
+      color: #1a202c;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+    .pin-highlight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 20px;
+      letter-spacing: 3px;
+    }
+    .button {
+      margin-top: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+    }
+    .button:active {
+      transform: translateY(0);
+    }
+    .note {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff5f5;
+      border: 2px solid #feb2b2;
+      border-radius: 12px;
+      color: #742a2a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .crown {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="crown">👑</div>
+    <div class="badge">بطاقة الدخول الآمن</div>
+    <h1>المدير العام</h1>
+    <p class="role">الإدارة العليا</p>
+
+    <div id="qrcode"></div>
+
+    <div class="info">
+      <div class="info-row">
+        <span class="info-label">رمز QR:</span>
+        <span class="info-value">GM-SECURE-2026</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">الرقم السري:</span>
+        <span class="pin-highlight">1234</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">المسار:</span>
+        <span class="info-value">/hq</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">الهاتف:</span>
+        <span class="info-value">0500000001</span>
+      </div>
+    </div>
+
+    <button class="button" onclick="window.print()">
+      🖨️ طباعة البطاقة
+    </button>
+
+    <div class="note">
+      <strong>⚠️ تعليمات الدخول:</strong><br>
+      1. امسح رمز QR في بوابة الدخول<br>
+      2. أدخل الرقم السري: 1234<br>
+      3. سيتم توجيهك تلقائياً إلى لوحة المقر الرئيسي (/hq)
+    </div>
+  </div>
+
+  <script>
+    const qrText = 'GM-SECURE-2026';
+
+    QRCode.toCanvas(qrText, {
+      width: 280,
+      margin: 2,
+      color: {
+        dark: '#1a202c',
+        light: '#f7fafc'
+      }
+    }, function (error, canvas) {
+      if (error) {
+        console.error(error);
+        document.getElementById('qrcode').innerHTML = '<p style="color: red;">خطأ في إنشاء QR</p>';
+        return;
+      }
+      document.getElementById('qrcode').appendChild(canvas);
+    });
+  </script>
+</body>
+</html>
