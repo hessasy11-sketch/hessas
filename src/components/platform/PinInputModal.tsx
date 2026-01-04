@@ -34,8 +34,16 @@ export function PinInputModal({
   ];
 
   useEffect(() => {
-    console.log('🔑 PIN Modal Mounted:', { staffId, staffName });
-    inputRefs[0].current?.focus();
+    console.log('🔑🔑🔑 PIN MODAL MOUNTED 🔑🔑🔑');
+    console.log('Staff ID:', staffId);
+    console.log('Staff Name:', staffName);
+    console.log('Modal should be visible NOW!');
+
+    const timer = setTimeout(() => {
+      inputRefs[0].current?.focus();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [staffId, staffName]);
 
   const handleInputChange = async (index: number, value: string) => {

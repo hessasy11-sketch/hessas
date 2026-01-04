@@ -60,7 +60,10 @@ export function useQRVerification() {
 
       const rawResult = await response.json();
 
-      console.log('🔍 Raw Result from Edge Function:', rawResult);
+      console.log('═══════════════════════════════════════════');
+      console.log('🔍 RAW RESULT FROM EDGE FUNCTION:');
+      console.log('═══════════════════════════════════════════');
+      console.log(JSON.stringify(rawResult, null, 2));
 
       const result: VerificationResult = {
         ...rawResult,
@@ -81,11 +84,17 @@ export function useQRVerification() {
         } : undefined,
       };
 
-      console.log('✅ Processed Result:', {
-        requires_pin: result.requires_pin,
-        landing_route: result.landing_route,
-        staff_name: result.staff?.full_name
-      });
+      console.log('═══════════════════════════════════════════');
+      console.log('✅ PROCESSED RESULT:');
+      console.log('═══════════════════════════════════════════');
+      console.log('  Success:', result.success);
+      console.log('  Requires PIN:', result.requires_pin);
+      console.log('  Landing Route:', result.landing_route);
+      console.log('  Staff Name:', result.staff?.full_name);
+      console.log('  Staff ID:', result.staff?.id);
+      console.log('  Raw requires_pin:', rawResult.requires_pin);
+      console.log('  Staff.requires_pin:', rawResult.staff?.requires_pin);
+      console.log('═══════════════════════════════════════════');
 
       setVerificationResult(result);
       setIsVerifying(false);

@@ -38,32 +38,40 @@ export function AdminSmartAccessGateV3() {
   }, [navigate]);
 
   const handleScanSuccess = async (decodedText: string) => {
+    console.log('═══════════════════════════════════════════');
+    console.log('🚀 STARTING QR VERIFICATION PROCESS');
+    console.log('═══════════════════════════════════════════');
+
     setScanStatus('verifying');
     setErrorMessage('');
     setStaffInfo(null);
+    setShowPinModal(false);
 
-    console.log('🔍 QR Scanned:', decodedText);
+    console.log('🔍 Step 1: QR Scanned:', decodedText);
 
     const result = await verifyQRToken(decodedText);
 
-    console.log('📋 Verification Result:', {
-      success: result.success,
-      requires_pin: result.requires_pin,
-      staff: result.staff,
-      landing_route: result.landing_route
-    });
+    console.log('📋 Step 2: Verification Result:', JSON.stringify(result, null, 2));
+    console.log('  - Success:', result.success);
+    console.log('  - Requires PIN:', result.requires_pin);
+    console.log('  - Staff:', result.staff?.full_name);
+    console.log('  - Landing Route:', result.landing_route);
 
     if (result.success && result.staff && deviceInfo) {
+      console.log('✅ Step 3: Verification Success - Setting States');
+
       setStaffInfo(result.staff);
       const landingRoute = result.landing_route || result.staff.landing_route || result.default_route || '/hq';
       setDefaultRoute(landingRoute);
 
-      console.log('✅ Staff Info Set:', result.staff);
-      console.log('🎯 Landing Route:', landingRoute);
-      console.log('🔐 Requires PIN:', result.requires_pin);
+      console.log('  - Staff Info Set:', result.staff.full_name);
+      console.log('  - Staff ID:', result.staff.id);
+      console.log('  - Landing Route:', landingRoute);
+      console.log('  - Requires PIN:', result.requires_pin);
+      console.log('  - Device Info:', deviceInfo);
 
       if (!result.requires_pin) {
-        console.log('✨ Creating session without PIN...');
+        console.log('✨ Step 4a: NO PIN REQUIRED - Creating session directly');
         adminSessionManager.createSession({
           staff_id: result.staff.id,
           user_id: result.staff.user_id || '',
@@ -74,33 +82,51 @@ export function AdminSmartAccessGateV3() {
           is_super_admin: result.staff.role === 'super_admin',
           is_platform_owner: result.staff.role === 'platform_owner',
         });
-      }
 
-      await registerDeviceAccess(
-        result.staff.id,
-        deviceInfo.fingerprint,
-        deviceInfo.type,
-        deviceInfo.info,
-        accessMethod === 'camera' ? 'camera_scan' : 'image_upload',
-        result.requires_pin || false,
-        false
-      );
+        await registerDeviceAccess(
+          result.staff.id,
+          deviceInfo.fingerprint,
+          deviceInfo.type,
+          deviceInfo.info,
+          accessMethod === 'camera' ? 'camera_scan' : 'image_upload',
+          false,
+          false
+        );
 
-      if (result.requires_pin) {
-        console.log('🔑 PIN Required - Showing PIN Modal');
-        setScanStatus('needsPin');
-        setTimeout(() => {
-          setShowPinModal(true);
-        }, 100);
-      } else {
-        console.log('🚀 No PIN Required - Navigating to:', landingRoute);
         setScanStatus('valid');
+        console.log('🚀 Navigating to:', landingRoute);
         setTimeout(() => {
           navigate(landingRoute);
         }, 2000);
+      } else {
+        console.log('🔐 Step 4b: PIN REQUIRED!');
+        console.log('  - Setting scanStatus to: needsPin');
+        setScanStatus('needsPin');
+
+        console.log('  - Registering device access with requires_pin=true');
+        await registerDeviceAccess(
+          result.staff.id,
+          deviceInfo.fingerprint,
+          deviceInfo.type,
+          deviceInfo.info,
+          accessMethod === 'camera' ? 'camera_scan' : 'image_upload',
+          true,
+          false
+        );
+
+        console.log('  - Waiting 300ms before showing modal...');
+        setTimeout(() => {
+          console.log('🔑🔑🔑 SETTING showPinModal = TRUE 🔑🔑🔑');
+          setShowPinModal(true);
+          console.log('  - showPinModal state should be TRUE now');
+          console.log('  - Modal should appear on screen');
+        }, 300);
       }
     } else {
-      console.error('❌ Verification Failed:', result.message);
+      console.error('❌ Step 3: VERIFICATION FAILED');
+      console.error('  - Message:', result.message);
+      console.error('  - Result:', result);
+
       setErrorMessage(result.message);
       setScanStatus('rejected');
 
@@ -109,6 +135,10 @@ export function AdminSmartAccessGateV3() {
         setErrorMessage('');
       }, 4000);
     }
+
+    console.log('═══════════════════════════════════════════');
+    console.log('END OF QR VERIFICATION PROCESS');
+    console.log('═══════════════════════════════════════════');
   };
 
   const handleScanError = (error: string) => {
@@ -378,15 +408,32 @@ export function AdminSmartAccessGateV3() {
 
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
 
-      {(showPinModal || scanStatus === 'needsPin') && staffInfo && (
-        <PinInputModal
-          staffId={staffInfo.id}
-          staffName={staffInfo.full_name}
-          onSuccess={handlePinSuccess}
-          onCancel={handlePinCancel}
-          onPinVerification={verifyStaffPin}
-        />
-      )}
+      {(() => {
+        const shouldShowModal = (showPinModal || scanStatus === 'needsPin') && staffInfo;
+        console.log('🔍 Render Check:', {
+          showPinModal,
+          scanStatus,
+          hasStaffInfo: !!staffInfo,
+          shouldShowModal,
+          staffName: staffInfo?.full_name
+        });
+
+        if (shouldShowModal) {
+          console.log('✅ RENDERING PIN MODAL');
+          return (
+            <PinInputModal
+              staffId={staffInfo.id}
+              staffName={staffInfo.full_name}
+              onSuccess={handlePinSuccess}
+              onCancel={handlePinCancel}
+              onPinVerification={verifyStaffPin}
+            />
+          );
+        }
+
+        console.log('❌ NOT RENDERING PIN MODAL');
+        return null;
+      })()}
     </div>
   );
 }
