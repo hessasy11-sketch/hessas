@@ -141,54 +141,24 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
   };
 
   const generateStaffCode = async (): Promise<string> => {
-    const maxRetries = 5;
+    try {
+      const { data, error } = await supabase.rpc('get_new_staff_code');
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        const { data: allStaff } = await supabase
-          .from('platform_staff')
-          .select('staff_code')
-          .order('created_at', { ascending: false });
-
-        let maxNumber = 0;
-
-        if (allStaff && allStaff.length > 0) {
-          allStaff.forEach(staff => {
-            if (staff.staff_code) {
-              const numericMatch = staff.staff_code.match(/A-(\d+)-/);
-              if (numericMatch) {
-                const num = parseInt(numericMatch[1], 10);
-                if (num > maxNumber) maxNumber = num;
-              }
-            }
-          });
-        }
-
-        const nextNumber = maxNumber + 1;
-        const timestamp = Date.now().toString().slice(-6);
-        const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        const newCode = `A-${String(nextNumber).padStart(5, '0')}-${timestamp}${randomSuffix}`;
-
-        const { data: existingCode } = await supabase
-          .from('platform_staff')
-          .select('staff_code')
-          .eq('staff_code', newCode)
-          .maybeSingle();
-
-        if (!existingCode) {
-          console.log(`✅ Generated unique staff code: ${newCode}`);
-          return newCode;
-        }
-
-        console.log(`⚠️ Code collision detected on attempt ${attempt + 1}, retrying...`);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error('Error generating staff code:', error);
-        if (attempt === maxRetries - 1) throw error;
+      if (error) {
+        console.error('❌ Error calling get_new_staff_code:', error);
+        throw error;
       }
-    }
 
-    throw new Error('فشل توليد رقم موظف فريد بعد عدة محاولات');
+      if (!data) {
+        throw new Error('لم يتم إرجاع رقم موظف من قاعدة البيانات');
+      }
+
+      console.log(`✅ Generated unique staff code from DB: ${data}`);
+      return data as string;
+    } catch (error) {
+      console.error('❌ Fatal error generating staff code:', error);
+      throw new Error('فشل توليد رقم موظف فريد');
+    }
   };
 
   const handleNext = () => {
