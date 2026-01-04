@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, LogOut } from 'lucide-react';
 import { adminSessionManager, initActivityTracking } from '../../utils/adminSessionManager';
 
 export function SessionTracker() {
   const navigate = useNavigate();
-  const [remainingMinutes, setRemainingMinutes] = useState(30);
+  const [remainingMinutes, setRemainingMinutes] = useState(60);
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function SessionTracker() {
       if (minutes <= 0) {
         adminSessionManager.destroySession();
         navigate('/admin/access', { replace: true });
-      } else if (minutes <= 5) {
+      } else if (minutes <= 10) {
         setShowWarning(true);
       } else {
         setShowWarning(false);
@@ -27,6 +27,11 @@ export function SessionTracker() {
 
     return () => clearInterval(checkInterval);
   }, [navigate]);
+
+  const handleLogout = () => {
+    adminSessionManager.destroySession();
+    navigate('/admin/access', { replace: true });
+  };
 
   if (!showWarning) return null;
 
@@ -50,6 +55,13 @@ export function SessionTracker() {
             <p className="text-white/80 text-xs mt-2">
               قم بأي نشاط لتجديد الجلسة
             </p>
+            <button
+              onClick={handleLogout}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-xs font-bold border border-white/20"
+            >
+              <LogOut className="w-3 h-3" />
+              تسجيل خروج الآن
+            </button>
           </div>
         </div>
       </div>

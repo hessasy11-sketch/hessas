@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   X,
   ArrowRight,
+  LogOut,
   Users,
   Activity,
   Sparkles,
@@ -387,12 +388,21 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 md:p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-200 hover:scale-105 active:scale-95"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 active:scale-95 font-bold"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>خروج</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="md:hidden p-2 md:p-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 

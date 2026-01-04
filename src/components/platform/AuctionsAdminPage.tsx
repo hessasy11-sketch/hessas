@@ -1,12 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { SessionTracker } from './SessionTracker';
 import { EnhancedAuctionsManagement } from '../EnhancedAuctionsManagement';
 
 export function AuctionsAdminPage() {
   const navigate = useNavigate();
 
   return (
-    <EnhancedAuctionsManagement
-      onClose={() => navigate('/hq', { replace: true })}
-    />
+    <>
+      <SessionTracker />
+      <EnhancedAuctionsManagement
+        onClose={() => navigate('/hq', { replace: true })}
+      />
+    </>
   );
 }

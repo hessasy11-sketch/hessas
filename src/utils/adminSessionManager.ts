@@ -21,7 +21,7 @@ interface AdminSession {
 }
 
 const SESSION_KEY = 'platform_staff_session';
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes idle timeout
 
 export const adminSessionManager = {
   createSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at'>): void {
