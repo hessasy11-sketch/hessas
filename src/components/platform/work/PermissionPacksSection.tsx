@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Plus, Edit2, Trash2, Lock, Map, Clock, CheckCircle, X } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { adminSessionManager } from '../../../utils/adminSessionManager';
 
 interface PermissionPack {
   id: string;
@@ -56,15 +57,25 @@ export function PermissionPacksSection() {
 
   const loadPacks = async () => {
     try {
-      const { data, error } = await supabase
-        .from('permission_packs')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const session = adminSessionManager.getSession();
+      if (!session) {
+        throw new Error('لا توجد جلسة نشطة');
+      }
+
+      const { data, error } = await supabase.rpc('admin_get_all_permission_packs', {
+        p_staff_id: session.staff_id
+      });
 
       if (error) throw error;
-      setPacks(data || []);
-    } catch (error) {
+
+      if (data?.success) {
+        setPacks(data.packs || []);
+      } else {
+        throw new Error(data?.message || 'فشل في تحميل الحزم');
+      }
+    } catch (error: any) {
       console.error('Error loading packs:', error);
+      alert(error?.message || 'حدث خطأ أثناء تحميل الحزم');
     } finally {
       setLoading(false);
     }
@@ -74,16 +85,27 @@ export function PermissionPacksSection() {
     if (!confirm('هل أنت متأكد من حذف هذه الحزمة؟')) return;
 
     try {
-      const { error } = await supabase
-        .from('permission_packs')
-        .delete()
-        .eq('id', id);
+      const session = adminSessionManager.getSession();
+      if (!session) {
+        throw new Error('لا توجد جلسة نشطة');
+      }
+
+      const { data, error } = await supabase.rpc('admin_delete_permission_pack', {
+        p_staff_id: session.staff_id,
+        p_pack_id: id
+      });
 
       if (error) throw error;
-      loadPacks();
-    } catch (error) {
+
+      if (data?.success) {
+        alert(data.message);
+        loadPacks();
+      } else {
+        throw new Error(data?.message || 'فشل في حذف الحزمة');
+      }
+    } catch (error: any) {
       console.error('Error deleting pack:', error);
-      alert('حدث خطأ أثناء الحذف');
+      alert(error?.message || 'حدث خطأ أثناء الحذف');
     }
   };
 
@@ -225,15 +247,26 @@ function CreatePackModal({ pack, onClose, onSuccess }: CreatePackModalProps) {
 
   const loadPackPermissions = async (packId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('pack_permissions')
-        .select('*')
-        .eq('pack_id', packId);
+      const session = adminSessionManager.getSession();
+      if (!session) {
+        throw new Error('لا توجد جلسة نشطة');
+      }
+
+      const { data, error } = await supabase.rpc('admin_get_pack_permissions', {
+        p_staff_id: session.staff_id,
+        p_pack_id: packId
+      });
 
       if (error) throw error;
-      setPermissions(data || []);
-    } catch (error) {
+
+      if (data?.success) {
+        setPermissions(data.permissions || []);
+      } else {
+        throw new Error(data?.message || 'فشل في تحميل الصلاحيات');
+      }
+    } catch (error: any) {
       console.error('Error loading permissions:', error);
+      alert(error?.message || 'حدث خطأ أثناء تحميل الصلاحيات');
     }
   };
 
@@ -280,52 +313,86 @@ function CreatePackModal({ pack, onClose, onSuccess }: CreatePackModalProps) {
 
     setSaving(true);
     try {
-      let packId = pack?.id;
-
-      if (pack) {
-        const { error } = await supabase
-          .from('permission_packs')
-          .update(formData)
-          .eq('id', pack.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('permission_packs')
-          .insert([formData])
-          .select()
-          .single();
-        if (error) throw error;
-        packId = data.id;
+      const session = adminSessionManager.getSession();
+      if (!session) {
+        throw new Error('لا توجد جلسة نشطة');
       }
 
+      let packId = pack?.id;
+      let result;
+
+      if (pack) {
+        // تحديث حزمة موجودة
+        const { data, error } = await supabase.rpc('admin_update_permission_pack', {
+          p_staff_id: session.staff_id,
+          p_pack_id: pack.id,
+          p_name: formData.name,
+          p_description: formData.description,
+          p_target_boards: formData.target_boards,
+          p_requires_pin: formData.requires_pin,
+          p_session_idle_minutes: formData.session_idle_minutes,
+          p_landing_route: formData.landing_route,
+          p_is_active: formData.is_active
+        });
+
+        if (error) throw error;
+        result = data;
+      } else {
+        // إنشاء حزمة جديدة
+        const { data, error } = await supabase.rpc('admin_create_permission_pack', {
+          p_staff_id: session.staff_id,
+          p_name: formData.name,
+          p_description: formData.description,
+          p_target_boards: formData.target_boards,
+          p_requires_pin: formData.requires_pin,
+          p_session_idle_minutes: formData.session_idle_minutes,
+          p_landing_route: formData.landing_route
+        });
+
+        if (error) throw error;
+        result = data;
+        packId = data?.pack?.id;
+      }
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'فشل في حفظ الحزمة');
+      }
+
+      // حذف الصلاحيات القديمة وإضافة الجديدة
       if (packId) {
-        await supabase
-          .from('pack_permissions')
-          .delete()
-          .eq('pack_id', packId);
+        // حذف الصلاحيات القديمة
+        await supabase.rpc('admin_clear_pack_permissions', {
+          p_staff_id: session.staff_id,
+          p_pack_id: packId
+        });
 
+        // إضافة الصلاحيات الجديدة
         if (permissions.length > 0) {
-          const permsToInsert = permissions
-            .filter(p => p.section)
-            .map(p => ({
-              pack_id: packId,
-              ...p
-            }));
+          const validPermissions = permissions.filter(p => p.section);
 
-          if (permsToInsert.length > 0) {
-            const { error } = await supabase
-              .from('pack_permissions')
-              .insert(permsToInsert);
-            if (error) throw error;
+          for (const perm of validPermissions) {
+            const { data: permData, error: permError } = await supabase.rpc('admin_add_pack_permission', {
+              p_staff_id: session.staff_id,
+              p_pack_id: packId,
+              p_board: perm.board,
+              p_section: perm.section,
+              p_access_level: perm.access_level,
+              p_actions: perm.actions
+            });
+
+            if (permError) {
+              console.error('Error adding permission:', permError);
+            }
           }
         }
       }
 
+      alert(result.message);
       onSuccess();
     } catch (error: any) {
       console.error('Error saving pack:', error);
       const errorMessage = error?.message || 'حدث خطأ غير معروف';
-      alert(`حدث خطأ أثناء الحفظ:\n${errorMessage}\n\nتأكد من أنك مسجل دخول كمدير نظام`);
+      alert(`حدث خطأ أثناء الحفظ:\n${errorMessage}`);
     } finally {
       setSaving(false);
     }
