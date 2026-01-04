@@ -10,9 +10,8 @@ export function B2FAdminPage() {
   const platformRole = session?.role || null;
 
   const handleClose = () => {
-    // Clear session and return to login
-    adminSessionManager.destroySession();
-    navigate('/admin/access', { replace: true });
+    // Return to HQ Dashboard
+    navigate('/hq', { replace: true });
   };
 
   return (

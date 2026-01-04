@@ -405,16 +405,17 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={onClose}
-                className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 active:scale-95 font-bold"
+                className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-200 hover:scale-105 active:scale-95 font-bold shadow-lg"
               >
-                <LogOut className="w-4 h-4" />
-                <span>خروج</span>
+                <ArrowRight className="w-4 h-4" />
+                <span>العودة للإدارة</span>
               </button>
               <button
                 onClick={onClose}
-                className="md:hidden p-2 md:p-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+                className="md:hidden p-2 md:p-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+                title="العودة للإدارة العليا"
               >
-                <LogOut className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -495,7 +496,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           <p className="text-sm text-gray-600">جميع أدوات وأقسام إدارة نظام استثمار أشجار المزارع - منظمة بشكل احترافي</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="space-y-8">
           {tabSections.map((section, sectionIndex) => {
             const SectionIcon = section.icon;
             let globalIndex = 0;
@@ -504,66 +505,66 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
             }
 
             return (
-              <>
-                <div key={`section-${sectionIndex}`} className="col-span-1 lg:col-span-3">
-                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${section.color} flex items-center justify-center shadow-lg`}>
-                      <SectionIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-base md:text-lg font-black text-gray-900">{section.title}</h3>
-                    </div>
+              <div key={`section-${sectionIndex}`} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${section.color} flex items-center justify-center shadow-lg`}>
+                    <SectionIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-base md:text-lg font-black text-gray-900">{section.title}</h3>
                   </div>
                 </div>
 
-                {section.tabs.map((tab, tabIndex) => {
-                  const Icon = tab.icon;
-                  const currentGlobalIndex = globalIndex + tabIndex;
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {section.tabs.map((tab, tabIndex) => {
+                    const Icon = tab.icon;
+                    const currentGlobalIndex = globalIndex + tabIndex;
 
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className="group relative bg-white rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:scale-[1.02] active:scale-[0.98]"
-                      style={{
-                        animationDelay: `${currentGlobalIndex * 50}ms`
-                      }}
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${tab.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className="group relative bg-white rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:scale-[1.02] active:scale-[0.98]"
+                        style={{
+                          animationDelay: `${currentGlobalIndex * 50}ms`
+                        }}
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${tab.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
 
-                      <div className="relative">
-                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${tab.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-3`}>
-                          <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                        <div className="relative">
+                          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${tab.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-3`}>
+                            <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                          </div>
+
+                          <h4 className="text-base md:text-lg font-black text-gray-900 mb-2 min-h-[3.5rem] flex items-center">
+                            {tab.title}
+                          </h4>
+                          {tab.badge && (
+                            <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${tab.gradient} text-white shadow-sm mb-2`}>
+                              {tab.badge}
+                            </span>
+                          )}
+                          <p className="text-xs md:text-sm text-gray-600 leading-relaxed mb-3 min-h-[2.5rem]">
+                            {tab.description}
+                          </p>
+
+                          <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
+                            <span>فتح</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
                         </div>
 
-                        <h4 className="text-base md:text-lg font-black text-gray-900 mb-2">
-                          {tab.title}
-                        </h4>
-                        {tab.badge && (
-                          <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${tab.gradient} text-white shadow-sm mb-2`}>
-                            {tab.badge}
-                          </span>
-                        )}
-                        <p className="text-xs md:text-sm text-gray-600 leading-relaxed mb-3">
-                          {tab.description}
-                        </p>
-
-                        <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
-                          <span>فتح</span>
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                    </button>
-                  );
-                })}
-              </>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-blue-100 shadow-lg">
+        <div className="mt-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-blue-100 shadow-lg">
           <div className="flex items-start gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
               <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -577,15 +578,15 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
               <div className="space-y-2 text-xs md:text-sm text-blue-800">
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed"><strong>1. إدارة المزارع → 2. العروض → 3. المبيعات → 4. المالية → 5. العقود → 6. التشغيل → 7. خدمة المستثمر</strong></p>
+                  <p className="leading-relaxed"><strong>1. المزارع → 2. العروض → 3. المبيعات → 4. المالية → 5. العقود → 6. التشغيل → 7. خدمة المستثمر</strong></p>
                 </div>
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed">البطاقات مرتبة حسب تسلسل العمليات الفعلي</p>
+                  <p className="leading-relaxed">البطاقات منظمة ومرتبة حسب تسلسل العمليات</p>
                 </div>
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mt-1.5 flex-shrink-0 shadow-sm"></div>
-                  <p className="leading-relaxed">كل مرحلة لها رقمها ووصفها الواضح</p>
+                  <p className="leading-relaxed">كل قسم مجمّع في مجموعة واحدة لسهولة التصفح</p>
                 </div>
               </div>
             </div>
