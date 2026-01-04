@@ -16,8 +16,6 @@ interface PaymentRequest {
   number_of_trees: number;
   total_amount: number;
   status: string;
-  payment_receipt_url: string | null;
-  payment_method: string | null;
   created_at: string;
   investor_name: string;
 }
@@ -79,7 +77,7 @@ export default function InvestorFinanceView() {
       setLoadingRequests(true);
       const { data, error } = await supabase
         .from('b2f_sales_requests')
-        .select('id, tree_type, number_of_trees, total_amount, status, payment_receipt_url, payment_method, created_at, investor_name')
+        .select('id, tree_type, number_of_trees, total_amount, status, created_at, investor_name')
         .eq('investor_phone', account.contact_phone)
         .order('created_at', { ascending: false });
 
@@ -718,18 +716,6 @@ export default function InvestorFinanceView() {
                       </span>
                     </div>
                   </div>
-
-                  {/* طريقة الدفع */}
-                  {request.payment_method && (
-                    <div className="bg-blue-50 rounded-lg p-3 mb-3">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-blue-600" />
-                        <span className="text-xs text-blue-600 font-bold">
-                          طريقة الدفع: {getPaymentMethodName(request.payment_method)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
 
                   {/* تاريخ الطلب */}
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
