@@ -164,9 +164,15 @@ export default function FarmOperationPage({ farmId, onBack }: FarmOperationPageP
     if (!farm) return;
 
     try {
+      // جلب staff_id من الجلسة
+      const sessionData = localStorage.getItem('platform_staff_session');
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      const staffId = session?.staff_id || null;
+
       const { data, error } = await supabase.rpc('create_farm_operation', {
         p_farm_id: farmId,
-        p_initial_phase: 'preparation'
+        p_initial_phase: 'preparation',
+        p_staff_id: staffId
       });
 
       if (error) throw error;

@@ -100,11 +100,17 @@ export default function FarmManagerApprovalsView({ farmId }: Props) {
 
     setProcessing(true);
     try {
+      // جلب staff_id من الجلسة
+      const sessionData = localStorage.getItem('platform_staff_session');
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      const staffId = session?.staff_id || null;
+
       // اعتماد المهمة
       const { data: approvalData, error: approvalError } = await supabase
         .rpc('approve_task_proof', {
           p_task_id: selectedTask.id,
-          p_approval_notes: notes || null
+          p_approval_notes: notes || null,
+          p_approver_staff_id: staffId
         });
 
       if (approvalError) throw approvalError;
@@ -219,10 +225,16 @@ export default function FarmManagerApprovalsView({ farmId }: Props) {
 
     setProcessing(true);
     try {
+      // جلب staff_id من الجلسة
+      const sessionData = localStorage.getItem('platform_staff_session');
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      const staffId = session?.staff_id || null;
+
       const { data, error } = await supabase
         .rpc('reject_task_proof', {
           p_task_id: selectedTask.id,
-          p_rejection_reason: notes
+          p_rejection_reason: notes,
+          p_rejecter_staff_id: staffId
         });
 
       if (error) throw error;
