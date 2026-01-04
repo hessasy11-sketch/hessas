@@ -140,25 +140,55 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     return `STAFF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`.toUpperCase();
   };
 
-  const generateStaffCode = async () => {
-    const { data: lastStaff } = await supabase
-      .from('platform_staff')
-      .select('staff_code')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const generateStaffCode = async (): Promise<string> => {
+    const maxRetries = 5;
 
-    let nextNumber = 1;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const { data: allStaff } = await supabase
+          .from('platform_staff')
+          .select('staff_code')
+          .order('created_at', { ascending: false });
 
-    if (lastStaff?.staff_code) {
-      const match = lastStaff.staff_code.match(/A-(\d+)/);
-      if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
+        let maxNumber = 0;
+
+        if (allStaff && allStaff.length > 0) {
+          allStaff.forEach(staff => {
+            if (staff.staff_code) {
+              const numericMatch = staff.staff_code.match(/A-(\d+)-/);
+              if (numericMatch) {
+                const num = parseInt(numericMatch[1], 10);
+                if (num > maxNumber) maxNumber = num;
+              }
+            }
+          });
+        }
+
+        const nextNumber = maxNumber + 1;
+        const timestamp = Date.now().toString().slice(-6);
+        const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const newCode = `A-${String(nextNumber).padStart(5, '0')}-${timestamp}${randomSuffix}`;
+
+        const { data: existingCode } = await supabase
+          .from('platform_staff')
+          .select('staff_code')
+          .eq('staff_code', newCode)
+          .maybeSingle();
+
+        if (!existingCode) {
+          console.log(`✅ Generated unique staff code: ${newCode}`);
+          return newCode;
+        }
+
+        console.log(`⚠️ Code collision detected on attempt ${attempt + 1}, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Error generating staff code:', error);
+        if (attempt === maxRetries - 1) throw error;
       }
     }
 
-    const timestamp = Date.now().toString().slice(-4);
-    return `A-${String(nextNumber).padStart(5, '0')}-${timestamp}`;
+    throw new Error('فشل توليد رقم موظف فريد بعد عدة محاولات');
   };
 
   const handleNext = () => {
@@ -187,81 +217,115 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     }
 
     setLoading(true);
-    try {
-      const { data: existing } = await supabase
-        .from('platform_staff')
-        .select('id')
-        .eq('phone_number', formData.phone_number)
-        .maybeSingle();
+    const maxRetries = 3;
 
-      if (existing) {
-        alert('رقم الجوال مسجل مسبقاً لموظف آخر');
-        setLoading(false);
-        return;
-      }
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Attempt ${attempt + 1} to create staff member...`);
 
-      const qrToken = formData.enable_qr ? generateQRToken() : null;
-      const staffCode = await generateStaffCode();
-      const pinCode = formData.requires_pin && formData.pin_code ? formData.pin_code : null;
+        const { data: existing } = await supabase
+          .from('platform_staff')
+          .select('id')
+          .eq('phone_number', formData.phone_number)
+          .maybeSingle();
 
-      const { data: staffData, error: staffError } = await supabase
-        .from('platform_staff')
-        .insert({
-          phone_number: formData.phone_number,
-          full_name: formData.full_name,
-          role: formData.permission_template,
-          department: formData.department,
-          job_title: formData.job_title,
-          reports_to: formData.reports_to || null,
-          qr_code: qrToken,
-          requires_pin: formData.requires_pin,
-          pin_code: pinCode,
-          is_active: true,
-          staff_code: staffCode
-        })
-        .select()
-        .single();
+        if (existing) {
+          alert('رقم الجوال مسجل مسبقاً لموظف آخر');
+          setLoading(false);
+          return;
+        }
 
-      if (staffError) throw staffError;
+        const qrToken = formData.enable_qr ? generateQRToken() : null;
+        const staffCode = await generateStaffCode();
+        const pinCode = formData.requires_pin && formData.pin_code ? formData.pin_code : null;
 
-      if (staffData && typeof staffData === 'object' && 'id' in staffData) {
-        await supabase.from('staff_permissions').insert({
-          staff_id: staffData.id as string,
-          permission_template: formData.permission_template,
-          can_create_tasks: formData.can_create_tasks,
-          can_approve_tasks: formData.can_approve_tasks,
-          can_send_reports: formData.can_send_reports
-        });
+        console.log(`📝 Inserting staff with code: ${staffCode}`);
 
-        await supabase.from('platform_audit_logs').insert({
-          action_type: 'staff_created',
-          target_type: 'staff',
-          target_id: staffData.id as string,
-          details: {
-            staff_name: formData.full_name,
+        const { data: staffData, error: staffError } = await supabase
+          .from('platform_staff')
+          .insert({
+            phone_number: formData.phone_number,
+            full_name: formData.full_name,
+            role: formData.permission_template,
             department: formData.department,
-            role: formData.permission_template
+            job_title: formData.job_title,
+            reports_to: formData.reports_to || null,
+            qr_code: qrToken,
+            requires_pin: formData.requires_pin,
+            pin_code: pinCode,
+            is_active: true,
+            staff_code: staffCode
+          })
+          .select()
+          .single();
+
+        if (staffError) {
+          if (staffError.code === '23505' && attempt < maxRetries - 1) {
+            console.warn(`⚠️ Duplicate staff_code on attempt ${attempt + 1}, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            continue;
           }
-        });
+          throw staffError;
+        }
 
-        setStaffCard({
-          id: staffData.id as string,
-          staff_code: staffCode,
-          full_name: formData.full_name,
-          job_title: formData.job_title,
-          department: formData.department,
-          qr_code: qrToken || '',
-          pin_code: pinCode || ''
-        });
+        if (staffData && typeof staffData === 'object' && 'id' in staffData) {
+          console.log(`✅ Staff member created successfully with ID: ${staffData.id}`);
 
-        setStep(3 as Step);
+          await supabase.from('staff_permissions').insert({
+            staff_id: staffData.id as string,
+            permission_template: formData.permission_template,
+            can_create_tasks: formData.can_create_tasks,
+            can_approve_tasks: formData.can_approve_tasks,
+            can_send_reports: formData.can_send_reports
+          });
+
+          await supabase.from('platform_audit_logs').insert({
+            action_type: 'staff_created',
+            target_type: 'staff',
+            target_id: staffData.id as string,
+            details: {
+              staff_name: formData.full_name,
+              department: formData.department,
+              role: formData.permission_template
+            }
+          });
+
+          setStaffCard({
+            id: staffData.id as string,
+            staff_code: staffCode,
+            full_name: formData.full_name,
+            job_title: formData.job_title,
+            department: formData.department,
+            qr_code: qrToken || '',
+            pin_code: pinCode || ''
+          });
+
+          setStep(3 as Step);
+          setLoading(false);
+          return;
+        }
+      } catch (error: any) {
+        console.error(`❌ Error on attempt ${attempt + 1}:`, error);
+
+        if (attempt === maxRetries - 1) {
+          let errorMessage = 'فشل إضافة الموظف';
+
+          if (error.code === '23505') {
+            errorMessage = 'حدث خطأ في توليد رقم موظف فريد. يرجى المحاولة مرة أخرى.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          alert(errorMessage);
+          setLoading(false);
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
-    } catch (error: any) {
-      console.error('Error creating staff:', error);
-      alert(error.message || 'فشل إضافة الموظف');
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const copyWhatsAppMessage = () => {
