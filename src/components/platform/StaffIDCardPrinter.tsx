@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { QrCode, Download, Printer, User, Briefcase, Hash, Building2, Shield, Scan, BadgeCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { QRScannerValidator } from './QRScannerValidator';
+import QRCodeLib from 'qrcode';
 
 interface StaffMember {
   id: string;
@@ -19,10 +20,36 @@ export function StaffIDCardPrinter() {
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'cards' | 'scanner'>('cards');
+  const [qrDataURLs, setQrDataURLs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadStaffList();
   }, []);
+
+  useEffect(() => {
+    if (staffList.length > 0) {
+      generateAllQRs();
+    }
+  }, [staffList]);
+
+  const generateAllQRs = async () => {
+    const urls: Record<string, string> = {};
+    for (const staff of staffList) {
+      if (staff.qr_code) {
+        try {
+          const dataURL = await QRCodeLib.toDataURL(staff.qr_code, {
+            width: 300,
+            margin: 1,
+            color: { dark: '#000000', light: '#FFFFFF' }
+          });
+          urls[staff.id] = dataURL;
+        } catch (error) {
+          console.error(`Error generating QR for ${staff.staff_code}:`, error);
+        }
+      }
+    }
+    setQrDataURLs(urls);
+  };
 
   const loadStaffList = async () => {
     try {
@@ -50,8 +77,14 @@ export function StaffIDCardPrinter() {
 
   const downloadQRAsImage = async (staff: StaffMember) => {
     try {
+      const dataURL = await QRCodeLib.toDataURL(staff.qr_code, {
+        width: 500,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+
       const link = document.createElement('a');
-      link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(staff.qr_code)}`;
+      link.href = dataURL;
       link.download = `QR-${staff.staff_code}-${staff.full_name}.png`;
       link.click();
     } catch (error) {
@@ -163,17 +196,15 @@ export function StaffIDCardPrinter() {
             {staff.qr_code && (
               <div className="bg-gray-50 rounded-lg p-3 mb-4">
                 <div className="bg-white p-2 rounded inline-block">
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: `
-                        <div id="qr-${staff.id}" style="width: 100px; height: 100px;">
-                          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(staff.qr_code)}"
-                               alt="QR Code"
-                               style="width: 100%; height: 100%;" />
-                        </div>
-                      `
-                    }}
-                  />
+                  {qrDataURLs[staff.id] ? (
+                    <img
+                      src={qrDataURLs[staff.id]}
+                      alt="QR Code"
+                      className="w-24 h-24"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-100 animate-pulse"></div>
+                  )}
                 </div>
               </div>
             )}
@@ -215,11 +246,15 @@ export function StaffIDCardPrinter() {
             {/* QR Code */}
             <div className="bg-white rounded-2xl p-6 mb-6">
               <div className="flex justify-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(selectedStaff.qr_code)}`}
-                  alt="QR Code"
-                  className="w-48 h-48"
-                />
+                {qrDataURLs[selectedStaff.id] ? (
+                  <img
+                    src={qrDataURLs[selectedStaff.id]}
+                    alt="QR Code"
+                    className="w-48 h-48"
+                  />
+                ) : (
+                  <div className="w-48 h-48 bg-gray-100 animate-pulse"></div>
+                )}
               </div>
             </div>
 

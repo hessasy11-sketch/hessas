@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QrCode, Download, Shield, User, Briefcase, Building2, Hash, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import QRCodeLib from 'qrcode';
 
 interface StaffData {
   id: string;
@@ -17,14 +18,41 @@ interface StaffData {
 export function MyQRCodeView() {
   const [staffData, setStaffData] = useState<StaffData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [qrDataURL, setQrDataURL] = useState<string>('');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     loadMyQRCode();
   }, []);
 
+  useEffect(() => {
+    if (staffData?.qr_code) {
+      generateQRCode(staffData.qr_code);
+    }
+  }, [staffData]);
+
+  const generateQRCode = async (data: string) => {
+    try {
+      const dataURL = await QRCodeLib.toDataURL(data, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrDataURL(dataURL);
+      console.log('✅ QR Code generated successfully');
+    } catch (error) {
+      console.error('❌ Error generating QR Code:', error);
+    }
+  };
+
   const loadMyQRCode = async () => {
     try {
       const sessionStaffId = localStorage.getItem('admin_session_staff_id');
+
+      console.log('🔍 Session Staff ID:', sessionStaffId);
 
       if (!sessionStaffId) {
         throw new Error('لم يتم العثور على بيانات الجلسة');
@@ -36,23 +64,27 @@ export function MyQRCodeView() {
         .eq('id', sessionStaffId)
         .maybeSingle();
 
+      console.log('📦 QR Data:', data);
+      console.log('❌ QR Error:', error);
+
       if (error) throw error;
       if (!data) throw new Error('لم يتم العثور على بياناتك');
+      if (!data.qr_code) throw new Error('لم يتم إنشاء QR Code لك بعد');
 
       setStaffData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading QR:', error);
-      alert('فشل تحميل بياناتك');
+      alert(error.message || 'فشل تحميل بياناتك');
     } finally {
       setLoading(false);
     }
   };
 
   const downloadQR = () => {
-    if (!staffData) return;
+    if (!qrDataURL || !staffData) return;
 
     const link = document.createElement('a');
-    link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(staffData.qr_code)}`;
+    link.href = qrDataURL;
     link.download = `My-QR-${staffData.staff_code}.png`;
     link.click();
   };
@@ -95,11 +127,20 @@ export function MyQRCodeView() {
           <div className="p-8">
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-6">
               <div className="bg-white rounded-xl p-4 shadow-inner">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(staffData.qr_code)}`}
-                  alt="My QR Code"
-                  className="w-full h-auto"
-                />
+                {qrDataURL ? (
+                  <img
+                    src={qrDataURL}
+                    alt="My QR Code"
+                    className="w-full h-auto"
+                  />
+                ) : (
+                  <div className="w-full aspect-square flex items-center justify-center bg-gray-100">
+                    <div className="text-center">
+                      <QrCode className="w-12 h-12 text-gray-400 mx-auto mb-2 animate-pulse" />
+                      <p className="text-sm text-gray-500">جاري إنشاء QR Code...</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Status Badge */}

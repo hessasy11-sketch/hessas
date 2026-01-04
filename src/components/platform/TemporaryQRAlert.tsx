@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, X, QrCode, Download, CheckCircle2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import QRCodeLib from 'qrcode';
 
 interface TemporaryQRData {
   has_temporary_qr: boolean;
@@ -49,8 +50,14 @@ export function TemporaryQRAlert() {
 
       if (data && data.success) {
         setNewQRToken(data.qr_token);
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qr_token)}`;
-        setQrCodeDataUrl(qrUrl);
+
+        const qrDataUrl = await QRCodeLib.toDataURL(data.qr_token, {
+          width: 400,
+          margin: 2,
+          color: { dark: '#000000', light: '#FFFFFF' }
+        });
+
+        setQrCodeDataUrl(qrDataUrl);
         setShowSuccess(true);
         setQrData(null);
       }

@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Shield, Lock } from 'lucide-react';
+import QRCodeLib from 'qrcode';
 
 interface StaffAccessCardProps {
   staffName: string;
@@ -10,7 +12,24 @@ interface StaffAccessCardProps {
 }
 
 export function StaffAccessCard({ staffName, jobTitle, department, qrToken, requiresPin, onClose }: StaffAccessCardProps) {
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrToken)}`;
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+
+  useEffect(() => {
+    generateQR();
+  }, [qrToken]);
+
+  const generateQR = async () => {
+    try {
+      const dataURL = await QRCodeLib.toDataURL(qrToken, {
+        width: 300,
+        margin: 1,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+      setQrCodeUrl(dataURL);
+    } catch (error) {
+      console.error('Error generating QR:', error);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -72,7 +91,13 @@ export function StaffAccessCard({ staffName, jobTitle, department, qrToken, requ
 
               <div className="flex justify-center mb-6">
                 <div className="bg-white p-4 rounded-xl border-4 border-slate-200 shadow-lg">
-                  <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+                  ) : (
+                    <div className="w-48 h-48 flex items-center justify-center bg-gray-100 animate-pulse">
+                      <span className="text-xs text-gray-500">جاري التحميل...</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
