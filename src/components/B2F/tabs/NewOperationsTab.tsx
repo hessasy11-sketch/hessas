@@ -95,7 +95,7 @@ export default function NewOperationsTab() {
 
       // جلب البطاقات التشغيلية
       let query = supabase
-        .from('b2f_tree_operations')
+        .from('b2f_farm_operations')
         .select(`
           *,
           farm:b2f_farms(name, location, city)

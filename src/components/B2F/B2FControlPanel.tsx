@@ -118,7 +118,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
         supabase.from('b2f_sales_requests').select('id', { count: 'exact', head: true }).in('status', ['receipt_needs_revision', 'receipt_under_review']),
         supabase.from('b2f_sales_requests').select('id', { count: 'exact', head: true }).eq('status', 'receipt_approved'),
         supabase.from('b2f_sales_requests').select('id', { count: 'exact', head: true }).eq('status', 'contract_issued'),
-        supabase.from('b2f_tree_operations').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('b2f_farm_operations').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('b2f_investor_accounts').select('id', { count: 'exact', head: true }),
         supabase.from('b2f_notifications').select('id', { count: 'exact', head: true }),
         supabase.from('b2f_notifications').select('id', { count: 'exact', head: true }).eq('is_read', false)
