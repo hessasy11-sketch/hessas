@@ -163,7 +163,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
 
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.full_name || !formData.phone_number || !formData.job_title || !formData.department) {
+      if (!formData.full_name || !formData.phone_number || !formData.job_title) {
         alert('يرجى تعبئة جميع الحقول الإلزامية');
         return;
       }
@@ -181,7 +181,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
   };
 
   const handleSubmit = async () => {
-    if (!formData.full_name || !formData.phone_number || !formData.department) {
+    if (!formData.full_name || !formData.phone_number) {
       alert('يرجى تعبئة جميع الحقول الإلزامية');
       return;
     }
@@ -452,7 +452,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
                   <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
                     <Building className="w-4 h-4 text-emerald-400" />
                     القسم
-                    <span className="text-red-400">*</span>
+                    <span className="text-gray-500 text-xs">(اختياري)</span>
                   </label>
                   <select
                     value={formData.department}
