@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Settings, Users, Shield, Link, BarChart3, Zap } from 'lucide-react';
+import { Building2, Plus, Settings, Users, Shield, Link, BarChart3, Zap, Trash2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { CreateDepartmentModal } from './CreateDepartmentModal';
 import { DepartmentDetailsView } from './DepartmentDetailsView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
+import { adminSessionManager } from '../../../utils/adminSessionManager';
 
 interface Department {
   id: string;
@@ -27,10 +28,39 @@ export function DynamicDepartmentsHub() {
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [activeView, setActiveView] = useState<'list' | 'details' | 'integrations'>('list');
   const [loading, setLoading] = useState(true);
+  const [canDeleteDepartments, setCanDeleteDepartments] = useState(false);
 
   useEffect(() => {
     loadDepartments();
+    checkDeletePermission();
   }, []);
+
+  const checkDeletePermission = async () => {
+    try {
+      const session = adminSessionManager.getSession();
+      if (!session) {
+        setCanDeleteDepartments(false);
+        return;
+      }
+
+      if (session.is_super_admin || session.is_platform_owner) {
+        setCanDeleteDepartments(true);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('department_permissions')
+        .select('*')
+        .eq('permission_key', 'delete_any_department')
+        .eq('is_granted', true)
+        .maybeSingle();
+
+      setCanDeleteDepartments(!!data);
+    } catch (error) {
+      console.error('Error checking delete permission:', error);
+      setCanDeleteDepartments(false);
+    }
+  };
 
   const loadDepartments = async () => {
     try {
@@ -81,6 +111,52 @@ export function DynamicDepartmentsHub() {
       alert('خطأ في تحميل الأقسام: ' + (error as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteDepartment = async (deptId: string, deptName: string) => {
+    if (!canDeleteDepartments) {
+      alert('ليس لديك صلاحية حذف الأقسام');
+      return;
+    }
+
+    if (!confirm(`هل أنت متأكد من حذف القسم "${deptName}"؟\n\nسيتم حذف جميع البيانات المرتبطة بهذا القسم بشكل نهائي.`)) {
+      return;
+    }
+
+    try {
+      await supabase
+        .from('department_staff_assignments')
+        .delete()
+        .eq('department_id', deptId);
+
+      await supabase
+        .from('department_permissions')
+        .delete()
+        .eq('department_id', deptId);
+
+      await supabase
+        .from('department_tasks')
+        .delete()
+        .eq('department_id', deptId);
+
+      await supabase
+        .from('system_integrations')
+        .delete()
+        .eq('department_id', deptId);
+
+      const { error } = await supabase
+        .from('platform_departments')
+        .delete()
+        .eq('id', deptId);
+
+      if (error) throw error;
+
+      alert('تم حذف القسم بنجاح');
+      loadDepartments();
+    } catch (error: any) {
+      console.error('Error deleting department:', error);
+      alert('خطأ في حذف القسم: ' + error.message);
     }
   };
 
@@ -272,7 +348,7 @@ export function DynamicDepartmentsHub() {
               </div>
 
               {/* Actions */}
-              <div className="grid grid-cols-3 gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={`grid ${canDeleteDepartments ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity`}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -304,6 +380,18 @@ export function DynamicDepartmentsHub() {
                   <BarChart3 className="w-3 h-3" />
                   تقارير
                 </button>
+                {canDeleteDepartments && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDepartment(dept.id, dept.name_ar);
+                    }}
+                    className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    حذف
+                  </button>
+                )}
               </div>
             </div>
           );
