@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import FarmsTab from '../B2F/tabs/FarmsTab';
-import FarmLevelOperationsTab from '../B2F/tabs/FarmLevelOperationsTab';
 import InvestmentApprovalsTab from '../B2F/tabs/InvestmentApprovalsTab';
 import ManagementReportsView from '../B2F/admin/ManagementReportsView';
 import MyFarmsTab from '../B2F/tabs/MyFarmsTab';
+import EnhancedOperationsManagement from './EnhancedOperationsManagement';
 
 interface FarmDirector {
   id: string;
@@ -129,7 +129,20 @@ export default function ComprehensiveFarmManagement() {
         <HierarchyManagement directors={directors} />
       )}
 
-      {activeSubTab === 'operations' && <FarmLevelOperationsTab />}
+      {activeSubTab === 'operations' && (
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">إدارة التشغيل والمتابعة</h2>
+              <p className="text-gray-400 text-sm mt-1">إدارة شاملة لجميع العمليات التشغيلية مع ربط مديري المزارع والموظفين</p>
+            </div>
+          </div>
+          <EnhancedOperationsManagement />
+        </div>
+      )}
 
       {activeSubTab === 'approvals' && <InvestmentApprovalsTab />}
 
