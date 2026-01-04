@@ -45,12 +45,19 @@ export default function PaymentsCollectionTab() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
+      console.log('🔄 جاري تحميل المدفوعات قيد المراجعة...');
       const { data, error } = await supabase
         .from('v_b2f_payments_under_review')
         .select('*')
         .order('uploaded_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ خطأ في تحميل المدفوعات:', error);
+        throw error;
+      }
+
+      console.log('✅ تم تحميل المدفوعات:', data?.length || 0, 'سداد');
+      console.log('📋 البيانات:', data);
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching payments:', error);
