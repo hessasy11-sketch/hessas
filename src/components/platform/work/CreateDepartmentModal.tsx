@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Building2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Building2, Check, Hash } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface Props {
@@ -18,6 +18,23 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
     color: '#3b82f6'
   });
   const [loading, setLoading] = useState(false);
+  const [suggestedCode, setSuggestedCode] = useState<string>('');
+
+  useEffect(() => {
+    fetchNextCode();
+  }, []);
+
+  const fetchNextCode = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_available_department_code');
+      if (!error && data) {
+        setSuggestedCode(data);
+        setFormData(prev => ({ ...prev, code: data }));
+      }
+    } catch (err) {
+      console.error('Error fetching next code:', err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +83,15 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
       const resultData = (rawData as any);
 
       if (!resultData.success) {
-        throw new Error(resultData.message || 'فشل إنشاء القسم');
+        const errorMsg = resultData.message || 'فشل إنشاء القسم';
+
+        if (errorMsg.includes('الرمز موجود بالفعل')) {
+          alert('❌ الرمز المدخل موجود بالفعل!\n\nالرجاء:\n• استخدام الرمز المقترح\n• أو إدخال رمز فريد آخر');
+          await fetchNextCode();
+        } else {
+          alert('❌ خطأ: ' + errorMsg);
+        }
+        return;
       }
 
       console.log('Department created successfully:', resultData);
@@ -78,7 +103,7 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
 
     } catch (error: any) {
       console.error('Error creating department:', error);
-      alert('خطأ في إنشاء القسم: ' + (error.message || 'خطأ غير معروف'));
+      alert('❌ خطأ في إنشاء القسم: ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setLoading(false);
     }
@@ -139,14 +164,29 @@ export function CreateDepartmentModal({ onClose, onSuccess }: Props) {
               <label className="block text-sm font-bold text-gray-300 mb-2">
                 الرمز
               </label>
-              <input
-                type="text"
-                required
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                placeholder="SALES"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  placeholder="SALES"
+                />
+                <button
+                  type="button"
+                  onClick={fetchNextCode}
+                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-2"
+                  title="اقتراح رمز جديد"
+                >
+                  <Hash className="w-4 h-4" />
+                </button>
+              </div>
+              {suggestedCode && (
+                <p className="text-xs text-green-400 mt-1">
+                  ✓ الرمز المقترح التالي: {suggestedCode}
+                </p>
+              )}
               <p className="text-xs text-gray-500 mt-1">رمز فريد للقسم (سيتم تحويله لأحرف كبيرة)</p>
             </div>
 
