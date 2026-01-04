@@ -146,125 +146,169 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
     }
   };
 
-  const tabs: Tab[] = [
+  const tabSections = [
     {
-      id: 'farms',
-      title: '1️⃣ إدارة المزارع',
+      title: 'إدارة الاستثمار الميدانية',
       icon: Sprout,
-      gradient: 'from-emerald-500 to-teal-600',
-      iconBg: 'from-emerald-400 to-teal-500',
-      description: 'إضافة وإدارة المزارع المرجعية',
-      badge: `${stats.totalFarms} مزرعة`
+      color: 'from-green-600 to-emerald-700',
+      tabs: [
+        {
+          id: 'my_farms' as TabId,
+          title: 'مزارعي',
+          icon: MapPin,
+          gradient: 'from-green-500 to-emerald-600',
+          iconBg: 'from-green-400 to-emerald-500',
+          description: 'المزارع المُسندة لي كمدير استثمار',
+          badge: 'مدير استثمار'
+        },
+        {
+          id: 'investment_approvals' as TabId,
+          title: 'اعتمادات الاستثمار',
+          icon: CheckCircle,
+          gradient: 'from-orange-500 to-amber-600',
+          iconBg: 'from-orange-400 to-amber-500',
+          description: 'المهام التي تحتاج موافقتي الاستثمارية',
+          badge: 'اعتماد'
+        }
+      ]
     },
     {
-      id: 'opportunities',
-      title: '2️⃣ العروض الاستثمارية',
+      title: 'المنتجات والعروض',
       icon: TrendingUp,
-      gradient: 'from-amber-500 to-orange-600',
-      iconBg: 'from-amber-400 to-orange-500',
-      description: 'إنشاء وإدارة العروض المرتبطة بالمزارع',
-      badge: `${stats.totalOpportunities} عرض`
+      color: 'from-amber-600 to-orange-700',
+      tabs: [
+        {
+          id: 'farms' as TabId,
+          title: 'إدارة المزارع',
+          icon: Sprout,
+          gradient: 'from-emerald-500 to-teal-600',
+          iconBg: 'from-emerald-400 to-teal-500',
+          description: 'إضافة وإدارة المزارع المرجعية',
+          badge: `${stats.totalFarms} مزرعة`
+        },
+        {
+          id: 'opportunities' as TabId,
+          title: 'العروض الاستثمارية',
+          icon: TrendingUp,
+          gradient: 'from-amber-500 to-orange-600',
+          iconBg: 'from-amber-400 to-orange-500',
+          description: 'إنشاء وإدارة العروض المرتبطة بالمزارع',
+          badge: `${stats.totalOpportunities} عرض`
+        }
+      ]
     },
     {
-      id: 'finance',
-      title: '3️⃣ المالية',
+      title: 'المالية والمبيعات',
       icon: DollarSign,
-      gradient: 'from-emerald-600 to-teal-600',
-      iconBg: 'from-emerald-500 to-teal-500',
-      description: 'إدارة الفواتير + بوابات الدفع + التحصيل',
-      badge: `${stats.collectionQueue} في التحصيل`
+      color: 'from-blue-600 to-cyan-700',
+      tabs: [
+        {
+          id: 'finance' as TabId,
+          title: 'المالية',
+          icon: DollarSign,
+          gradient: 'from-emerald-600 to-teal-600',
+          iconBg: 'from-emerald-500 to-teal-500',
+          description: 'إدارة الفواتير + بوابات الدفع + التحصيل',
+          badge: `${stats.collectionQueue} في التحصيل`
+        },
+        {
+          id: 'sales' as TabId,
+          title: 'المبيعات',
+          icon: FileCheck,
+          gradient: 'from-blue-500 to-cyan-600',
+          iconBg: 'from-blue-400 to-cyan-500',
+          description: 'استقبال الطلبات + فتح الدفع + الإيصالات',
+          badge: `${stats.totalSalesRequests} طلب`
+        },
+        {
+          id: 'contracts' as TabId,
+          title: 'العقود',
+          icon: FileText,
+          gradient: 'from-indigo-500 to-purple-600',
+          iconBg: 'from-indigo-400 to-purple-500',
+          description: 'إدارة عقود الاستنفاع الصادرة',
+          badge: `${stats.totalContracts} عقد`
+        }
+      ]
     },
     {
-      id: 'sales',
-      title: '4️⃣ المبيعات',
-      icon: FileCheck,
-      gradient: 'from-blue-500 to-cyan-600',
-      iconBg: 'from-blue-400 to-cyan-500',
-      description: 'استقبال الطلبات + فتح الدفع + الإيصالات',
-      badge: `${stats.totalSalesRequests} طلب`
-    },
-    {
-      id: 'contracts',
-      title: '5️⃣ العقود',
-      icon: FileText,
-      gradient: 'from-indigo-500 to-purple-600',
-      iconBg: 'from-indigo-400 to-purple-500',
-      description: 'إدارة عقود الاستنفاع الصادرة',
-      badge: `${stats.totalContracts} عقد`
-    },
-    {
-      id: 'operations',
-      title: '6️⃣ التشغيل والمتابعة',
+      title: 'العمليات والتشغيل',
       icon: Activity,
-      gradient: 'from-teal-500 to-emerald-600',
-      iconBg: 'from-teal-400 to-emerald-500',
-      description: 'نظام التشغيل المركزي - تحديث واحد يصل لجميع المستثمرين',
-      badge: 'مركزي'
+      color: 'from-teal-600 to-emerald-700',
+      tabs: [
+        {
+          id: 'operations' as TabId,
+          title: 'التشغيل والمتابعة',
+          icon: Activity,
+          gradient: 'from-teal-500 to-emerald-600',
+          iconBg: 'from-teal-400 to-emerald-500',
+          description: 'نظام التشغيل المركزي - تحديث واحد يصل لجميع المستثمرين',
+          badge: 'مركزي'
+        },
+        {
+          id: 'reports' as TabId,
+          title: 'تقارير التوثيق',
+          icon: FileText,
+          gradient: 'from-rose-500 to-pink-600',
+          iconBg: 'from-rose-400 to-pink-500',
+          description: 'تقارير المشرفين ومدراء المزارع المرسلة للإدارة',
+          badge: 'إدارة'
+        }
+      ]
     },
     {
-      id: 'reports',
-      title: '7️⃣ تقارير التوثيق',
-      icon: FileText,
-      gradient: 'from-rose-500 to-pink-600',
-      iconBg: 'from-rose-400 to-pink-500',
-      description: 'تقارير المشرفين ومدراء المزارع المرسلة للإدارة',
-      badge: 'إدارة'
-    },
-    {
-      id: 'investor_service',
-      title: '8️⃣ خدمة المستثمر',
+      title: 'خدمة العملاء',
       icon: UserCog,
-      gradient: 'from-purple-500 to-pink-600',
-      iconBg: 'from-purple-400 to-pink-500',
-      description: 'إدارة المستثمرين والتواصل معهم',
-      badge: `${stats.activeInvestors} مستثمر`
+      color: 'from-purple-600 to-pink-700',
+      tabs: [
+        {
+          id: 'investor_service' as TabId,
+          title: 'خدمة المستثمر',
+          icon: UserCog,
+          gradient: 'from-purple-500 to-pink-600',
+          iconBg: 'from-purple-400 to-pink-500',
+          description: 'إدارة المستثمرين والتواصل معهم',
+          badge: `${stats.activeInvestors} مستثمر`
+        },
+        {
+          id: 'notifications' as TabId,
+          title: 'الإشعارات',
+          icon: Bell,
+          gradient: 'from-teal-500 to-cyan-600',
+          iconBg: 'from-teal-400 to-cyan-500',
+          description: 'إرسال وإدارة إشعارات المستثمرين',
+          badge: `${stats.unreadNotifications} غير مقروء`
+        },
+        {
+          id: 'ai' as TabId,
+          title: 'المساعد الذكي',
+          icon: Brain,
+          gradient: 'from-violet-600 to-fuchsia-600',
+          iconBg: 'from-violet-500 to-fuchsia-500',
+          description: 'إدارة قاعدة المعرفة والتعلم الذاتي',
+          badge: 'AI'
+        }
+      ]
     },
     {
-      id: 'notifications',
-      title: '9️⃣ الإشعارات',
-      icon: Bell,
-      gradient: 'from-teal-500 to-cyan-600',
-      iconBg: 'from-teal-400 to-cyan-500',
-      description: 'إرسال وإدارة إشعارات المستثمرين',
-      badge: `${stats.unreadNotifications} غير مقروء`
-    },
-    {
-      id: 'ai',
-      title: '🔟 المساعد الذكي',
-      icon: Brain,
-      gradient: 'from-violet-600 to-fuchsia-600',
-      iconBg: 'from-violet-500 to-fuchsia-500',
-      description: 'إدارة قاعدة المعرفة والتعلم الذاتي',
-      badge: 'AI'
-    },
-    {
-      id: 'my_farms',
-      title: 'مزارعي',
-      icon: MapPin,
-      gradient: 'from-green-500 to-emerald-600',
-      iconBg: 'from-green-400 to-emerald-500',
-      description: 'المزارع المُسندة لي كمدير استثمار',
-      badge: 'مدير استثمار'
-    },
-    {
-      id: 'investment_approvals',
-      title: 'اعتمادات الاستثمار',
-      icon: CheckCircle,
-      gradient: 'from-orange-500 to-amber-600',
-      iconBg: 'from-orange-400 to-amber-500',
-      description: 'المهام التي تحتاج موافقتي الاستثمارية',
-      badge: 'اعتماد'
-    },
-    {
-      id: 'settings',
-      title: '0️⃣ إعدادات القسم',
+      title: 'الإعدادات',
       icon: Settings,
-      gradient: 'from-slate-500 to-slate-700',
-      iconBg: 'from-slate-400 to-slate-600',
-      description: 'الإعدادات العامة وتخصيص النصوص',
-      badge: 'أساسي'
+      color: 'from-slate-600 to-slate-700',
+      tabs: [
+        {
+          id: 'settings' as TabId,
+          title: 'إعدادات القسم',
+          icon: Settings,
+          gradient: 'from-slate-500 to-slate-700',
+          iconBg: 'from-slate-400 to-slate-600',
+          description: 'الإعدادات العامة وتخصيص النصوص',
+          badge: 'أساسي'
+        }
+      ]
     }
   ];
+
+  const tabs: Tab[] = tabSections.flatMap(section => section.tabs);
 
   if (activeTab) {
     const currentTab = tabs.find(t => t.id === activeTab);
@@ -422,54 +466,72 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
       </div>
 
       <div className="relative z-10 p-4 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-lg md:text-xl font-black text-gray-900 mb-2">أقسام الإدارة</h2>
-          <p className="text-sm text-gray-600">جميع أدوات وأقسام إدارة نظام استثمار أشجار المزارع</p>
+        <div className="mb-8">
+          <h2 className="text-lg md:text-xl font-black text-gray-900 mb-2">لوحة التحكم الشاملة</h2>
+          <p className="text-sm text-gray-600">جميع أدوات وأقسام إدارة نظام استثمار أشجار المزارع - منظمة بشكل احترافي</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {tabs.map((tab, index) => {
-            const Icon = tab.icon;
+        {tabSections.map((section, sectionIndex) => {
+          const SectionIcon = section.icon;
 
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="group relative bg-white rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  animationDelay: `${index * 100}ms`
-                }}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${tab.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-
-                <div className="relative">
-                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${tab.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-3`}>
-                    <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
-                  </div>
-
-                  <h3 className="text-base md:text-lg font-black text-gray-900 mb-2">
-                    {tab.title}
-                  </h3>
-                  {tab.badge && (
-                    <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${tab.gradient} text-white shadow-sm mb-2`}>
-                      {tab.badge}
-                    </span>
-                  )}
-                  <p className="text-xs md:text-sm text-gray-600 leading-relaxed mb-3">
-                    {tab.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
-                    <span>فتح</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
+          return (
+            <div key={sectionIndex} className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${section.color} flex items-center justify-center shadow-lg`}>
+                  <SectionIcon className="w-5 h-5 text-white" />
                 </div>
+                <div>
+                  <h3 className="text-base md:text-lg font-black text-gray-900">{section.title}</h3>
+                </div>
+              </div>
 
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-              </button>
-            );
-          })}
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {section.tabs.map((tab, tabIndex) => {
+                  const Icon = tab.icon;
+                  const globalIndex = sectionIndex * 10 + tabIndex;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className="group relative bg-white rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:scale-[1.02] active:scale-[0.98]"
+                      style={{
+                        animationDelay: `${globalIndex * 50}ms`
+                      }}
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-br ${tab.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+
+                      <div className="relative">
+                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${tab.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-3`}>
+                          <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                        </div>
+
+                        <h4 className="text-base md:text-lg font-black text-gray-900 mb-2">
+                          {tab.title}
+                        </h4>
+                        {tab.badge && (
+                          <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-gradient-to-r ${tab.gradient} text-white shadow-sm mb-2`}>
+                            {tab.badge}
+                          </span>
+                        )}
+                        <p className="text-xs md:text-sm text-gray-600 leading-relaxed mb-3">
+                          {tab.description}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
+                          <span>فتح</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
 
         <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-blue-100 shadow-lg">
           <div className="flex items-start gap-3 md:gap-4">
