@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { adminSessionManager } from '../utils/adminSessionManager';
 
 export interface B2FFarm {
   id: string;
@@ -44,13 +45,13 @@ export function useB2FFarms() {
 
   const addFarm = async (farmData: Omit<B2FFarm, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const adminUserId = sessionStorage.getItem('adminUserId');
-      if (!adminUserId) {
+      const session = adminSessionManager.getSession();
+      if (!session?.user_id) {
         return { success: false, error: 'يجب تسجيل الدخول أولاً' };
       }
 
       const { data, error: rpcError } = await supabase.rpc('add_farm_as_admin', {
-        p_user_id: adminUserId,
+        p_user_id: session.user_id,
         p_name: farmData.name,
         p_location: farmData.location,
         p_total_trees_available: farmData.total_trees_available,
