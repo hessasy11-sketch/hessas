@@ -49,18 +49,25 @@ html {
   display: none;
 }
 
-/* B2F Cards Grid - نظام ترتيب البطاقات */
-.b2f-cards-grid {
+/* B2F Opportunity Grid - قوة إجبارية 100% */
+.b2f-opportunity-grid {
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 1.5rem !important;
-  align-items: stretch !important;
+  width: 100% !important;
+  grid-auto-rows: 1fr !important;
 }
 
 @media (min-width: 768px) {
-  .b2f-cards-grid {
+  .b2f-opportunity-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
+}
+
+/* تأكيد أن جميع العناصر الأطفال تأخذ عرض كامل */
+.b2f-opportunity-grid > * {
+  min-width: 0 !important;
+  width: 100% !important;
 }
 
 * {

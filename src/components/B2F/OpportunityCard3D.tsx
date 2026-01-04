@@ -60,7 +60,15 @@ export default function OpportunityCard3D({ opportunity, onDetailsClick }: Oppor
 
   return (
     <>
-      <div className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300" style={{ width: '100%' }}>
+      <div
+        className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300"
+        style={{
+          width: '100%',
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         <div className="relative">
           <button
             onClick={() => setShowImagePreview(true)}

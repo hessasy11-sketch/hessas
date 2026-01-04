@@ -187,7 +187,7 @@ export default function InvestorOpportunitiesView({
                 : 'فرص استثمارية متاحة'}
             </div>
 
-            <div className="b2f-cards-grid">
+            <div className="b2f-opportunity-grid">
               {filteredOpportunities.map((opportunity) => (
                 <OpportunityCard3D
                   key={opportunity.id}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Test - اختبار الشبكة</title>
+    <style>
+        * {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a202c;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .info-box h2 {
+            margin-top: 0;
+            color: #2563eb;
+        }
+
+        .info-box code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* نفس CSS الموجود في index.css */
+        .b2f-opportunity-grid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+            width: 100% !important;
+            grid-auto-rows: 1fr !important;
+        }
+
+        @media (min-width: 768px) {
+            .b2f-opportunity-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            }
+        }
+
+        .b2f-opportunity-grid > * {
+            min-width: 0 !important;
+            width: 100% !important;
+        }
+
+        /* تصميم البطاقة */
+        .card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-image {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card-price {
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .screen-size {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="status">✓ Grid Active</div>
+    <div class="screen-size" id="screenSize"></div>
+
+    <div class="container">
+        <h1>اختبار نظام Grid - 3 بطاقات في صف واحد</h1>
+
+        <div class="info-box">
+            <h2>معلومات الفحص</h2>
+            <p><strong>الكود المطبق:</strong></p>
+            <p><code>display: grid</code></p>
+            <p><code>grid-template-columns: repeat(3, minmax(0, 1fr))</code> (على الديسكتوب)</p>
+            <p><code>grid-template-columns: 1fr</code> (على الجوال)</p>
+            <p style="margin-top: 15px;"><strong>التعليمات:</strong></p>
+            <ol style="color: #4b5563;">
+                <li>افتح DevTools بالضغط على F12</li>
+                <li>اذهب لـ Elements tab</li>
+                <li>ابحث عن <code>&lt;div class="b2f-opportunity-grid"&gt;</code></li>
+                <li>افحص Computed tab → ابحث عن display و grid-template-columns</li>
+                <li>إذا كان العرض أكبر من 768px، المفروض تشوف 3 بطاقات جنب بعض</li>
+            </ol>
+        </div>
+
+        <div class="b2f-opportunity-grid">
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    بطاقة 1
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية أولى</div>
+                    <div class="card-description">
+                        استثمار في أشجار الزيتون بعائد سنوي مضمون
+                    </div>
+                    <div class="card-price">25,000 ر.س</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    بطاقة 2
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية ثانية</div>
+                    <div class="card-description">
+                        استثمار في أشجار النخيل بعائد عالي
+                    </div>
+                    <div class="card-price">30,000 ر.س</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    بطاقة 3
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية ثالثة</div>
+                    <div class="card-description">
+                        استثمار في أشجار الحمضيات بأسعار منافسة
+                    </div>
+                    <div class="card-price">20,000 ر.س</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    بطاقة 4
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية رابعة</div>
+                    <div class="card-description">
+                        استثمار في أشجار التين بعوائد موسمية
+                    </div>
+                    <div class="card-price">18,000 ر.س</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    بطاقة 5
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية خامسة</div>
+                    <div class="card-description">
+                        استثمار في أشجار الرمان بفرص نمو عالية
+                    </div>
+                    <div class="card-price">22,000 ر.س</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-image" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                    بطاقة 6
+                </div>
+                <div class="card-content">
+                    <div class="card-title">فرصة استثمارية سادسة</div>
+                    <div class="card-description">
+                        استثمار في أشجار اللوز بعوائد طويلة الأجل
+                    </div>
+                    <div class="card-price">28,000 ر.س</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // عرض حجم الشاشة
+        function updateScreenSize() {
+            const width = window.innerWidth;
+            const cols = width >= 768 ? '3 أعمدة' : '1 عمود';
+            document.getElementById('screenSize').textContent = `العرض: ${width}px | ${cols}`;
+        }
+
+        updateScreenSize();
+        window.addEventListener('resize', updateScreenSize);
+
+        // تحقق من Grid
+        const grid = document.querySelector('.b2f-opportunity-grid');
+        const computedStyle = window.getComputedStyle(grid);
+
+        console.log('🔍 فحص Grid:');
+        console.log('display:', computedStyle.display);
+        console.log('grid-template-columns:', computedStyle.gridTemplateColumns);
+        console.log('gap:', computedStyle.gap);
+        console.log('width:', computedStyle.width);
+    </script>
+</body>
+</html>
