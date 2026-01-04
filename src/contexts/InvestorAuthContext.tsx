@@ -87,17 +87,25 @@ export function InvestorAuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
+      console.log('🔄 محاولة تسجيل الدخول:', { phone, pinLength: pin.length });
+
       const { data, error } = await supabase.rpc('verify_investor_login', {
         p_phone: phone,
         p_pin: pin
       });
 
-      if (error) throw error;
+      console.log('📥 استجابة من الخادم:', { data, error });
+
+      if (error) {
+        console.error('❌ خطأ من Supabase:', error);
+        throw error;
+      }
 
       const result = typeof data === 'string' ? JSON.parse(data) : data;
+      console.log('📦 النتيجة بعد المعالجة:', result);
 
-      if (!result.success) {
-        throw new Error(result.error || 'فشل تسجيل الدخول');
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'فشل تسجيل الدخول');
       }
 
       const account = result.account;
