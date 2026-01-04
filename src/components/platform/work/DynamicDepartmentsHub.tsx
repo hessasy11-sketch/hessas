@@ -34,12 +34,19 @@ export function DynamicDepartmentsHub() {
 
   const loadDepartments = async () => {
     try {
+      console.log('Loading departments...');
+
       const { data, error } = await supabase
         .from('platform_departments')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('Departments query result:', { data, error, count: data?.length });
+
+      if (error) {
+        console.error('Error loading departments:', error);
+        throw error;
+      }
 
       const deptsWithStats = await Promise.all(
         (data || []).map(async (dept) => {
@@ -67,9 +74,11 @@ export function DynamicDepartmentsHub() {
         })
       );
 
+      console.log('Departments with stats:', deptsWithStats);
       setDepartments(deptsWithStats);
     } catch (error) {
       console.error('Error loading departments:', error);
+      alert('خطأ في تحميل الأقسام: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
