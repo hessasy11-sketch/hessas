@@ -3,12 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   Leaf,
-  Calculator,
-  TrendingUp,
   Users,
-  ArrowRight,
-  Activity,
-  Eye,
   DollarSign,
   AlertTriangle,
   CheckCircle,
@@ -16,10 +11,8 @@ import {
   Zap,
   BarChart3,
   Target,
-  Sparkles,
   Crown,
   Shield,
-  Command,
   Layers
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -30,15 +23,6 @@ interface SystemPulse {
   finance_pending: number;
   marketing_visits: number;
   critical_alerts: number;
-}
-
-interface QuickStat {
-  label: string;
-  value: string | number;
-  change?: string;
-  trend?: 'up' | 'down' | 'neutral';
-  icon: typeof Activity;
-  color: string;
 }
 
 export default function HQDashboard() {
@@ -75,40 +59,6 @@ export default function HQDashboard() {
     }
   };
 
-  const quickStats: QuickStat[] = [
-    {
-      label: 'حجوزات نشطة',
-      value: pulse?.b2f_active || 0,
-      change: '+12%',
-      trend: 'up',
-      icon: Leaf,
-      color: 'emerald'
-    },
-    {
-      label: 'مزادات جارية',
-      value: pulse?.b2b_active || 0,
-      change: '+8%',
-      trend: 'up',
-      icon: Building2,
-      color: 'blue'
-    },
-    {
-      label: 'عمليات مالية',
-      value: pulse?.finance_pending || 0,
-      change: '',
-      trend: 'neutral',
-      icon: Calculator,
-      color: 'amber'
-    },
-    {
-      label: 'زيارات اليوم',
-      value: pulse?.marketing_visits || 0,
-      change: '+24%',
-      trend: 'up',
-      icon: Eye,
-      color: 'purple'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50" dir="rtl">
@@ -157,44 +107,6 @@ export default function HQDashboard() {
       </div>
 
       <div className="max-w-[1800px] mx-auto px-8 py-8">
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          {quickStats.map((stat, idx) => {
-            const Icon = stat.icon;
-            const colorClasses = {
-              emerald: 'from-emerald-500 to-emerald-600 shadow-emerald-500/30',
-              blue: 'from-blue-500 to-blue-600 shadow-blue-500/30',
-              amber: 'from-amber-500 to-amber-600 shadow-amber-500/30',
-              purple: 'from-purple-500 to-purple-600 shadow-purple-500/30'
-            };
-
-            return (
-              <div
-                key={idx}
-                className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[stat.color as keyof typeof colorClasses]} flex items-center justify-center shadow-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  {stat.change && (
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
-                      stat.trend === 'up' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      <TrendingUp className={`w-3 h-3 ${stat.trend === 'down' ? 'rotate-180' : ''}`} />
-                      {stat.change}
-                    </div>
-                  )}
-                </div>
-                <div className="text-3xl font-bold text-slate-900 mb-1">
-                  {loading ? '...' : stat.value}
-                </div>
-                <div className="text-sm text-slate-600">{stat.label}</div>
-              </div>
-            );
-          })}
-        </div>
-
 
         {/* Main Sections Grid */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
