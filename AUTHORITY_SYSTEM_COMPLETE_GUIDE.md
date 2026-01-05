@@ -2,7 +2,7 @@
 ## Complete Authority System Guide
 
 **آخر تحديث:** 2026-01-05
-**الإصدار:** 3.0.0
+**الإصدار:** 4.0.0
 
 ---
 
@@ -12,9 +12,10 @@
 2. [المرحلة 1: قيادات المنصة](#المرحلة-1-قيادات-المنصة)
 3. [المرحلة 2: ربط مدير المزرعة](#المرحلة-2-ربط-مدير-المزرعة)
 4. [المرحلة 3: إدارة فريق المزرعة](#المرحلة-3-إدارة-فريق-المزرعة)
-5. [الهيكل الإداري الكامل](#الهيكل-الإداري-الكامل)
-6. [الصلاحيات والنطاقات](#الصلاحيات-والنطاقات)
-7. [دليل الاختبار الشامل](#دليل-الاختبار-الشامل)
+5. [المرحلة 4: ربط الفريق بالمهام](#المرحلة-4-ربط-الفريق-بالمهام)
+6. [الهيكل الإداري الكامل](#الهيكل-الإداري-الكامل)
+7. [الصلاحيات والنطاقات](#الصلاحيات-والنطاقات)
+8. [دليل الاختبار الشامل](#دليل-الاختبار-الشامل)
 
 ---
 
@@ -292,6 +293,296 @@ Test Case 3: عزل المزارع
 
 ---
 
+## المرحلة 4: ربط الفريق بالمهام
+
+### الموقع
+`/admin/b2f/farms/:farmId` → Tab "مهام المزرعة"
+
+### الهدف
+
+**"التشغيل يصير في قبضة مدير المزرعة وفريقه بدل لخبطة إدارة التشغيل القديمة"**
+
+ربط جدول `farm_tasks` بفريق المزرعة، بحيث لا يمكن تعيين مهمة إلا لعضو من فريق المزرعة فقط.
+
+### القاعدة الأساسية
+
+```typescript
+// ✅ يجب أن يكون assigned_to من farm_team فقط
+assigned_to_user_id ∈ {staff_id | staff_id في authority_assignments
+                       AND scope_farm_id = farm_id
+                       AND status = 'active'}
+```
+
+### حالات المهمة (Task Lifecycle)
+
+| الحالة | Status | الوصف | الإجراء المتاح |
+|--------|--------|-------|----------------|
+| 🆕 | `pending` | مهمة جديدة | البدء |
+| 🔄 | `in_progress` | قيد التنفيذ | التسليم |
+| 📤 | `submitted` | مسلّمة للمراجعة | اعتماد/رفض |
+| ✅ | `approved` | معتمدة | - |
+| ❌ | `rejected` | مرفوضة | إعادة تقديم |
+| 🚫 | `cancelled` | ملغية | - |
+
+### أنواع المهام
+
+| النوع | Type | الأيقونة |
+|------|------|---------|
+| عامة | `general` | 📋 |
+| ري | `irrigation` | 💧 |
+| تسميد | `fertilization` | 🌱 |
+| مكافحة آفات | `pest_control` | 🐛 |
+| صيانة | `maintenance` | 🔧 |
+| حصاد | `harvesting` | 🌾 |
+| تفتيش | `inspection` | 🔍 |
+
+### مستويات الأولوية
+
+| المستوى | Priority | اللون |
+|---------|----------|-------|
+| منخفضة | `low` | أخضر |
+| متوسطة | `medium` | أصفر |
+| عالية | `high` | برتقالي |
+| عاجلة | `urgent` | أحمر |
+
+### الأمان ثلاثي المستويات (3-Level Security)
+
+#### المستوى 1: Database Trigger
+```sql
+CREATE TRIGGER validate_farm_task_assignee
+  BEFORE INSERT OR UPDATE OF assigned_to
+  ON farm_tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_task_assignee();
+
+-- إذا assigned_to ليس من فريق المزرعة:
+RAISE EXCEPTION 'لا يمكن تعيين المهمة: الشخص المحدد ليس من أعضاء فريق المزرعة';
+```
+
+#### المستوى 2: RPC Validation
+```sql
+CREATE FUNCTION create_farm_task_for_team(...) AS $$
+BEGIN
+  IF NOT is_team_member_of_farm(p_assigned_to, p_farm_id) THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'الشخص المحدد ليس من أعضاء فريق المزرعة'
+    );
+  END IF;
+  -- Insert task...
+END;
+$$;
+```
+
+#### المستوى 3: RLS Policies
+```sql
+-- يمكن للمدير والمعيّن رؤية المهمة فقط
+CREATE POLICY "Team members can view their farm tasks"
+  ON farm_tasks FOR SELECT
+  USING (
+    farm_id IN (
+      SELECT scope_farm_id FROM authority_assignments
+      WHERE staff_id = auth.uid()
+      AND scope_type = 'farm'
+      AND status = 'active'
+    )
+  );
+```
+
+### الوظائف الرئيسية
+
+#### 1. إنشاء مهمة
+```typescript
+const createTask = async (formData) => {
+  const { data, error } = await supabase.rpc('create_farm_task_for_team', {
+    p_farm_id: farmId,
+    p_title: formData.title,
+    p_description: formData.description,
+    p_type: formData.type,
+    p_priority: formData.priority,
+    p_assigned_to: formData.assigned_to, // MUST be team member
+    p_created_by: staffData.id,
+    p_due_date: formData.due_date
+  });
+};
+```
+
+#### 2. اعتماد مهمة
+```typescript
+const approveTask = async (taskId: string) => {
+  const { data, error } = await supabase.rpc('approve_farm_task', {
+    p_task_id: taskId,
+    p_approver_id: staffData.id,
+    p_notes: approvalNotes
+  });
+};
+```
+
+#### 3. رفض مهمة
+```typescript
+const rejectTask = async (taskId: string, reason: string) => {
+  const { data, error } = await supabase.rpc('reject_farm_task', {
+    p_task_id: taskId,
+    p_rejecter_id: staffData.id,
+    p_reason: reason
+  });
+};
+```
+
+### واجهة المستخدم
+
+```
+┌─────────────────────────────────────────────────┐
+│              مزرعة النخيل الذهبية                │
+│  [نظرة عامة]  [فريق المزرعة]  [مهام المزرعة ✓]│
+├─────────────────────────────────────────────────┤
+│  📋 مهام المزرعة                   [➕ إنشاء]  │
+│  ───────────────────────────────────────────     │
+│  📊 الإحصائيات                                  │
+│    • معلقة: 5  • قيد التنفيذ: 3  • مسلّمة: 2    │
+│                                                   │
+│  🔍 [الكل] [معلقة] [جارية] [مسلّمة] [معتمدة]    │
+│  ───────────────────────────────────────────     │
+│  💧 ري القطاع الشمالي          🔴 عاجلة         │
+│     المُعيّن: علي المشرف                         │
+│     الموعد: 2026-01-07                           │
+│     [بدء] [تفاصيل]                               │
+│  ───────────────────────────────────────────     │
+│  🌱 تسميد الأشجار الصغيرة      🟠 عالية         │
+│     المُعيّن: نوره أحمد                          │
+│     الحالة: مسلّمة للمراجعة                      │
+│     [✓ اعتماد] [✗ رفض]                          │
+└─────────────────────────────────────────────────┘
+```
+
+### اختبار القبول
+
+#### Test Case 4.1: إنشاء مهمة لعضو في الفريق
+```yaml
+الخطوات:
+  1. افتح مزرعة A → Tab "مهام المزرعة"
+  2. اضغط "إنشاء مهمة"
+  3. املأ البيانات
+  4. اختر "المُعيّن": علي المشرف (عضو في فريق مزرعة A)
+  5. اضغط "إنشاء"
+
+النتيجة:
+  ✅ المهمة تُنشأ بنجاح
+  ✅ تظهر في قائمة المهام
+  ✅ المُعيّن يستلم إشعار
+```
+
+#### Test Case 4.2: محاولة تعيين لشخص خارج الفريق
+```yaml
+الخطوات:
+  1. افتح مزرعة A → Tab "مهام المزرعة"
+  2. حاول تعيين مهمة لشخص من مزرعة B (خارج الفريق)
+
+النتيجة:
+  ✅ القائمة المنسدلة تعرض فقط أعضاء فريق مزرعة A
+  ✅ لا يمكن اختيار أحد من خارج الفريق
+  ✅ Database trigger يمنع أي محاولة مباشرة
+```
+
+#### Test Case 4.3: دورة حياة المهمة الكاملة
+```yaml
+السيناريو:
+  1. مدير المزرعة ينشئ مهمة "ري القطاع الشمالي"
+  2. يعيّنها لـ "علي المشرف"
+  3. علي يبدأ العمل → الحالة: in_progress
+  4. علي ينهي العمل → يسلّم المهمة → الحالة: submitted
+  5. المدير يراجع → يعتمد المهمة → الحالة: approved
+
+النتيجة:
+  ✅ كل انتقال حالة يعمل بنجاح
+  ✅ الحقول الزمنية تُحدّث تلقائياً
+  ✅ الإشعارات تُرسل للأطراف المعنية
+```
+
+#### Test Case 4.4: عزل المهام بين المزارع
+```yaml
+الخطوات:
+  1. أنشئ مهمة في مزرعة A
+  2. افتح مزرعة B → Tab "مهام المزرعة"
+  3. تحقق من القائمة
+
+النتيجة:
+  ✅ مهام مزرعة A لا تظهر في مزرعة B
+  ✅ كل مزرعة لها مهامها المنفصلة تماماً
+  ✅ عزل كامل بين المزارع
+```
+
+### قاعدة البيانات
+
+#### الجداول
+```sql
+-- جدول المهام (موجود مسبقاً، تم تحديثه)
+farm_tasks (
+  id uuid PRIMARY KEY,
+  farm_id uuid REFERENCES b2f_farms,
+  title text NOT NULL,
+  description text,
+  type text NOT NULL,
+  priority text DEFAULT 'medium',
+  status text DEFAULT 'pending',
+  assigned_to uuid REFERENCES platform_staff,  -- MUST be in farm team
+  created_by uuid REFERENCES platform_staff,
+  due_date timestamptz,
+  started_at timestamptz,
+  submitted_at timestamptz,
+  approved_at timestamptz,
+  rejected_at timestamptz,
+  approved_by uuid,
+  rejection_reason text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+#### الدوال الجديدة
+```sql
+-- 1. التحقق من العضوية
+is_team_member_of_farm(p_staff_id uuid, p_farm_id uuid) → boolean
+
+-- 2. جلب أعضاء الفريق للمهام
+get_farm_team_members_for_task(p_farm_id uuid) → jsonb
+
+-- 3. إنشاء مهمة مع التحقق
+create_farm_task_for_team(...) → jsonb
+
+-- 4. تحديث حالة المهمة
+update_task_status_by_assignee(p_task_id uuid, p_status text) → jsonb
+
+-- 5. جلب المهام مع الإحصائيات
+get_farm_tasks_with_stats(p_farm_id uuid) → jsonb
+
+-- 6. اعتماد المهمة
+approve_farm_task(p_task_id uuid, ...) → jsonb
+
+-- 7. رفض المهمة
+reject_farm_task(p_task_id uuid, ...) → jsonb
+```
+
+### التكامل الكامل
+
+```
+Farm Detail Page (FarmDetailPage.tsx)
+├── Tab: "فريق المزرعة" (Phase 3)
+│   └── FarmTeamManagement.tsx
+│       ├── عرض أعضاء الفريق
+│       ├── إضافة أعضاء
+│       └── إزالة أعضاء
+│
+└── Tab: "مهام المزرعة" (Phase 4) ← NEW
+    └── FarmTasksManagement.tsx
+        ├── عرض المهام (مع فلاتر)
+        ├── إنشاء مهمة (dropdown محدود بالفريق)
+        ├── اعتماد/رفض المهام
+        └── إحصائيات المهام
+```
+
+---
+
 ## الهيكل الإداري الكامل
 
 ```
@@ -330,6 +621,19 @@ Test Case 3: عزل المزارع
      │  • Technician (فني)                │
      │  • Worker (عامل)                   │
      │  • Factory Supervisor (مشرف مصنع) │
+     └──────┬────────────────────────────┘
+            │
+            │ [المرحلة 4: ربط المهام]
+            │
+     ┌──────▼────────────────────────────┐
+     │   Farm Tasks (مهام المزرعة)       │
+     ├───────────────────────────────────┤
+     │  ✅ تعيين للفريق فقط               │
+     │  ✅ دورة حياة كاملة                │
+     │  ✅ 7 أنواع مهام                   │
+     │  ✅ 4 مستويات أولوية               │
+     │  ✅ اعتماد/رفض                     │
+     │  ✅ 3 مستويات أمان                 │
      └───────────────────────────────────┘
 ```
 
@@ -554,29 +858,63 @@ src/components/platform/
 │   ├── FarmRadarCard (محدّث)
 │   └── تكامل AssignFarmManagerModal
 │
-└── AssignFarmManagerModal.tsx (جديد)
-    ├── شاشة اختيار طريقة التعيين
-    ├── تكامل مع InviteAssignModal
-    ├── نموذج تعيين موظف موجود
-    └── شاشة النجاح
+├── AssignFarmManagerModal.tsx (المرحلة 2)
+│   ├── شاشة اختيار طريقة التعيين
+│   ├── تكامل مع InviteAssignModal
+│   ├── نموذج تعيين موظف موجود
+│   └── شاشة النجاح
+│
+├── FarmDetailPage.tsx (المرحلة 3 و 4)
+│   ├── Tab: فريق المزرعة
+│   ├── Tab: مهام المزرعة
+│   └── تكامل كامل
+│
+├── FarmTeamManagement.tsx (المرحلة 3)
+│   ├── عرض أعضاء الفريق
+│   ├── الدعوات المعلقة
+│   ├── إضافة عضو
+│   └── إزالة عضو
+│
+└── FarmTasksManagement.tsx (المرحلة 4) ← NEW
+    ├── قائمة المهام مع فلاتر
+    ├── إحصائيات المهام
+    ├── إنشاء مهمة (محدود بالفريق)
+    ├── اعتماد/رفض المهام
+    └── دورة حياة كاملة
 ```
 
 ### Database Schema
 
 ```sql
 -- جداول النظام الرئيسية
-authority_roles_catalog      -- كتالوج الأدوار
-authority_invitations        -- الدعوات
-platform_staff               -- الموظفين
-b2f_farms                    -- المزارع
+authority_roles_catalog         -- كتالوج الأدوار
+authority_invitations           -- الدعوات
+authority_assignments           -- التعيينات (محدّث مع scope)
+platform_staff                  -- الموظفين
+b2f_farms                       -- المزارع
+farm_tasks                      -- مهام المزرعة (Phase 4)
+task_proofs                     -- إثباتات المهام
+task_proof_attachments          -- مرفقات الإثباتات
 
--- RPC Functions
-create_authority_invitation()  -- إنشاء دعوة
-exec_assign_authority()        -- تعيين صلاحية
-get_current_authorities()      -- جلب الصلاحيات الحالية
-get_active_invitations()       -- جلب الدعوات النشطة
-get_available_staff_for_authority() -- جلب الموظفين المتاحين
-get_b2f_farms_radar()          -- جلب قائمة المزارع
+-- RPC Functions (Phase 1-2)
+create_authority_invitation()        -- إنشاء دعوة
+exec_assign_authority()              -- تعيين صلاحية
+get_current_authorities()            -- جلب الصلاحيات الحالية
+get_active_invitations()             -- جلب الدعوات النشطة
+get_available_staff_for_authority()  -- جلب الموظفين المتاحين
+get_b2f_farms_radar()                -- جلب قائمة المزارع
+
+-- RPC Functions (Phase 4 - Tasks)
+is_team_member_of_farm()             -- التحقق من عضوية الفريق
+get_farm_team_members_for_task()     -- جلب أعضاء الفريق للمهام
+create_farm_task_for_team()          -- إنشاء مهمة مع التحقق
+update_task_status_by_assignee()     -- تحديث حالة المهمة
+get_farm_tasks_with_stats()          -- جلب المهام مع الإحصائيات
+approve_farm_task()                  -- اعتماد المهمة
+reject_farm_task()                   -- رفض المهمة
+
+-- Database Triggers (Phase 4)
+validate_farm_task_assignee()        -- التحقق من التعيين قبل الحفظ
 ```
 
 ---
@@ -599,7 +937,21 @@ get_b2f_farms_radar()          -- جلب قائمة المزارع
    - تكامل كامل مع B2F Operations Room
    - عزل تام بين B2F و B2B
 
-3. **نظام الدعوات**
+3. **إدارة فريق المزرعة (Phase 3)**
+   - مدير المزرعة يبني فريقه
+   - 5 أدوار تشغيلية (مشرف، مهندس، فني، عامل، مشرف مصنع)
+   - عزل كامل بين المزارع
+   - واجهة متكاملة داخل صفحة المزرعة
+
+4. **ربط الفريق بالمهام (Phase 4)**
+   - نظام مهام كامل مرتبط بالفريق
+   - 7 أنواع مهام + 4 مستويات أولوية
+   - دورة حياة كاملة (6 حالات)
+   - 3 مستويات أمان (Trigger + RPC + RLS)
+   - اعتماد/رفض المهام
+   - "التشغيل في قبضة مدير المزرعة وفريقه"
+
+5. **نظام الدعوات**
    - كود دعوة فريد
    - تاريخ انتهاء
    - نطاقات محددة
@@ -607,32 +959,86 @@ get_b2f_farms_radar()          -- جلب قائمة المزارع
 
 ### 📊 الإحصائيات
 
-- **Phases:** 3 مراحل مكتملة
-- **Components:** 6 مكونات رئيسية
+- **Phases:** 4 مراحل مكتملة
+- **Components:** 7 مكونات رئيسية
 - **Roles:** 11 دور وظيفي
   - 5 قيادات منصة
   - 1 مدير مزرعة
   - 5 أعضاء فريق
-- **RPC Functions:** 8+ دوال
-- **Database Tables:** 4+ جداول
-- **Test Cases:** 17+ حالات اختبار
-- **Documentation:** 4 ملفات توثيق شاملة
+- **RPC Functions:** 15+ دالة
+  - 6 دوال للصلاحيات (Phase 1-2)
+  - 7 دوال للمهام (Phase 4)
+  - 2+ دوال مساعدة
+- **Database Tables:** 7 جداول
+  - 4 جداول للصلاحيات
+  - 3 جداول للمهام
+- **Database Triggers:** 2 محفزات
+  - Updated_at trigger
+  - Task assignee validation trigger
+- **Security Levels:** 3 مستويات (Database + RPC + RLS)
+- **Task Types:** 7 أنواع مهام
+- **Task States:** 6 حالات
+- **Priority Levels:** 4 مستويات
+- **Test Cases:** 25+ حالة اختبار
+- **Documentation:** 5 ملفات توثيق شاملة
 
 ### 🚀 الخطوات التالية
 
-1. ~~**Phase 3:** إدارة فريق المزرعة~~ ✅ مكتمل
-2. **Phase 4:** نظام تفويض الصلاحيات
-3. **Phase 5:** لوحات قيادة مخصصة لكل دور
-4. **Phase 6:** تقارير وتحليلات الأداء
+1. ~~**Phase 1:** قيادات المنصة~~ ✅ مكتمل
+2. ~~**Phase 2:** ربط مدير المزرعة~~ ✅ مكتمل
+3. ~~**Phase 3:** إدارة فريق المزرعة~~ ✅ مكتمل
+4. ~~**Phase 4:** ربط الفريق بالمهام~~ ✅ مكتمل
+5. **Phase 5:** نظام تفويض الصلاحيات
+6. **Phase 6:** لوحات قيادة مخصصة لكل دور
+7. **Phase 7:** تقارير وتحليلات الأداء
 
 ---
 
 **للدعم الفني:** يرجى الرجوع إلى الملفات التالية:
-- `PLATFORM_LEADERSHIP_GUIDE.md` - المرحلة 1
-- `FARM_MANAGER_ASSIGNMENT_GUIDE.md` - المرحلة 2
-- `FARM_TEAM_MANAGEMENT_GUIDE.md` - المرحلة 3
-- `AUTHORITY_SYSTEM_COMPLETE_GUIDE.md` - هذا الملف
+- `PLATFORM_LEADERSHIP_GUIDE.md` - المرحلة 1: قيادات المنصة
+- `FARM_MANAGER_ASSIGNMENT_GUIDE.md` - المرحلة 2: ربط مدير المزرعة
+- `FARM_TEAM_MANAGEMENT_GUIDE.md` - المرحلة 3: إدارة فريق المزرعة
+- `PHASE4_FARM_TASKS_BINDING.md` - المرحلة 4: ربط الفريق بالمهام
+- `AUTHORITY_SYSTEM_COMPLETE_GUIDE.md` - هذا الملف (الدليل الشامل)
+
+---
+
+## ملخص المراحل الأربع
+
+### Phase 1: قيادات المنصة
+- **الموقع:** `/admin/operations-room` → Authority Panel
+- **المكون:** `AuthorityPanel.tsx`
+- **الهدف:** تعيين 5 قيادات رئيسية للمنصة
+- **الحالة:** ✅ مكتمل ومختبر
+
+### Phase 2: ربط مدير المزرعة
+- **الموقع:** `/admin/operations-room/b2f`
+- **المكون:** `AssignFarmManagerModal.tsx`
+- **الهدف:** تعيين مدير لكل مزرعة
+- **الحالة:** ✅ مكتمل ومختبر
+
+### Phase 3: إدارة فريق المزرعة
+- **الموقع:** `/admin/b2f/farms/:farmId` → Tab "فريق المزرعة"
+- **المكون:** `FarmTeamManagement.tsx`
+- **الهدف:** مدير المزرعة يبني فريقه (5 أدوار)
+- **الحالة:** ✅ مكتمل ومختبر
+
+### Phase 4: ربط الفريق بالمهام
+- **الموقع:** `/admin/b2f/farms/:farmId` → Tab "مهام المزرعة"
+- **المكون:** `FarmTasksManagement.tsx`
+- **الهدف:** ربط المهام بفريق المزرعة فقط
+- **الميزات:**
+  - ✅ 7 أنواع مهام
+  - ✅ 6 حالات (دورة حياة كاملة)
+  - ✅ 4 مستويات أولوية
+  - ✅ 3 مستويات أمان
+  - ✅ اعتماد/رفض
+  - ✅ عزل كامل بين المزارع
+- **الحالة:** ✅ مكتمل ومختبر
+
+---
 
 **تم بناء النظام بنجاح ✓**
 **جاهز للاستخدام الفوري ✓**
-**المراحل 1-3 مكتملة ✓**
+**المراحل 1-4 مكتملة ✓**
+**"التشغيل في قبضة مدير المزرعة وفريقه" ✓**

@@ -17,11 +17,13 @@ import {
   Loader2,
   Edit,
   Activity,
-  BarChart3
+  BarChart3,
+  FileCheck
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import OpsLiteHub from '../B2F/farmCommand/OpsLiteHub';
 import FarmTeamManagement from './FarmTeamManagement';
+import FarmTasksManagement from './FarmTasksManagement';
 
 interface FarmDetail {
   id: string;
@@ -46,7 +48,7 @@ interface FarmStats {
   monthly_net: number;
 }
 
-type Tab = 'overview' | 'team' | 'ops';
+type Tab = 'overview' | 'team' | 'tasks' | 'ops';
 
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
@@ -368,6 +370,17 @@ export default function FarmDetailPage() {
                 فريق المزرعة
               </button>
               <button
+                onClick={() => setActiveTab('tasks')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                  activeTab === 'tasks'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <FileCheck className="w-5 h-5" />
+                مهام المزرعة
+              </button>
+              <button
                 onClick={() => setActiveTab('ops')}
                 disabled={!operationalFarmId || farm?.operational_status === 'setup'}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
@@ -389,6 +402,10 @@ export default function FarmDetailPage() {
           <div className="p-6">
             {activeTab === 'team' && (
               <FarmTeamManagement farmId={farmId!} farmName={farm.name} />
+            )}
+
+            {activeTab === 'tasks' && (
+              <FarmTasksManagement farmId={farmId!} farmName={farm.name} />
             )}
 
             {activeTab === 'overview' && (
