@@ -187,7 +187,10 @@ export default function OperationsRoomHub() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border-2 border-emerald-200 p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => navigate('/admin/operations-room/b2f')}
+                className="group bg-white rounded-xl border-2 border-emerald-200 p-6 hover:shadow-xl hover:border-emerald-400 hover:scale-105 transition-all cursor-pointer text-right w-full"
+              >
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
                     <Leaf className="w-5 h-5 text-white" />
@@ -197,9 +200,16 @@ export default function OperationsRoomHub() {
                 <div className="text-3xl font-bold text-emerald-600">
                   {summary.b2f_today.toLocaleString()}
                 </div>
-              </div>
+                <div className="mt-3 pt-3 border-t border-emerald-100 flex items-center justify-center gap-2 text-emerald-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span>دخول لوحة استثمار المزارع</span>
+                  <ArrowLeft className="w-4 h-4" />
+                </div>
+              </button>
 
-              <div className="bg-white rounded-xl border-2 border-blue-200 p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => navigate('/admin/operations-room/b2b')}
+                className="group bg-white rounded-xl border-2 border-blue-200 p-6 hover:shadow-xl hover:border-blue-400 hover:scale-105 transition-all cursor-pointer text-right w-full"
+              >
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-white" />
@@ -209,7 +219,11 @@ export default function OperationsRoomHub() {
                 <div className="text-3xl font-bold text-blue-600">
                   {summary.b2b_today.toLocaleString()}
                 </div>
-              </div>
+                <div className="mt-3 pt-3 border-t border-blue-100 flex items-center justify-center gap-2 text-blue-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span>دخول لوحة مزاد الشركات</span>
+                  <ArrowLeft className="w-4 h-4" />
+                </div>
+              </button>
 
               <div className="bg-white rounded-xl border-2 border-slate-200 p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-3 mb-2">
