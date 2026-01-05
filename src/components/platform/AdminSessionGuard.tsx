@@ -17,37 +17,41 @@ export function AdminSessionGuard({ children }: AdminSessionGuardProps) {
 
     const checkSession = async () => {
       try {
-        console.log('🔍 Checking admin session...');
+        console.log('🔍 AdminSessionGuard - Checking session...');
 
         const localSession = adminSessionManager.getSession();
 
         if (!localSession) {
-          console.log('❌ No local session found');
+          console.log('❌ No session found - redirecting to /admin/access');
           if (isMounted) {
             navigate('/admin/access', { replace: true });
           }
           return;
         }
 
-        console.log('✅ Local session found, verifying with database...');
+        console.log('✅ Session found in localStorage:', {
+          staff_id: localSession.staff_id,
+          full_name: localSession.full_name,
+          role: localSession.role,
+          created_at: new Date(localSession.created_at).toLocaleString(),
+          last_activity: new Date(localSession.last_activity_at).toLocaleString(),
+          session_token: localSession.session_token ? 'Present' : 'Missing'
+        });
 
-        const restoredSession = await adminSessionManager.restoreSessionFromDB();
-
-        if (!restoredSession) {
-          console.log('❌ Session restoration failed');
-          if (isMounted) {
-            navigate('/admin/access', { replace: true });
-          }
-          return;
+        if (localSession.session_token) {
+          console.log('🔄 Updating session activity in background...');
+          adminSessionManager.updateActivityInDB().catch(err => {
+            console.warn('Failed to update activity in DB (non-critical):', err);
+          });
         }
 
-        console.log('✅ Session verified successfully');
         if (isMounted) {
           setIsAuthenticated(true);
           initActivityTracking();
+          console.log('✅ Session validated - Allowing access');
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('❌ Error in session check:', error);
         if (isMounted) {
           navigate('/admin/access', { replace: true });
         }
