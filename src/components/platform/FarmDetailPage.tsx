@@ -16,9 +16,11 @@ import {
   TrendingDown,
   Loader2,
   Edit,
-  Activity
+  Activity,
+  BarChart3
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import OpsLiteHub from '../B2F/farmCommand/OpsLiteHub';
 
 interface FarmDetail {
   id: string;
@@ -43,6 +45,8 @@ interface FarmStats {
   monthly_net: number;
 }
 
+type Tab = 'overview' | 'ops';
+
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
   const navigate = useNavigate();
@@ -51,6 +55,8 @@ export default function FarmDetailPage() {
   const [stats, setStats] = useState<FarmStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [operationalFarmId, setOperationalFarmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (farmId) {
@@ -73,6 +79,16 @@ export default function FarmDetailPage() {
       if (!farmData) throw new Error('المزرعة غير موجودة');
 
       setFarm(farmData);
+
+      const { data: opFarmData } = await supabase
+        .from('fc_operational_farms')
+        .select('id')
+        .eq('reference_farm_id', farmId)
+        .maybeSingle();
+
+      if (opFarmData) {
+        setOperationalFarmId(opFarmData.id);
+      }
 
       const readinessResult = await supabase.rpc('calculate_farm_readiness', {
         p_farm_id: farmId
@@ -324,124 +340,169 @@ export default function FarmDetailPage() {
           )}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Teams */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">{stats.teams_count}</p>
-                <p className="text-sm text-gray-600">فرق العمل</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contents */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-purple-500">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Package className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">{stats.contents_count}</p>
-                <p className="text-sm text-gray-600">المحتويات</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Equipment */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Wrench className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">{stats.equipment_count}</p>
-                <p className="text-sm text-gray-600">المعدات</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Issues */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <div>
-                <p className="text-3xl font-black text-gray-900">{stats.open_issues}</p>
-                <p className="text-sm text-gray-600">أعطال مفتوحة</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Financial Summary */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-            <DollarSign className="w-7 h-7 text-emerald-600" />
-            الملخص المالي - الشهر الحالي
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Revenue */}
-            <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-                <p className="text-sm font-medium text-green-900">الإيرادات</p>
-              </div>
-              <p className="text-3xl font-black text-green-600">
-                {formatCurrency(stats.monthly_revenue)}
-              </p>
-            </div>
-
-            {/* Expenses */}
-            <div className="p-6 bg-red-50 rounded-xl border-2 border-red-200">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingDown className="w-5 h-5 text-red-600" />
-                <p className="text-sm font-medium text-red-900">المصاريف</p>
-              </div>
-              <p className="text-3xl font-black text-red-600">
-                {formatCurrency(stats.monthly_expenses)}
-              </p>
-            </div>
-
-            {/* Net */}
-            <div
-              className={`p-6 rounded-xl border-2 ${
-                stats.monthly_net >= 0
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-orange-50 border-orange-200'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                {stats.monthly_net >= 0 ? (
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-orange-600" />
-                )}
-                <p
-                  className={`text-sm font-medium ${
-                    stats.monthly_net >= 0 ? 'text-blue-900' : 'text-orange-900'
-                  }`}
-                >
-                  الصافي
-                </p>
-              </div>
-              <p
-                className={`text-3xl font-black ${
-                  stats.monthly_net >= 0 ? 'text-blue-600' : 'text-orange-600'
+        {/* Tabs */}
+        <div className="bg-white rounded-2xl shadow-xl mb-8">
+          <div className="border-b border-gray-200">
+            <div className="flex gap-4 p-4">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
                 }`}
               >
-                {formatCurrency(Math.abs(stats.monthly_net))}
-              </p>
+                <BarChart3 className="w-5 h-5" />
+                نظرة عامة
+              </button>
+              <button
+                onClick={() => setActiveTab('ops')}
+                disabled={!operationalFarmId || farm?.operational_status === 'setup'}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                  activeTab === 'ops'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                } ${(!operationalFarmId || farm?.operational_status === 'setup') ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Activity className="w-5 h-5" />
+                التشغيل (Ops Lite)
+                {(!operationalFarmId || farm?.operational_status === 'setup') && (
+                  <Lock className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {/* Teams */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <Users className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-gray-900">{stats.teams_count}</p>
+                        <p className="text-sm text-gray-600">فرق العمل</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contents */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-purple-500">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <Package className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-gray-900">{stats.contents_count}</p>
+                        <p className="text-sm text-gray-600">المحتويات</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Equipment */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <Wrench className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-gray-900">{stats.equipment_count}</p>
+                        <p className="text-sm text-gray-600">المعدات</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Issues */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-gray-900">{stats.open_issues}</p>
+                        <p className="text-sm text-gray-600">أعطال مفتوحة</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <DollarSign className="w-7 h-7 text-emerald-600" />
+                    الملخص المالي - الشهر الحالي
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Revenue */}
+                    <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        <p className="text-sm font-medium text-green-900">الإيرادات</p>
+                      </div>
+                      <p className="text-3xl font-black text-green-600">
+                        {formatCurrency(stats.monthly_revenue)}
+                      </p>
+                    </div>
+
+                    {/* Expenses */}
+                    <div className="p-6 bg-red-50 rounded-xl border-2 border-red-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingDown className="w-5 h-5 text-red-600" />
+                        <p className="text-sm font-medium text-red-900">المصاريف</p>
+                      </div>
+                      <p className="text-3xl font-black text-red-600">
+                        {formatCurrency(stats.monthly_expenses)}
+                      </p>
+                    </div>
+
+                    {/* Net */}
+                    <div
+                      className={`p-6 rounded-xl border-2 ${
+                        stats.monthly_net >= 0
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-orange-50 border-orange-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {stats.monthly_net >= 0 ? (
+                          <TrendingUp className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5 text-orange-600" />
+                        )}
+                        <p
+                          className={`text-sm font-medium ${
+                            stats.monthly_net >= 0 ? 'text-blue-900' : 'text-orange-900'
+                          }`}
+                        >
+                          الصافي
+                        </p>
+                      </div>
+                      <p
+                        className={`text-3xl font-black ${
+                          stats.monthly_net >= 0 ? 'text-blue-600' : 'text-orange-600'
+                        }`}
+                      >
+                        {formatCurrency(Math.abs(stats.monthly_net))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+        </>
+      )}
+
+      {activeTab === 'ops' && operationalFarmId && (
+        <OpsLiteHub operationalFarmId={operationalFarmId} />
+      )}
     </div>
-  );
+  </div>
+</div>
+</div>
+);
 }
