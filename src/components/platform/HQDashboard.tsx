@@ -195,51 +195,6 @@ export default function HQDashboard() {
           })}
         </div>
 
-        {/* Executive Operations Room - Hero Section */}
-        <div className="mb-8">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-600 via-slate-700 to-slate-600 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-            <button
-              onClick={() => navigate('/hq/executive-ops')}
-              className="relative w-full bg-gradient-to-br from-slate-800 via-slate-900 to-black rounded-3xl p-8 border border-slate-700 hover:border-slate-600 transition-all duration-300 overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl" />
-
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/50">
-                    <Command className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-3xl font-bold text-white">غرفة العمليات التنفيذية</h2>
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-full border border-amber-500/30">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span className="text-amber-300 text-sm font-medium">مركز القيادة</span>
-                      </div>
-                    </div>
-                    <p className="text-slate-300 text-lg">
-                      مركز التحكم الشامل في المنصة - متابعة القرارات والعمليات الحرجة
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-5xl font-bold text-white mb-1">
-                      {loading ? '...' : (pulse?.critical_alerts || 0)}
-                    </div>
-                    <div className="text-slate-400 text-sm">قرارات معلقة</div>
-                  </div>
-                  <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
-                    <ArrowRight className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
 
         {/* Main Sections Grid */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
