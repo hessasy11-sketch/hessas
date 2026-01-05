@@ -31,6 +31,7 @@ import FinanceSection from './components/platform/FinanceSection';
 import MarketingSection from './components/platform/MarketingSection';
 import PartnersSection from './components/platform/PartnersSection';
 import OperationsRoomHub from './components/platform/OperationsRoomHub';
+import B2FOperationsRoom from './components/platform/B2FOperationsRoom';
 import B2FOperationsView from './components/platform/B2FOperationsView';
 import B2BOperationsView from './components/platform/B2BOperationsView';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
@@ -457,7 +458,7 @@ function App() {
   return (
     <Routes>
       <Route path="/admin/operations-room" element={<OperationsRoomHub />} />
-      <Route path="/admin/operations-room/b2f" element={<B2FOperationsView />} />
+      <Route path="/admin/operations-room/b2f" element={<B2FOperationsRoom />} />
       <Route path="/admin/operations-room/b2b" element={<B2BOperationsView />} />
       <Route path="/admin/operations-room/finance" element={<FinanceSection />} />
       <Route path="/admin/operations-room/marketing" element={<MarketingSection />} />
