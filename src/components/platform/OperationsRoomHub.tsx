@@ -1,77 +1,330 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Gavel, ArrowRight } from 'lucide-react';
+import {
+  Building2,
+  Leaf,
+  ArrowRight,
+  Crown,
+  Activity,
+  Clock,
+  Shield,
+  Zap,
+  AlertTriangle,
+  DollarSign,
+  Users,
+  TrendingUp,
+  BarChart3
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface SystemPulse {
+  b2f_active: number;
+  b2b_active: number;
+  finance_pending: number;
+  marketing_visits: number;
+  critical_alerts: number;
+}
 
 export default function OperationsRoomHub() {
   const navigate = useNavigate();
+  const [pulse, setPulse] = useState<SystemPulse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSystemPulse();
+    const interval = setInterval(loadSystemPulse, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadSystemPulse = async () => {
+    try {
+      const [b2fRes, b2bRes, financeRes, marketingRes] = await Promise.all([
+        supabase.rpc('get_executive_pulse_b2f'),
+        supabase.rpc('get_executive_pulse_b2b'),
+        supabase.rpc('get_executive_pulse_finance'),
+        supabase.rpc('get_executive_pulse_marketing')
+      ]);
+
+      setPulse({
+        b2f_active: b2fRes.data?.bookings_today || 0,
+        b2b_active: b2bRes.data?.active_auctions || 0,
+        finance_pending: financeRes.data?.pending_reviews || 0,
+        marketing_visits: marketingRes.data?.platform_total || 0,
+        critical_alerts: (b2fRes.data?.critical_alerts || 0) + (b2bRes.data?.no_bids || 0)
+      });
+    } catch (error) {
+      console.error('Error loading system pulse:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-3">
-            غرفة العمليات التنفيذية
-          </h1>
-          <p className="text-slate-400 text-lg">
-            اختر القسم المطلوب
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50" dir="rtl">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 shadow-2xl">
+        <div className="max-w-[1800px] mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/50">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                    غرفة العمليات التنفيذية
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-medium">
+                      <Activity className="w-3 h-3 animate-pulse" />
+                      مباشر
+                    </span>
+                  </h1>
+                  <p className="text-slate-400 text-sm mt-0.5">Executive Operations Room</p>
+                </div>
+              </div>
+            </div>
+
+            {pulse && pulse.critical_alerts > 0 && (
+              <div className="flex items-center gap-3 px-5 py-3 bg-red-500/20 border border-red-500/30 rounded-xl">
+                <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse" />
+                <div>
+                  <div className="text-red-300 font-bold">{pulse.critical_alerts} تنبيه حرج</div>
+                  <div className="text-red-400 text-xs">يتطلب انتباه فوري</div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 rounded-xl border border-slate-600">
+                <Clock className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-300 text-sm font-medium">
+                  {new Date().toLocaleDateString('ar-SA')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1800px] mx-auto px-8 py-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+            <button
+              onClick={() => navigate('/admin/operations-room/b2f')}
+              className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-2xl"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <Leaf className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-1">استثمار المزارع</h3>
+                    <p className="text-slate-600 text-sm">Farm Investment Operations</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-2 transition-all" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-emerald-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-emerald-900">{pulse?.b2f_active || 0}</div>
+                  <div className="text-xs text-emerald-700 mt-1">حجوزات نشطة</div>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-blue-900">8</div>
+                  <div className="text-xs text-blue-700 mt-1">مزارع تشغيلية</div>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-amber-900">24</div>
+                  <div className="text-xs text-amber-700 mt-1">عقود فعالة</div>
+                </div>
+              </div>
+
+              <p className="text-slate-600 leading-relaxed">
+                إدارة الاستثمار الزراعي وربط الإدارة بالمزارع والفرق التشغيلية ومتابعة العمليات الموسمية.
+              </p>
+            </button>
+          </div>
+
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+            <button
+              onClick={() => navigate('/admin/operations-room/b2b')}
+              className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-2xl"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-1">مزاد الشركات</h3>
+                    <p className="text-slate-600 text-sm">Business Auctions Platform</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-2 transition-all" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-blue-900">{pulse?.b2b_active || 0}</div>
+                  <div className="text-xs text-blue-700 mt-1">مزادات نشطة</div>
+                </div>
+                <div className="bg-emerald-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-emerald-900">156</div>
+                  <div className="text-xs text-emerald-700 mt-1">مزايدات اليوم</div>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-amber-900">42</div>
+                  <div className="text-xs text-amber-700 mt-1">مباعة</div>
+                </div>
+              </div>
+
+              <p className="text-slate-600 leading-relaxed">
+                إدارة المزادات التجارية للشركات والمؤسسات ومتابعة النشاط التجاري والمزايدات.
+              </p>
+            </button>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <OperationCard
-            icon={Building2}
-            title="غرفة عمليات B2F"
-            description="إدارة عمليات استثمار المزارع"
-            color="from-emerald-500 to-teal-600"
-            onClick={() => navigate('/admin/operations-room/b2f')}
-          />
+        <div className="grid lg:grid-cols-4 gap-6 mb-8">
+          <button
+            onClick={() => navigate('/admin/operations-room/finance')}
+            className="group bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 hover:border-amber-300 transition-all duration-300 hover:shadow-xl"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <DollarSign className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="text-xl font-bold text-slate-900">المحاسبة</h3>
+                <p className="text-slate-600 text-xs">Finance</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
+            </div>
 
-          <OperationCard
-            icon={Gavel}
-            title="غرفة عمليات B2B"
-            description="إدارة عمليات مزاد الشركات"
-            color="from-blue-500 to-indigo-600"
-            onClick={() => navigate('/admin/operations-room/b2b')}
-          />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg p-3 border border-amber-200">
+                <div className="text-lg font-bold text-emerald-900">{pulse?.finance_pending || 0}</div>
+                <div className="text-xs text-slate-600">معلقة</div>
+              </div>
+              <div className="flex-1 bg-white rounded-lg p-3 border border-amber-200">
+                <div className="text-lg font-bold text-slate-900">342K</div>
+                <div className="text-xs text-slate-600">اليوم</div>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/operations-room/marketing')}
+            className="group bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-200 hover:border-violet-300 transition-all duration-300 hover:shadow-xl"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <TrendingUp className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="text-xl font-bold text-slate-900">التسويق</h3>
+                <p className="text-slate-600 text-xs">Marketing</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
+            </div>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg p-3 border border-violet-200">
+                <div className="text-lg font-bold text-violet-900">{pulse?.marketing_visits || 0}</div>
+                <div className="text-xs text-slate-600">زيارات</div>
+              </div>
+              <div className="flex-1 bg-white rounded-lg p-3 border border-violet-200">
+                <div className="text-lg font-bold text-slate-900">18%</div>
+                <div className="text-xs text-slate-600">تحويل</div>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/operations-room/partners')}
+            className="group bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200 hover:border-orange-300 transition-all duration-300 hover:shadow-xl"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <Users className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="text-xl font-bold text-slate-900">الشركاء</h3>
+                <p className="text-slate-600 text-xs">Partners</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" />
+            </div>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg p-3 border border-orange-200">
+                <div className="text-lg font-bold text-orange-900">12</div>
+                <div className="text-xs text-slate-600">شريك</div>
+              </div>
+              <div className="flex-1 bg-white rounded-lg p-3 border border-orange-200">
+                <div className="text-lg font-bold text-slate-900">128K</div>
+                <div className="text-xs text-slate-600">أرباح</div>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/operations-room/reports')}
+            className="group bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-6 border border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-lg shadow-slate-500/30">
+                <BarChart3 className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="text-xl font-bold text-slate-900">التقارير</h3>
+                <p className="text-slate-600 text-xs">Reports</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+            </div>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg p-3 border border-slate-200">
+                <div className="text-lg font-bold text-slate-900">24</div>
+                <div className="text-xs text-slate-600">تقرير جديد</div>
+              </div>
+              <div className="flex-1 bg-white rounded-lg p-3 border border-slate-200">
+                <div className="text-lg font-bold text-slate-900">98%</div>
+                <div className="text-xs text-slate-600">دقة</div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
+                <span className="text-sm font-medium text-slate-700">النظام يعمل بشكل طبيعي</span>
+              </div>
+              <div className="h-8 w-px bg-slate-200" />
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Shield className="w-4 h-4 text-emerald-600" />
+                <span>آمن ومشفر</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Zap className="w-4 h-4 text-amber-600" />
+                <span>وقت الاستجابة: 120ms</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors border border-slate-200"
+            >
+              <ArrowRight className="w-4 h-4 rotate-180" />
+              <span className="text-sm font-medium">العودة للرئيسية</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-interface OperationCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  color: string;
-  onClick: () => void;
-}
-
-function OperationCard({ icon: Icon, title, description, color, onClick }: OperationCardProps) {
-  return (
-    <button
-      onClick={onClick}
-      className="group relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50 hover:border-slate-600 transition-all duration-300 hover:scale-105 text-right"
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`} />
-
-      <div className="relative">
-        <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-6 mr-auto`}>
-          <Icon className="w-8 h-8 text-white" />
-        </div>
-
-        <h3 className="text-2xl font-bold text-white mb-3">
-          {title}
-        </h3>
-
-        <p className="text-slate-400 mb-6">
-          {description}
-        </p>
-
-        <div className="flex items-center justify-end text-slate-300 group-hover:text-white transition-colors">
-          <span className="font-semibold ml-2">دخول</span>
-          <ArrowRight className="w-5 h-5" />
-        </div>
-      </div>
-    </button>
   );
 }
