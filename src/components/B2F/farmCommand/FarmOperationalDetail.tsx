@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import FarmTeamsManagement from './FarmTeamsManagement';
+import OpsLiteHub from './OpsLiteHub';
+import FarmContentsView from './FarmContentsView';
+import FinanceCalculatorView from './FinanceCalculatorView';
 
 type TabId = 'command' | 'contents' | 'teams' | 'technicians' | 'equipment' | 'facilities' | 'finance' | 'events';
 
@@ -223,9 +226,14 @@ export default function FarmOperationalDetail() {
 
       {/* المحتوى */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {activeTab === 'command' && <OpsLiteHub farmId={farm.id} />}
+        {activeTab === 'contents' && <FarmContentsView farmId={farm.id} />}
         {activeTab === 'teams' && <FarmTeamsManagement farmId={farm.id} />}
+        {activeTab === 'technicians' && <OpsLiteHub farmId={farm.id} />}
+        {activeTab === 'equipment' && <OpsLiteHub farmId={farm.id} />}
+        {activeTab === 'finance' && <FinanceCalculatorView farmId={farm.id} />}
 
-        {activeTab !== 'teams' && (
+        {(activeTab === 'facilities' || activeTab === 'events') && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             {currentTab && (
               <div className="text-center">

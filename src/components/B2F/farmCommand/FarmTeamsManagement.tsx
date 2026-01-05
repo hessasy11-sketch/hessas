@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, UserPlus, Shield, Trash2, Loader2 } from 'lucide-react';
+import { Users, Plus, UserPlus, Shield, Trash2, Loader2, Eye } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useFarmPermissions } from '../../../hooks/useFarmPermissions';
+import CreateTeamModal from './CreateTeamModal';
+import AddMemberModal from './AddMemberModal';
+import TeamDetailsModal from './TeamDetailsModal';
 
 interface Team {
   id: string;
@@ -36,7 +39,9 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
   const [availableStaff, setAvailableStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
-  const [showAddMember, setShowAddMember] = useState<string | null>(null);
+  const [showAddMember, setShowAddMember] = useState<{ teamId: string; teamName: string } | null>(null);
+  const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -48,13 +53,13 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
 
       // جلب الفرق
       const { data: teamsData, error: teamsError } = await supabase
-        .from('fc_teams')
+        .from('fc_farm_teams')
         .select(`
           *,
           leader:platform_staff!team_leader_id(name_ar),
           members:fc_team_members(count)
         `)
-        .eq('operational_farm_id', farmId)
+        .eq('farm_id', farmId)
         .eq('is_active', true);
 
       if (teamsError) throw teamsError;
@@ -87,6 +92,31 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
       console.error('Error loading teams data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!confirm('هل تريد حذف هذا الفريق؟ تأكد من إزالة جميع الأعضاء أولاً.')) return;
+
+    try {
+      setDeletingId(teamId);
+
+      const { data, error } = await supabase.rpc('delete_farm_team', {
+        p_team_id: teamId
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        loadData();
+      } else {
+        alert(data?.message || 'حدث خطأ');
+      }
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      alert('حدث خطأ أثناء حذف الفريق');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -213,14 +243,29 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
 
               <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => setShowAddMember(team.id)}
+                  onClick={() => setShowDetails(team.id)}
+                  className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  التفاصيل
+                </button>
+                <button
+                  onClick={() => setShowAddMember({ teamId: team.id, teamName: team.team_name })}
                   className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
                   إضافة عضو
                 </button>
-                <button className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
-                  <Trash2 className="w-5 h-5" />
+                <button
+                  onClick={() => handleDeleteTeam(team.id)}
+                  disabled={deletingId === team.id}
+                  className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {deletingId === team.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -254,6 +299,32 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
           ))}
         </div>
       </div>
+
+      {/* Modals */}
+      {showCreateTeam && (
+        <CreateTeamModal
+          farmId={farmId}
+          onClose={() => setShowCreateTeam(false)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {showAddMember && (
+        <AddMemberModal
+          teamId={showAddMember.teamId}
+          teamName={showAddMember.teamName}
+          onClose={() => setShowAddMember(null)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {showDetails && (
+        <TeamDetailsModal
+          teamId={showDetails}
+          onClose={() => setShowDetails(null)}
+          onRefresh={loadData}
+        />
+      )}
     </div>
   );
 }
