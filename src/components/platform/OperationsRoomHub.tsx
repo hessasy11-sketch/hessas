@@ -11,9 +11,12 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  BarChart3
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useVisitsTracking } from '../../hooks/useVisitsTracking';
 
 interface B2FPulse {
   active_requests: number;
@@ -37,11 +40,17 @@ export default function OperationsRoomHub() {
   const [b2bPulse, setB2bPulse] = useState<B2BPulse | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const { summary, loadSummary } = useVisitsTracking();
+
   useEffect(() => {
     loadPulse();
-    const interval = setInterval(loadPulse, 30000);
+    loadSummary();
+    const interval = setInterval(() => {
+      loadPulse();
+      loadSummary();
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadSummary]);
 
   const loadPulse = async () => {
     try {
@@ -92,6 +101,67 @@ export default function OperationsRoomHub() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* قسم إحصائيات الزيارات */}
+        {summary && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Eye className="w-5 h-5 text-slate-600" />
+              <h2 className="text-xl font-bold text-slate-900">إحصائيات الزيارات</h2>
+              <span className="text-sm text-slate-500">آخر 24 ساعة</span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-white rounded-xl border-2 border-slate-200 p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm text-slate-600 font-medium">إجمالي اليوم</span>
+                </div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {summary.total_today.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border-2 border-emerald-200 p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+                    <Leaf className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm text-slate-600 font-medium">زيارات B2F</span>
+                </div>
+                <div className="text-3xl font-bold text-emerald-600">
+                  {summary.b2f_today.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border-2 border-blue-200 p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm text-slate-600 font-medium">زيارات B2B</span>
+                </div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {summary.b2b_today.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border-2 border-slate-200 p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm text-slate-600 font-medium">الأسبوع</span>
+                </div>
+                <div className="text-3xl font-bold text-slate-600">
+                  {summary.total_week.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-2 gap-8">
           <OperationCard
             title="استثمار المزارع"

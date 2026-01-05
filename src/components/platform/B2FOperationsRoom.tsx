@@ -22,6 +22,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useDecisionQueue } from '../../hooks/useDecisionQueue';
 import { useMasterActions } from '../../hooks/useMasterActions';
+import { useVisitsTracking } from '../../hooks/useVisitsTracking';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
 
@@ -91,13 +92,18 @@ export default function B2FOperationsRoom() {
 
   const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2f');
   const { toggleFarmBookings, loading: masterActionLoading } = useMasterActions();
+  const { topFarms, loadTopFarms } = useVisitsTracking();
 
   // استخدام staff_id مؤقت للتجربة - في الإنتاج سيأتي من الـ session
   const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
+    loadTopFarms();
+    const interval = setInterval(() => {
+      loadData();
+      loadTopFarms();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -287,6 +293,48 @@ export default function B2FOperationsRoom() {
                 )}
               </div>
             </div>
+
+            {/* Top 5 Most Visited Farms */}
+            {topFarms.length > 0 && (
+              <div className="bg-white rounded-2xl border-2 border-emerald-200 shadow-lg">
+                <div className="p-4 border-b border-emerald-100 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-emerald-600" />
+                    أكثر المزارع زيارة
+                  </h2>
+                  <span className="text-sm text-emerald-600 font-medium">آخر 24 ساعة</span>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                  {topFarms.map((farm, index) => (
+                    <div key={farm.farm_id} className="p-4 hover:bg-emerald-50/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white' :
+                            index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' :
+                            index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-white' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{farm.farm_name}</div>
+                            <div className="text-xs text-slate-500">
+                              آخر زيارة: {new Date(farm.last_visit).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-emerald-600" />
+                          <span className="text-lg font-bold text-emerald-600">{farm.visit_count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">

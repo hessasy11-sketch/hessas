@@ -23,6 +23,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useDecisionQueue } from '../../hooks/useDecisionQueue';
 import { useMasterActions } from '../../hooks/useMasterActions';
+import { useVisitsTracking } from '../../hooks/useVisitsTracking';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
 
@@ -93,15 +94,20 @@ export default function B2BAuctionsOpsRoom() {
 
   const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2b');
   const { extendAuctionTime, loading: masterActionLoading } = useMasterActions();
+  const { topAuctions, loadTopAuctions } = useVisitsTracking();
 
   // استخدام staff_id مؤقت للتجربة - في الإنتاج سيأتي من الـ session
   const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
+    loadTopAuctions();
+    const interval = setInterval(() => {
+      loadData();
+      loadTopAuctions();
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadTopAuctions]);
 
   const loadData = async () => {
     try {
@@ -316,6 +322,57 @@ export default function B2BAuctionsOpsRoom() {
                 )}
               </div>
             </div>
+
+            {/* Top 5 Most Visited Auctions */}
+            {topAuctions.length > 0 && (
+              <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-lg">
+                <div className="p-4 border-b border-blue-100 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    أكثر المزادات زيارة
+                  </h2>
+                  <span className="text-sm text-blue-600 font-medium">آخر 24 ساعة</span>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                  {topAuctions.map((auction, index) => (
+                    <div key={auction.auction_id} className="p-4 hover:bg-blue-50/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white' :
+                            index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' :
+                            index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-white' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{auction.auction_title}</div>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className={`px-2 py-0.5 rounded-full ${
+                                auction.auction_status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                                auction.auction_status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                'bg-slate-100 text-slate-700'
+                              }`}>
+                                {auction.auction_status}
+                              </span>
+                              <span className="text-slate-500">
+                                آخر زيارة: {new Date(auction.last_visit).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-blue-600" />
+                          <span className="text-lg font-bold text-blue-600">{auction.visit_count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
