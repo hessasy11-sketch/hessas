@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  BarChart3
+  BarChart3,
+  FileText
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useVisitsTracking } from '../../hooks/useVisitsTracking';
@@ -91,6 +92,14 @@ export default function OperationsRoomHub() {
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/admin/operations-room/logs')}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/20 border border-blue-500/30 rounded-xl hover:bg-blue-500/30 transition-colors"
+              >
+                <FileText className="w-4 h-4 text-blue-300" />
+                <span className="text-blue-200 text-sm font-medium">السجل القيادي</span>
+              </button>
+
               <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
                 <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
                 <span className="text-emerald-300 text-sm font-medium">مباشر</span>

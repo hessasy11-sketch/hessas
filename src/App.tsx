@@ -38,6 +38,7 @@ import B2BOperationsView from './components/platform/B2BOperationsView';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
+import ExecutiveLogsView from './components/platform/ExecutiveLogsView';
 import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
@@ -459,6 +460,7 @@ function App() {
   return (
     <Routes>
       <Route path="/admin/operations-room" element={<OperationsRoomHub />} />
+      <Route path="/admin/operations-room/logs" element={<ExecutiveLogsView />} />
       <Route path="/admin/operations-room/b2f" element={<B2FOperationsRoom />} />
       <Route path="/admin/operations-room/b2b" element={<B2BAuctionsOpsRoom />} />
       <Route path="/admin/operations-room/finance" element={<FinanceSection />} />
