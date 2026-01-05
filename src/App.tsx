@@ -39,6 +39,7 @@ import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
+import FarmSetupPage from './components/platform/FarmSetupPage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -467,6 +468,7 @@ function App() {
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
       <Route path="/admin/b2f/farm-command" element={<FarmCommandCenter />} />
       <Route path="/admin/b2f/farm-command/farms/:farmId" element={<FarmDetailPage />} />
+      <Route path="/farms/:farmId" element={<FarmSetupPage />} />
       <Route path="/admin/settings" element={<SettingsAdminPage />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
