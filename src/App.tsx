@@ -33,7 +33,9 @@ import FarmDetailPage from './components/platform/FarmDetailPage';
 import FinanceSection from './components/platform/FinanceSection';
 import MarketingSection from './components/platform/MarketingSection';
 import PartnersSection from './components/platform/PartnersSection';
-import PlatformCommandCenter from './components/platform/PlatformCommandCenter';
+import OperationsRoomHub from './components/platform/OperationsRoomHub';
+import B2FOperationsView from './components/platform/B2FOperationsView';
+import B2BOperationsView from './components/platform/B2BOperationsView';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
@@ -472,6 +474,9 @@ function App() {
       <Route path="/admin/b2f/farm-command/farms/:farmId" element={<FarmDetailPage />} />
       <Route path="/farms/:farmId" element={<FarmSetupPage />} />
       <Route path="/admin/settings" element={<SettingsAdminPage />} />
+      <Route path="/admin/operations-room" element={<OperationsRoomHub />} />
+      <Route path="/admin/operations-room/b2f" element={<B2FOperationsView />} />
+      <Route path="/admin/operations-room/b2b" element={<B2BOperationsView />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
   );
