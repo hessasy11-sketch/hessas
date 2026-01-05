@@ -24,6 +24,8 @@ import { supabase } from '../../lib/supabase';
 import FarmTeamManagement from './FarmTeamManagement';
 import FarmTasksManagement from './FarmTasksManagement';
 import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
+import EquipmentView from '../B2F/farmCommand/EquipmentView';
+import FinanceCalculatorView from '../B2F/farmCommand/FinanceCalculatorView';
 
 interface FarmDetail {
   id: string;
@@ -542,25 +544,11 @@ export default function FarmDetailPage() {
             )}
 
             {activeTab === 'equipment' && (
-              <div className="text-center py-16">
-                <Wrench className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-700 mb-2">المعدات</h3>
-                <p className="text-gray-500">
-                  هنا سيتم عرض جميع معدات المزرعة وأدواتها وحالتها التشغيلية
-                </p>
-                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
-              </div>
+              <EquipmentView farmId={farmId!} />
             )}
 
             {activeTab === 'calculator' && (
-              <div className="text-center py-16">
-                <DollarSign className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-700 mb-2">الحاسبة المالية</h3>
-                <p className="text-gray-500">
-                  هنا سيتم عرض تفاصيل المداخيل والمصاريف والحسابات المالية للمزرعة
-                </p>
-                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
-              </div>
+              <FinanceCalculatorView farmId={farmId!} />
             )}
           </div>
         </div>
