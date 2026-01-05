@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageGuard } from './PermissionGuard';
 import { SessionTracker } from './SessionTracker';
 import { adminSessionManager } from '../../utils/adminSessionManager';
 import B2FControlPanel from '../B2F/B2FControlPanel';
 
 export function B2FAdminPage() {
   const navigate = useNavigate();
-  const [platformRole, setPlatformRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,7 +34,6 @@ export function B2FAdminPage() {
         }
       }
 
-      setPlatformRole(session?.role || null);
       setLoading(false);
     };
 
@@ -44,7 +41,7 @@ export function B2FAdminPage() {
   }, []);
 
   const handleClose = () => {
-    navigate('/admin', { replace: true });
+    navigate('/hq', { replace: true });
   };
 
   if (loading) {
@@ -59,9 +56,9 @@ export function B2FAdminPage() {
   }
 
   return (
-    <PageGuard platformRole={platformRole} pageKey="b2f">
+    <>
       <SessionTracker />
       <B2FControlPanel onClose={handleClose} />
-    </PageGuard>
+    </>
   );
 }
