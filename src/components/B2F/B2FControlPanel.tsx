@@ -29,20 +29,18 @@ import OpportunitiesTab from './tabs/OpportunitiesTab';
 import Finance2Section from './Finance2Section';
 import SalesTab from './tabs/SalesTab';
 import ContractsTab from './tabs/ContractsTab';
-import FarmLevelOperationsTab from './tabs/FarmLevelOperationsTab';
 import InvestorServiceTab from './tabs/InvestorServiceTab';
 import NotificationsManagementTab from './tabs/NotificationsManagementTab';
 import AIAssistantManagementTab from './tabs/AIAssistantManagementTab';
 import SettingsTab from './tabs/SettingsTab';
-import ManagementReportsView from './admin/ManagementReportsView';
-import MyFarmsTab from './tabs/MyFarmsTab';
 import InvestmentApprovalsTab from './tabs/InvestmentApprovalsTab';
+import FarmCommandTab from './tabs/FarmCommandTab';
 
 interface B2FControlPanelProps {
   onClose: () => void;
 }
 
-type TabId = 'settings' | 'farms' | 'opportunities' | 'finance' | 'sales' | 'contracts' | 'operations' | 'reports' | 'investor_service' | 'notifications' | 'ai' | 'my_farms' | 'investment_approvals';
+type TabId = 'settings' | 'farms' | 'opportunities' | 'finance' | 'sales' | 'contracts' | 'farm_command' | 'investor_service' | 'notifications' | 'ai' | 'investment_approvals';
 
 interface Tab {
   id: TabId;
@@ -229,27 +227,18 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
       ]
     },
     {
-      title: '6️⃣ التشغيل - متابعة العمليات',
+      title: '6️⃣ قيادة المزارع - التشغيل',
       icon: Activity,
       color: 'from-teal-600 to-emerald-700',
       tabs: [
         {
-          id: 'operations' as TabId,
-          title: '6. التشغيل والمتابعة',
+          id: 'farm_command' as TabId,
+          title: '6. قيادة المزارع',
           icon: Activity,
           gradient: 'from-teal-500 to-emerald-600',
           iconBg: 'from-teal-400 to-emerald-500',
-          description: 'الخطوة السادسة - نظام التشغيل المركزي ومتابعة الأشجار',
-          badge: `${stats.totalOperations} عملية`
-        },
-        {
-          id: 'reports' as TabId,
-          title: '6ب. تقارير التوثيق',
-          icon: FileText,
-          gradient: 'from-rose-500 to-pink-600',
-          iconBg: 'from-rose-400 to-pink-500',
-          description: 'تقارير المشرفين ومدراء المزارع المرسلة للإدارة',
-          badge: 'توثيق'
+          description: 'لوحة قيادة وطنية لإدارة المزارع التشغيلية',
+          badge: 'جديد'
         }
       ]
     },
@@ -283,15 +272,6 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
       icon: Settings,
       color: 'from-slate-600 to-gray-700',
       tabs: [
-        {
-          id: 'my_farms' as TabId,
-          title: 'مزارعي',
-          icon: MapPin,
-          gradient: 'from-green-500 to-emerald-600',
-          iconBg: 'from-green-400 to-emerald-500',
-          description: 'المزارع المُسندة لي كمدير استثمار',
-          badge: 'مدير'
-        },
         {
           id: 'investment_approvals' as TabId,
           title: 'اعتمادات الاستثمار',
@@ -367,12 +347,10 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
           {activeTab === 'finance' && <Finance2Section />}
           {activeTab === 'sales' && <SalesTab />}
           {activeTab === 'contracts' && <ContractsTab />}
-          {activeTab === 'operations' && <FarmLevelOperationsTab />}
-          {activeTab === 'reports' && <ManagementReportsView />}
+          {activeTab === 'farm_command' && <FarmCommandTab />}
           {activeTab === 'investor_service' && <InvestorServiceTab />}
           {activeTab === 'notifications' && <NotificationsManagementTab />}
           {activeTab === 'ai' && <AIAssistantManagementTab />}
-          {activeTab === 'my_farms' && <MyFarmsTab />}
           {activeTab === 'investment_approvals' && <InvestmentApprovalsTab />}
         </div>
       </div>

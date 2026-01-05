@@ -37,6 +37,7 @@ import PlatformCommandCenter from './components/platform/PlatformCommandCenter';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
+import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -463,6 +464,8 @@ function App() {
       <Route path="/hq/partners" element={<PartnersSection />} />
       <Route path="/admin/auctions" element={<AuctionsAdminPage />} />
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
+      <Route path="/admin/b2f/farm-command" element={<B2FAdminPage />} />
+      <Route path="/admin/b2f/farm-command/farms/:farmId" element={<FarmOperationalDetail />} />
       <Route path="/admin/settings" element={<SettingsAdminPage />} />
       <Route path="*" element={<MainApp />} />
     </Routes>
