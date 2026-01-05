@@ -17,7 +17,9 @@ import {
   FileText,
   DollarSign,
   TrendingUp,
-  Shield
+  Shield,
+  UserPlus,
+  Edit3
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useDecisionQueue } from '../../hooks/useDecisionQueue';
@@ -25,6 +27,7 @@ import { useMasterActions } from '../../hooks/useMasterActions';
 import { useVisitsTracking } from '../../hooks/useVisitsTracking';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
+import AssignFarmManagerModal from './AssignFarmManagerModal';
 
 interface Pulse {
   visits_today: number;
@@ -89,6 +92,8 @@ export default function B2FOperationsRoom() {
   const [showAuthority, setShowAuthority] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedDecisionForReject, setSelectedDecisionForReject] = useState<Decision | null>(null);
+  const [showAssignManagerModal, setShowAssignManagerModal] = useState(false);
+  const [selectedFarmForManager, setSelectedFarmForManager] = useState<FarmRadar | null>(null);
 
   const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2f');
   const { toggleFarmBookings, loading: masterActionLoading } = useMasterActions();
@@ -171,6 +176,17 @@ export default function B2FOperationsRoom() {
       setSelectedDecisionForReject(null);
       loadData();
     }
+  };
+
+  const handleOpenAssignManager = (farm: FarmRadar) => {
+    setSelectedFarmForManager(farm);
+    setShowAssignManagerModal(true);
+  };
+
+  const handleCloseAssignManager = () => {
+    setShowAssignManagerModal(false);
+    setSelectedFarmForManager(null);
+    loadData();
   };
 
   return (
@@ -260,6 +276,7 @@ export default function B2FOperationsRoom() {
                     isSelected={selectedFarm === farm.id}
                     onSelect={() => setSelectedFarm(farm.id)}
                     onToggleBookings={handleToggleBookings}
+                    onAssignManager={() => handleOpenAssignManager(farm)}
                     loading={masterActionLoading}
                   />
                 ))}
@@ -381,6 +398,14 @@ export default function B2FOperationsRoom() {
         decisionTitle={selectedDecisionForReject?.farm_name || 'القرار'}
         loading={actionLoading}
       />
+
+      {selectedFarmForManager && (
+        <AssignFarmManagerModal
+          isOpen={showAssignManagerModal}
+          onClose={handleCloseAssignManager}
+          farm={selectedFarmForManager}
+        />
+      )}
     </div>
   );
 }
@@ -397,7 +422,7 @@ function PulseCard({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings, loading }: any) {
+function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings, onAssignManager, loading }: any) {
   return (
     <div
       className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer ${isSelected ? 'bg-emerald-50' : ''}`}
@@ -417,12 +442,40 @@ function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings, loading }
             <MapPin className="w-3 h-3" />
             {farm.location}
           </p>
-          {farm.farm_manager_name && (
-            <p className="text-xs text-slate-600 mt-1 flex items-center gap-1">
-              <UserCheck className="w-3 h-3" />
-              المدير: {farm.farm_manager_name}
-            </p>
-          )}
+
+          <div className="mt-2 flex items-center gap-2">
+            {farm.farm_manager_name ? (
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg flex-1">
+                  <UserCheck className="w-3 h-3 text-emerald-600" />
+                  <span className="text-xs text-emerald-700 font-medium">
+                    المدير: {farm.farm_manager_name}
+                  </span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAssignManager();
+                  }}
+                  className="px-2 py-1 bg-blue-50 border border-blue-200 text-blue-600 rounded-lg text-xs hover:bg-blue-100 transition-colors"
+                  title="تغيير المدير"
+                >
+                  <Edit3 className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAssignManager();
+                }}
+                className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold hover:bg-blue-600 transition-colors flex items-center gap-1"
+              >
+                <UserPlus className="w-3 h-3" />
+                تعيين مدير مزرعة
+              </button>
+            )}
+          </div>
         </div>
 
         <button
