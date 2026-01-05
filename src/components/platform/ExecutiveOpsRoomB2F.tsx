@@ -9,7 +9,9 @@ import {
   XCircle,
   Clock,
   Loader2,
-  Shield
+  Shield,
+  DollarSign,
+  TrendingDown
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -48,8 +50,17 @@ interface MasterAction {
   danger_level: string;
 }
 
+interface FinancePulse {
+  payments_today: number;
+  expenses_today: number;
+  pending_reviews: number;
+  net_today: number;
+  net_week: number;
+}
+
 export default function ExecutiveOpsRoomB2F({ onBack }: ExecutiveOpsRoomB2FProps) {
   const [pulse, setPulse] = useState<PulseData | null>(null);
+  const [financePulse, setFinancePulse] = useState<FinancePulse | null>(null);
   const [owners, setOwners] = useState<{ b2f: OwnerData | null; farm_command: OwnerData | null }>({ b2f: null, farm_command: null });
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [actions, setActions] = useState<MasterAction[]>([]);
@@ -64,14 +75,16 @@ export default function ExecutiveOpsRoomB2F({ onBack }: ExecutiveOpsRoomB2FProps
 
   const loadRoomData = async () => {
     try {
-      const [pulseRes, ownersRes, decisionsRes, actionsRes] = await Promise.all([
+      const [pulseRes, financeRes, ownersRes, decisionsRes, actionsRes] = await Promise.all([
         supabase.rpc('get_executive_pulse_b2f'),
+        supabase.rpc('get_executive_pulse_finance'),
         supabase.rpc('get_executive_owners'),
         supabase.rpc('get_executive_decision_queue', { p_section: 'b2f' }),
         supabase.from('executive_master_actions').select('*').eq('section', 'b2f').eq('is_active', true)
       ]);
 
       if (pulseRes.data) setPulse(pulseRes.data);
+      if (financeRes.data) setFinancePulse(financeRes.data);
       if (ownersRes.data) {
         setOwners({
           b2f: ownersRes.data.b2f,
@@ -198,6 +211,46 @@ export default function ExecutiveOpsRoomB2F({ onBack }: ExecutiveOpsRoomB2FProps
             </div>
           )}
         </div>
+
+        {financePulse && (
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg p-6 mb-8 border-2 border-amber-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">مؤشرات المحاسب</h2>
+                <p className="text-xs text-gray-600">Finance Overview</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              <div className="bg-white rounded-lg p-3 border border-emerald-200">
+                <div className="text-xs text-emerald-700 font-medium mb-1">مدفوعات اليوم</div>
+                <div className="text-xl font-bold text-emerald-900">{financePulse.payments_today.toLocaleString()}</div>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-red-200">
+                <div className="text-xs text-red-700 font-medium mb-1">مصروفات اليوم</div>
+                <div className="text-xl font-bold text-red-900">{financePulse.expenses_today.toLocaleString()}</div>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-amber-200">
+                <div className="text-xs text-amber-700 font-medium mb-1">تحتاج مراجعة</div>
+                <div className="text-xl font-bold text-amber-900">{financePulse.pending_reviews}</div>
+              </div>
+              <div className={`bg-white rounded-lg p-3 border ${financePulse.net_today >= 0 ? 'border-emerald-200' : 'border-red-200'}`}>
+                <div className="text-xs text-gray-700 font-medium mb-1">صافي اليوم</div>
+                <div className={`text-xl font-bold ${financePulse.net_today >= 0 ? 'text-emerald-900' : 'text-red-900'}`}>
+                  {financePulse.net_today.toLocaleString()}
+                </div>
+              </div>
+              <div className={`bg-white rounded-lg p-3 border ${financePulse.net_week >= 0 ? 'border-emerald-200' : 'border-red-200'}`}>
+                <div className="text-xs text-gray-700 font-medium mb-1">صافي الأسبوع</div>
+                <div className={`text-xl font-bold ${financePulse.net_week >= 0 ? 'text-emerald-900' : 'text-red-900'}`}>
+                  {financePulse.net_week.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6">

@@ -6,7 +6,9 @@ import {
   TrendingUp,
   AlertTriangle,
   User,
-  Loader2
+  Loader2,
+  Eye,
+  BarChart3
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import ExecutiveOpsRoomB2F from './ExecutiveOpsRoomB2F';
@@ -232,6 +234,98 @@ function OperationsRoomCard({ section, onEnter }: OperationsRoomCardProps) {
   );
 }
 
+interface MarketingPulse {
+  platform_total: number;
+  b2f_visits: number;
+  b2b_visits: number;
+  b2f_conversion: number;
+  b2b_conversion: number;
+}
+
+function MarketingPulseCard() {
+  const [pulse, setPulse] = useState<MarketingPulse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadMarketingPulse();
+    const interval = setInterval(loadMarketingPulse, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadMarketingPulse = async () => {
+    try {
+      const { data } = await supabase.rpc('get_executive_pulse_marketing');
+      if (data) setPulse(data);
+    } catch (error) {
+      console.error('Error loading marketing pulse:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!pulse) return null;
+
+  return (
+    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+          <Eye className="w-6 h-6 text-purple-600" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">مؤشرات التسويق</h3>
+          <p className="text-xs text-gray-600">Marketing Performance Metrics</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-3">
+        <div className="bg-white rounded-lg p-3 border border-purple-200">
+          <div className="flex items-center gap-2 mb-1">
+            <BarChart3 className="w-3 h-3 text-purple-600" />
+            <span className="text-xs text-gray-600">إجمالي</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">{pulse.platform_total}</div>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-emerald-200">
+          <div className="flex items-center gap-2 mb-1">
+            <Eye className="w-3 h-3 text-emerald-600" />
+            <span className="text-xs text-gray-600">B2F</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">{pulse.b2f_visits}</div>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-blue-200">
+          <div className="flex items-center gap-2 mb-1">
+            <Eye className="w-3 h-3 text-blue-600" />
+            <span className="text-xs text-gray-600">B2B</span>
+          </div>
+          <div className="text-xl font-bold text-gray-900">{pulse.b2b_visits}</div>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-emerald-200">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-3 h-3 text-emerald-600" />
+            <span className="text-xs text-gray-600">تحويل B2F</span>
+          </div>
+          <div className="text-xl font-bold text-emerald-900">{pulse.b2f_conversion}%</div>
+        </div>
+        <div className="bg-white rounded-lg p-3 border border-blue-200">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-3 h-3 text-blue-600" />
+            <span className="text-xs text-gray-600">تحويل B2B</span>
+          </div>
+          <div className="text-xl font-bold text-blue-900">{pulse.b2b_conversion}%</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ExecutiveOpsRoom() {
   const [activeRoom, setActiveRoom] = useState<'entry' | 'b2f' | 'b2b' | 'authority'>('entry');
 
@@ -260,6 +354,10 @@ export default function ExecutiveOpsRoom() {
           <p className="text-sm text-gray-500">
             Executive Operations Command Center
           </p>
+        </div>
+
+        <div className="mb-8">
+          <MarketingPulseCard />
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-8">
