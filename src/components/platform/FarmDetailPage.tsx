@@ -23,6 +23,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import FarmTeamManagement from './FarmTeamManagement';
 import FarmTasksManagement from './FarmTasksManagement';
+import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
 
 interface FarmDetail {
   id: string;
@@ -529,14 +530,7 @@ export default function FarmDetailPage() {
             )}
 
             {activeTab === 'contents' && (
-              <div className="text-center py-16">
-                <Package className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-700 mb-2">محتويات المزرعة</h3>
-                <p className="text-gray-500">
-                  هنا سيتم عرض جميع محتويات المزرعة من أشجار ومحاصيل ومنتجات
-                </p>
-                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
-              </div>
+              <FarmContentsView farmId={farmId!} />
             )}
 
             {activeTab === 'team' && (
