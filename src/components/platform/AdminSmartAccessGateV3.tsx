@@ -82,7 +82,7 @@ export function AdminSmartAccessGateV3() {
 
       if (!result.requires_pin) {
         console.log('✨ Step 4a: NO PIN REQUIRED - Creating session directly');
-        adminSessionManager.createSession({
+        await adminSessionManager.createSession({
           staff_id: result.staff.id,
           user_id: result.staff.user_id || '',
           full_name: result.staff.full_name,
@@ -168,7 +168,7 @@ export function AdminSmartAccessGateV3() {
 
     if (staffInfo && deviceInfo) {
       console.log('  - Creating admin session...');
-      adminSessionManager.createSession({
+      await adminSessionManager.createSession({
         staff_id: staffInfo.id,
         user_id: staffInfo.user_id || '',
         full_name: staffInfo.full_name,

@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase';
+
 interface FarmContext {
   farm_id: string;
   farm_name: string;
@@ -18,20 +20,142 @@ interface AdminSession {
   current_farm_id?: string | null;
   available_farms?: FarmContext[];
   farm_roles_map?: Record<string, string>;
+  session_token?: string;
+  db_session_id?: string;
 }
 
 const SESSION_KEY = 'platform_staff_session';
-const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes idle timeout
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
 
 export const adminSessionManager = {
-  createSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at'>): void {
+  async createSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at' | 'session_token' | 'db_session_id'>): Promise<void> {
     const now = Date.now();
-    const session: AdminSession = {
-      ...sessionData,
-      created_at: now,
-      last_activity_at: now,
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+    try {
+      const { data: dbSession, error } = await supabase
+        .from('platform_staff_sessions')
+        .insert({
+          staff_id: sessionData.staff_id,
+          login_method: 'qr',
+          device_info: {
+            browser: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          },
+          ip_address: null,
+          user_agent: navigator.userAgent,
+          is_active: true,
+          landing_route: '/hq'
+        })
+        .select('id, session_token')
+        .single();
+
+      if (error) {
+        console.error('Error creating database session:', error);
+        return;
+      }
+
+      const session: AdminSession = {
+        ...sessionData,
+        created_at: now,
+        last_activity_at: now,
+        session_token: dbSession.session_token,
+        db_session_id: dbSession.id,
+      };
+
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      console.log('✅ Session created successfully in DB and localStorage');
+    } catch (error) {
+      console.error('Exception creating session:', error);
+    }
+  },
+
+  async restoreSessionFromDB(): Promise<AdminSession | null> {
+    try {
+      const localSession = localStorage.getItem(SESSION_KEY);
+      if (!localSession) return null;
+
+      const parsedSession: AdminSession = JSON.parse(localSession);
+
+      if (!parsedSession.session_token) {
+        console.log('❌ No session token found in localStorage');
+        this.destroySession();
+        return null;
+      }
+
+      const { data: dbSession, error } = await supabase
+        .from('platform_staff_sessions')
+        .select(`
+          id,
+          session_token,
+          staff_id,
+          is_active,
+          started_at,
+          last_activity_at,
+          ended_at,
+          staff:platform_staff(
+            id,
+            user_id,
+            full_name,
+            phone_number,
+            role,
+            department
+          )
+        `)
+        .eq('session_token', parsedSession.session_token)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error restoring session from DB:', error);
+        this.destroySession();
+        return null;
+      }
+
+      if (!dbSession || !dbSession.staff) {
+        console.log('❌ Session not found in DB or inactive');
+        this.destroySession();
+        return null;
+      }
+
+      const lastActivity = new Date(dbSession.last_activity_at).getTime();
+      const idleTime = Date.now() - lastActivity;
+
+      if (idleTime > IDLE_TIMEOUT_MS) {
+        console.log('❌ Session expired (idle timeout)');
+        await this.destroySession();
+        return null;
+      }
+
+      const staffData: any = dbSession.staff;
+      const restoredSession: AdminSession = {
+        staff_id: staffData.id,
+        user_id: staffData.user_id || '',
+        full_name: staffData.full_name,
+        role: staffData.role,
+        role_title: staffData.role || '',
+        department: staffData.department || '',
+        is_super_admin: staffData.role === 'super_admin',
+        is_platform_owner: staffData.role === 'platform_owner',
+        created_at: new Date(dbSession.started_at).getTime(),
+        last_activity_at: Date.now(),
+        session_token: dbSession.session_token,
+        db_session_id: dbSession.id,
+        current_farm_id: parsedSession.current_farm_id,
+        available_farms: parsedSession.available_farms,
+        farm_roles_map: parsedSession.farm_roles_map,
+      };
+
+      localStorage.setItem(SESSION_KEY, JSON.stringify(restoredSession));
+
+      await this.updateActivityInDB();
+
+      console.log('✅ Session restored from DB successfully');
+      return restoredSession;
+    } catch (error) {
+      console.error('Exception restoring session:', error);
+      this.destroySession();
+      return null;
+    }
   },
 
   getSession(): AdminSession | null {
@@ -60,16 +184,53 @@ export const adminSessionManager = {
     return idleTime > IDLE_TIMEOUT_MS;
   },
 
-  updateActivity(): void {
+  async updateActivity(): Promise<void> {
     const session = this.getSession();
     if (!session) return;
 
     session.last_activity_at = Date.now();
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+    await this.updateActivityInDB();
   },
 
-  destroySession(): void {
+  async updateActivityInDB(): Promise<void> {
+    const session = this.getSession();
+    if (!session || !session.db_session_id) return;
+
+    try {
+      await supabase
+        .from('platform_staff_sessions')
+        .update({
+          last_activity_at: new Date().toISOString()
+        })
+        .eq('id', session.db_session_id);
+    } catch (error) {
+      console.error('Error updating activity in DB:', error);
+    }
+  },
+
+  async destroySession(): Promise<void> {
+    const session = this.getSession();
+
+    if (session?.db_session_id) {
+      try {
+        await supabase
+          .from('platform_staff_sessions')
+          .update({
+            is_active: false,
+            ended_at: new Date().toISOString()
+          })
+          .eq('id', session.db_session_id);
+
+        console.log('✅ Session ended in database');
+      } catch (error) {
+        console.error('Error ending session in DB:', error);
+      }
+    }
+
     localStorage.removeItem(SESSION_KEY);
+    console.log('✅ Session destroyed from localStorage');
   },
 
   isAuthenticated(): boolean {
@@ -182,5 +343,13 @@ export function initActivityTracking(): void {
 
   events.forEach(event => {
     window.addEventListener(event, updateActivity, { passive: true });
+  });
+
+  const dbUpdateInterval = setInterval(() => {
+    adminSessionManager.updateActivityInDB();
+  }, 30000);
+
+  window.addEventListener('beforeunload', () => {
+    clearInterval(dbUpdateInterval);
   });
 }
