@@ -188,7 +188,7 @@ export default function OperationsRoomHub() {
               </div>
 
               <button
-                onClick={() => navigate('/admin/operations-room/b2f')}
+                onClick={() => navigate('/admin/b2f')}
                 className="group bg-white rounded-xl border-2 border-emerald-200 p-6 hover:shadow-xl hover:border-emerald-400 hover:scale-105 transition-all cursor-pointer text-right w-full"
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -207,7 +207,7 @@ export default function OperationsRoomHub() {
               </button>
 
               <button
-                onClick={() => navigate('/admin/operations-room/b2b')}
+                onClick={() => navigate('/admin/auctions')}
                 className="group bg-white rounded-xl border-2 border-blue-200 p-6 hover:shadow-xl hover:border-blue-400 hover:scale-105 transition-all cursor-pointer text-right w-full"
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -284,7 +284,7 @@ export default function OperationsRoomHub() {
               { label: 'عقود فعالة', value: b2fPulse?.active_contracts || 0, icon: TrendingUp, color: 'text-slate-600' }
             ]}
             criticalAlerts={b2fPulse?.critical_alerts || 0}
-            onEnter={() => navigate('/admin/operations-room/b2f')}
+            onEnter={() => navigate('/admin/b2f')}
             loading={loading}
           />
 
@@ -303,7 +303,7 @@ export default function OperationsRoomHub() {
               { label: 'مكتملة اليوم', value: b2bPulse?.completed_today || 0, icon: CheckCircle2, color: 'text-slate-600' }
             ]}
             criticalAlerts={b2bPulse?.critical_alerts || 0}
-            onEnter={() => navigate('/admin/operations-room/b2b')}
+            onEnter={() => navigate('/admin/auctions')}
             loading={loading}
           />
         </div>
