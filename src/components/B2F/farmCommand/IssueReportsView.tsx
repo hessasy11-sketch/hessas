@@ -23,17 +23,9 @@ export default function IssueReportsView({ farmId }: { farmId: string }) {
 
   const loadReports = async () => {
     try {
-      const { data, error } = await supabase
-        .from('fc_issue_reports')
-        .select(`
-          *,
-          reported_by_staff:platform_staff!reported_by(full_name)
-        `)
-        .eq('farm_id', farmId)
-        .order('reported_at', { ascending: false });
-
-      if (error) throw error;
-      setReports(data || []);
+      // FC Issue Reports table not yet implemented - return empty array
+      console.log('⚠️ Issue Reports not yet implemented');
+      setReports([]);
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
