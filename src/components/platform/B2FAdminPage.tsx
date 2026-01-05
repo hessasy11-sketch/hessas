@@ -10,8 +10,8 @@ export function B2FAdminPage() {
   const platformRole = session?.role || null;
 
   const handleClose = () => {
-    // Return to HQ Dashboard
-    navigate('/hq', { replace: true });
+    // Return to main admin page
+    navigate('/admin', { replace: true });
   };
 
   return (

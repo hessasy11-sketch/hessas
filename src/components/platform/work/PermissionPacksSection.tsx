@@ -233,7 +233,7 @@ function CreatePackModal({ pack, onClose, onSuccess }: CreatePackModalProps) {
     target_boards: pack?.target_boards || [],
     requires_pin: pack?.requires_pin || false,
     session_idle_minutes: pack?.session_idle_minutes || 30,
-    landing_route: pack?.landing_route || '/hq',
+    landing_route: pack?.landing_route || '/admin',
     is_active: pack?.is_active ?? true
   });
   const [permissions, setPermissions] = useState<PackPermission[]>([]);
@@ -430,7 +430,7 @@ function CreatePackModal({ pack, onClose, onSuccess }: CreatePackModalProps) {
                 onChange={(e) => setFormData({ ...formData, landing_route: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white"
               >
-                <option value="/hq">لوحة الإدارة العليا</option>
+                <option value="/admin">لوحة التحكم الرئيسية</option>
                 <option value="/admin/auctions">المزادات</option>
                 <option value="/admin/b2f">استثمار المزارع</option>
                 <option value="/admin/settings">الإعدادات</option>

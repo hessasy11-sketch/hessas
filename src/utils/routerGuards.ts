@@ -66,7 +66,7 @@ export const PermissionGuard = (requiredBoard?: string, requiredSection?: string
 };
 
 export const checkRouteAccess = (path: string): GuardResult => {
-  if (path.startsWith('/admin') || path.startsWith('/hq')) {
+  if (path.startsWith('/admin')) {
     const adminCheck = AdminGuard();
     if (!adminCheck.allowed) return adminCheck;
 

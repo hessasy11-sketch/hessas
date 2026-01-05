@@ -6,7 +6,7 @@ export function PlatformAdminPage() {
 
   return (
     <PlatformCommandCenter
-      onClose={() => navigate('/hq', { replace: true })}
+      onClose={() => navigate('/admin', { replace: true })}
       onNavigateToB2F={() => navigate('/admin/b2f', { replace: true })}
       onNavigateToAuctions={() => navigate('/admin/auctions', { replace: true })}
     />

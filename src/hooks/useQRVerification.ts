@@ -93,8 +93,8 @@ export function useQRVerification() {
         message: rawResult.message || '',
         reason: rawResult.reason,
         requires_pin: rawResult.requires_pin === true,
-        default_route: rawResult.default_route || '/hq',
-        landing_route: rawResult.landing_route || '/hq',
+        default_route: rawResult.default_route || '/admin',
+        landing_route: rawResult.landing_route || '/admin',
         staff: rawResult.staff ? {
           id: rawResult.staff.id,
           user_id: rawResult.staff.user_id || null,
@@ -105,7 +105,7 @@ export function useQRVerification() {
           department: rawResult.staff.department || '',
           permissions: {},
           scope_farms: [],
-          landing_route: rawResult.staff.landing_route || '/hq',
+          landing_route: rawResult.staff.landing_route || '/admin',
         } : undefined,
       };
 

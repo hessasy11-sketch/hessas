@@ -71,7 +71,7 @@ export const adminSessionManager = {
           ip_address: null,
           user_agent: navigator.userAgent,
           is_active: true,
-          landing_route: '/hq'
+          landing_route: '/admin'
         })
         .select('id, session_token')
         .single();

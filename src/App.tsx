@@ -28,7 +28,6 @@ import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
 import { AdminSmartAccessGateV3 } from './components/platform/AdminSmartAccessGateV3';
 import { AdminSessionGuard } from './components/platform/AdminSessionGuard';
-import { HQDashboard } from './components/platform/HQDashboard';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
@@ -456,7 +455,6 @@ function App() {
   return (
     <Routes>
       <Route path="/admin/access" element={<AdminSmartAccessGateV3 />} />
-      <Route path="/hq" element={<AdminSessionGuard><HQDashboard /></AdminSessionGuard>} />
       <Route path="/admin/auctions" element={<AdminSessionGuard><AuctionsAdminPage /></AdminSessionGuard>} />
       <Route path="/admin/b2f" element={<AdminSessionGuard><B2FAdminPage /></AdminSessionGuard>} />
       <Route path="/admin/settings" element={<AdminSessionGuard><SettingsAdminPage /></AdminSessionGuard>} />

@@ -9,7 +9,7 @@ export function AuctionsAdminPage() {
     <>
       <SessionTracker />
       <EnhancedAuctionsManagement
-        onClose={() => navigate('/hq', { replace: true })}
+        onClose={() => navigate('/admin', { replace: true })}
       />
     </>
   );

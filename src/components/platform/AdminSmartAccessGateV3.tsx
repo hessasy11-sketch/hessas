@@ -67,7 +67,7 @@ export function AdminSmartAccessGateV3() {
       console.log('✅ Step 3: Verification Success - Setting States');
 
       setStaffInfo(result.staff);
-      const landingRoute = result.landing_route || result.staff.landing_route || result.default_route || '/hq';
+      const landingRoute = result.landing_route || result.staff.landing_route || result.default_route || '/admin';
       setDefaultRoute(landingRoute);
 
       console.log('  - Staff Info Set:', result.staff.full_name);
@@ -239,9 +239,9 @@ export function AdminSmartAccessGateV3() {
       );
 
       setScanStatus('valid');
-      console.log('🎯 Navigating after PIN success to:', defaultRoute || '/hq');
+      console.log('🎯 Navigating after PIN success to:', defaultRoute || '/admin');
       setTimeout(() => {
-        navigate(defaultRoute || '/hq');
+        navigate(defaultRoute || '/admin');
       }, 2000);
     } else {
       console.error('❌ Missing staffInfo or deviceInfo');

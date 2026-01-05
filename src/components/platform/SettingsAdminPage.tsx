@@ -28,7 +28,7 @@ export function SettingsAdminPage() {
             </div>
 
             <button
-              onClick={() => navigate('/hq', { replace: true })}
+              onClick={() => navigate('/admin', { replace: true })}
               className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-600"
             >
               <ArrowRight className="w-5 h-5" />
