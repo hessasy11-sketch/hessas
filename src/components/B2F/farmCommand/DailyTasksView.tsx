@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ListChecks, Plus, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { useFarmOperationLock } from '../../../hooks/useFarmOperationLock';
 
 interface Task {
   id: string;
@@ -16,6 +17,7 @@ export default function DailyTasksView({ farmId }: { farmId: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const { lockStatus } = useFarmOperationLock(farmId);
 
   useEffect(() => {
     loadTasks();
@@ -102,7 +104,15 @@ export default function DailyTasksView({ farmId }: { farmId: string }) {
           ))}
         </div>
 
-        <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
+        <button
+          disabled={lockStatus.isLocked}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            lockStatus.isLocked
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-emerald-500 text-white hover:bg-emerald-600'
+          }`}
+          title={lockStatus.isLocked ? 'المزرعة موقوفة - لا يمكن إضافة مهام' : ''}
+        >
           <Plus className="w-4 h-4" />
           مهمة جديدة
         </button>

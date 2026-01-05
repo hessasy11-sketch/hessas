@@ -62,7 +62,7 @@ export function useSmartAlerts() {
 
   const generateAlerts = async () => {
     try {
-      const { data, error } = await supabase.rpc('generate_smart_alerts');
+      const { data, error } = await supabase.rpc('run_all_smart_alerts_checks');
 
       if (error) throw error;
 

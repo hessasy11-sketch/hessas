@@ -10,7 +10,8 @@ import {
   Plus,
   PlayCircle,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 
 interface FarmWithContracts {
@@ -25,6 +26,8 @@ interface FarmWithContracts {
   has_active_operation: boolean;
   operation_current_phase?: string;
   operation_progress?: number;
+  operational_status?: 'setup' | 'active' | 'suspended';
+  suspended_reason?: string;
 }
 
 interface FarmOperationsManagerProps {
@@ -47,7 +50,7 @@ export default function FarmOperationsManager({ onSelectFarm }: FarmOperationsMa
       // جلب المزارع مع حساب العقود النشطة
       const { data: farmsData, error: farmsError } = await supabase
         .from('b2f_farms')
-        .select('id, name, location, city, total_trees_available')
+        .select('id, name, location, city, total_trees_available, operational_status, suspended_reason')
         .eq('is_active', true)
         .order('name');
 
@@ -354,12 +357,44 @@ export default function FarmOperationsManager({ onSelectFarm }: FarmOperationsMa
                     </div>
                   )}
 
+                  {/* تحذير الإيقاف */}
+                  {farm.operational_status === 'suspended' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-start gap-3">
+                        <Lock className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 text-right">
+                          <p className="text-red-900 font-semibold mb-1">
+                            المزرعة موقوفة مؤقتاً
+                          </p>
+                          {farm.suspended_reason && (
+                            <p className="text-sm text-red-700">
+                              {farm.suspended_reason}
+                            </p>
+                          )}
+                          <p className="text-xs text-red-600 mt-2">
+                            العمليات معطلة - العرض فقط متاح
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* زر الإجراء */}
                   <button
                     onClick={() => onSelectFarm(farm.id)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                    disabled={farm.operational_status === 'suspended'}
+                    className={`w-full px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                      farm.operational_status === 'suspended'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl'
+                    }`}
                   >
-                    {farm.has_active_operation ? (
+                    {farm.operational_status === 'suspended' ? (
+                      <>
+                        <Lock className="w-5 h-5" />
+                        المزرعة موقوفة
+                      </>
+                    ) : farm.has_active_operation ? (
                       <>
                         <Tractor className="w-5 h-5" />
                         إدارة تشغيل المزرعة
