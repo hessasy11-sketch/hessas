@@ -50,12 +50,10 @@ interface AuctionRadar {
 interface Decision {
   id: string;
   decision_type: string;
-  farm_id: string;
-  farm_name: string;
+  auction_id: string;
+  auction_title: string;
   target_staff_id: string | null;
   target_staff_name: string | null;
-  expense_amount: number | null;
-  expense_description: string | null;
   status: string;
   priority: string;
   requested_by: string;
@@ -67,8 +65,7 @@ interface Decision {
 interface ExecutiveLog {
   id: string;
   action_type: string;
-  farm_id: string;
-  farm_name: string;
+  auction_id: string | null;
   staff_id: string | null;
   staff_name: string | null;
   performed_by: string;
@@ -100,8 +97,8 @@ export default function B2BAuctionsOpsRoom() {
       const [pulseRes, auctionsRes, decisionsRes, logsRes] = await Promise.all([
         supabase.rpc('get_b2b_ops_pulse'),
         supabase.rpc('get_b2b_auctions_radar'),
-        supabase.rpc('get_pending_decisions'),
-        supabase.rpc('get_executive_logs', { limit_count: 20 })
+        supabase.rpc('get_pending_b2b_decisions'),
+        supabase.rpc('get_b2b_executive_logs', { limit_count: 20 })
       ]);
 
       if (pulseRes.data) setPulse(pulseRes.data);
@@ -480,15 +477,13 @@ function AuctionRadarCard({ auction, isSelected, onSelect, onToggleStatus, onExt
 function DecisionCard({ decision, onApprove, onReject }: any) {
   const getDecisionLabel = (type: string) => {
     const labels: Record<string, string> = {
-      assign_farm_manager: 'تعيين مدير مزرعة',
-      change_farm_manager: 'تغيير مدير مزرعة',
-      pause_farm: 'إيقاف مزرعة',
-      activate_farm: 'تشغيل مزرعة',
-      approve_expense: 'اعتماد مصروف',
-      toggle_bookings: 'تفعيل/إيقاف حجوزات',
       pause_auction: 'إيقاف مزاد',
+      activate_auction: 'تفعيل مزاد',
       extend_auction: 'تمديد مزاد',
-      approve_auction_result: 'اعتماد نتيجة مزاد'
+      cancel_auction: 'إلغاء مزاد',
+      approve_auction_result: 'اعتماد نتيجة مزاد',
+      remove_auction: 'سحب مزاد',
+      review_auction: 'مراجعة مزاد'
     };
     return labels[type] || type;
   };
@@ -512,15 +507,9 @@ function DecisionCard({ decision, onApprove, onReject }: any) {
               {getDecisionLabel(decision.decision_type)}
             </span>
           </div>
-          <h3 className="font-bold text-slate-900 mb-1">{decision.farm_name}</h3>
+          <h3 className="font-bold text-slate-900 mb-1">{decision.auction_title}</h3>
           {decision.target_staff_name && (
             <p className="text-sm text-slate-600">الموظف: {decision.target_staff_name}</p>
-          )}
-          {decision.expense_amount && (
-            <p className="text-sm text-slate-600 flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />
-              {decision.expense_amount} ريال - {decision.expense_description}
-            </p>
           )}
           <p className="text-xs text-slate-500 mt-1">طلب من: {decision.requester_name}</p>
         </div>
@@ -554,12 +543,8 @@ function LogCard({ log }: any) {
       auction_cancelled: 'إلغاء مزاد',
       auction_time_extended: 'تمديد وقت مزاد',
       auction_result_approved: 'اعتماد نتيجة مزاد',
-      farm_manager_assigned: 'تعيين مدير',
-      farm_manager_changed: 'تغيير مدير',
-      farm_activated: 'تشغيل مزرعة',
-      farm_paused: 'إيقاف مزرعة',
-      expense_approved: 'اعتماد مصروف',
-      bookings_toggled: 'تغيير حالة الحجوزات'
+      auction_removed: 'سحب مزاد',
+      auction_under_review: 'مزاد تحت المراجعة'
     };
     return labels[type] || type;
   };
@@ -581,9 +566,6 @@ function LogCard({ log }: any) {
           <div className="font-bold text-slate-900">{getActionLabel(log.action_type)}</div>
           {log.action_data?.auction_title && (
             <div className="text-slate-600">{log.action_data.auction_title}</div>
-          )}
-          {log.action_data?.farm_name && (
-            <div className="text-slate-600">{log.action_data.farm_name}</div>
           )}
           {log.action_data?.hours_added && (
             <div className="text-xs text-slate-500">تم التمديد: {log.action_data.hours_added} ساعة</div>
