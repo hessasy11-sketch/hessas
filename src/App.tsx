@@ -26,8 +26,6 @@ import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
-import DevGateway from './components/platform/DevGateway';
-import HQGuard from './components/platform/HQGuard';
 import PlatformCommandCenter from './components/platform/PlatformCommandCenter';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
@@ -449,20 +447,17 @@ function MainApp() {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<DevGateway />} />
       <Route path="/hq" element={
-        <HQGuard>
-          <PlatformCommandCenter
-            onClose={() => {}}
-            onNavigateToB2F={() => {}}
-            onNavigateToAuctions={() => {}}
-          />
-        </HQGuard>
+        <PlatformCommandCenter
+          onClose={() => {}}
+          onNavigateToB2F={() => {}}
+          onNavigateToAuctions={() => {}}
+        />
       } />
-      <Route path="/admin/auctions" element={<HQGuard><AuctionsAdminPage /></HQGuard>} />
-      <Route path="/admin/b2f" element={<HQGuard><B2FAdminPage /></HQGuard>} />
-      <Route path="/admin/settings" element={<HQGuard><SettingsAdminPage /></HQGuard>} />
-      <Route path="/app" element={<MainApp />} />
+      <Route path="/admin/auctions" element={<AuctionsAdminPage />} />
+      <Route path="/admin/b2f" element={<B2FAdminPage />} />
+      <Route path="/admin/settings" element={<SettingsAdminPage />} />
+      <Route path="*" element={<MainApp />} />
     </Routes>
   );
 }
