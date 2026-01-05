@@ -5,22 +5,29 @@ import {
   LogOut,
   User,
   Monitor,
-  MapPin,
   Calendar,
   AlertTriangle,
   RefreshCw,
-  X
+  X,
+  MapPin,
+  Smartphone
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface ActiveSession {
   id: string;
-  device_id: string;
-  device_fingerprint: any;
-  logged_in_at: string;
-  last_activity_at: string;
+  session_token: string;
+  login_method: string;
+  device_info: any;
+  ip_address: string | null;
+  user_agent: string | null;
   is_active: boolean;
+  started_at: string;
+  last_activity_at: string;
+  ended_at: string | null;
+  landing_route: string | null;
   staff_member: {
+    id: string;
     full_name: string;
     phone_number: string;
     role: string;
@@ -46,15 +53,20 @@ export default function SessionManagementSection() {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from('staff_access_devices')
+        .from('platform_staff_sessions')
         .select(`
           id,
-          device_id,
-          device_fingerprint,
-          logged_in_at,
-          last_activity_at,
+          session_token,
+          login_method,
+          device_info,
+          ip_address,
+          user_agent,
           is_active,
-          staff:platform_staff(full_name, phone_number, role, department)
+          started_at,
+          last_activity_at,
+          ended_at,
+          landing_route,
+          staff:platform_staff(id, full_name, phone_number, role, department)
         `)
         .eq('is_active', true)
         .order('last_activity_at', { ascending: false });
@@ -63,11 +75,16 @@ export default function SessionManagementSection() {
 
       const formattedSessions = (data || []).map((session: any) => ({
         id: session.id,
-        device_id: session.device_id,
-        device_fingerprint: session.device_fingerprint,
-        logged_in_at: session.logged_in_at,
-        last_activity_at: session.last_activity_at,
+        session_token: session.session_token,
+        login_method: session.login_method,
+        device_info: session.device_info,
+        ip_address: session.ip_address,
+        user_agent: session.user_agent,
         is_active: session.is_active,
+        started_at: session.started_at,
+        last_activity_at: session.last_activity_at,
+        ended_at: session.ended_at,
+        landing_route: session.landing_route,
         staff_member: session.staff || {},
       }));
 
@@ -86,8 +103,11 @@ export default function SessionManagementSection() {
 
     try {
       const { error } = await supabase
-        .from('staff_access_devices')
-        .update({ is_active: false })
+        .from('platform_staff_sessions')
+        .update({
+          is_active: false,
+          ended_at: new Date().toISOString()
+        })
         .eq('id', sessionId);
 
       if (error) throw error;
@@ -138,6 +158,24 @@ export default function SessionManagementSection() {
     );
   };
 
+  const getLoginMethodBadge = (method: string) => {
+    const methods: Record<string, { color: string; label: string; icon: any }> = {
+      qr: { color: 'from-blue-500 to-cyan-500', label: 'QR Code', icon: Monitor },
+      pin: { color: 'from-purple-500 to-pink-500', label: 'PIN', icon: MapPin },
+      direct: { color: 'from-orange-500 to-red-500', label: 'مباشر', icon: User },
+    };
+
+    const methodInfo = methods[method] || { color: 'from-gray-500 to-gray-600', label: method, icon: User };
+    const MethodIcon = methodInfo.icon;
+
+    return (
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r ${methodInfo.color} text-white`}>
+        <MethodIcon className="w-3 h-3" />
+        {methodInfo.label}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -151,7 +189,7 @@ export default function SessionManagementSection() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10 border border-purple-500/20 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <Clock className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
           <div>
@@ -165,10 +203,12 @@ export default function SessionManagementSection() {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6 text-purple-400" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
+            <Activity className="w-6 h-6 text-white" />
+          </div>
           <div>
             <h3 className="text-white font-bold text-lg">الجلسات النشطة</h3>
-            <p className="text-gray-400 text-sm">{sessions.length} جلسة</p>
+            <p className="text-gray-400 text-sm">{sessions.length} جلسة نشطة حالياً</p>
           </div>
         </div>
 
@@ -198,16 +238,17 @@ export default function SessionManagementSection() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${statusColors[idleStatus]} flex items-center justify-center flex-shrink-0`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${statusColors[idleStatus]} flex items-center justify-center flex-shrink-0 shadow-lg`}>
                     <User className="w-6 h-6 text-white" />
                   </div>
 
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <h3 className="text-white font-bold text-lg">
                         {session.staff_member.full_name || 'غير محدد'}
                       </h3>
                       {getDepartmentBadge(session.staff_member.department)}
+                      {getLoginMethodBadge(session.login_method)}
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-400">
@@ -218,18 +259,35 @@ export default function SessionManagementSection() {
 
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>دخول: {new Date(session.logged_in_at).toLocaleString('ar-SA')}</span>
+                        <span>دخول: {new Date(session.started_at).toLocaleString('ar-SA', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Monitor className="w-4 h-4" />
-                        <span>{session.device_id.substring(0, 20)}...</span>
-                      </div>
+                      {session.ip_address && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>IP: {session.ip_address}</span>
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-2">
                         <Activity className="w-4 h-4" />
-                        <span>آخر نشاط: {new Date(session.last_activity_at).toLocaleString('ar-SA')}</span>
+                        <span>آخر نشاط: {new Date(session.last_activity_at).toLocaleString('ar-SA', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</span>
                       </div>
+
+                      {session.landing_route && (
+                        <div className="flex items-center gap-2 col-span-2">
+                          <Monitor className="w-4 h-4" />
+                          <span className="truncate">الصفحة: {session.landing_route}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -257,6 +315,15 @@ export default function SessionManagementSection() {
                   <AlertTriangle className="w-4 h-4 text-orange-400" />
                   <span className="text-orange-200 text-sm font-bold">
                     تحذير: الجلسة قريبة من الانتهاء التلقائي
+                  </span>
+                </div>
+              )}
+
+              {idleStatus === 'expired' && (
+                <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <span className="text-red-200 text-sm font-bold">
+                    تنبيه: الجلسة منتهية ويجب إنهاؤها
                   </span>
                 </div>
               )}
@@ -328,17 +395,29 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
             <h3 className="text-white font-bold mb-3">معلومات الجلسة</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">معرف الجهاز:</span>
-                <span className="text-white font-mono text-xs">{session.device_id}</span>
+                <span className="text-gray-400">طريقة الدخول:</span>
+                <span className="text-white font-bold">{session.login_method.toUpperCase()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">وقت الدخول:</span>
-                <span className="text-white">{new Date(session.logged_in_at).toLocaleString('ar-SA')}</span>
+                <span className="text-white">{new Date(session.started_at).toLocaleString('ar-SA')}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">آخر نشاط:</span>
                 <span className="text-white">{new Date(session.last_activity_at).toLocaleString('ar-SA')}</span>
               </div>
+              {session.ip_address && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">عنوان IP:</span>
+                  <span className="text-white font-mono">{session.ip_address}</span>
+                </div>
+              )}
+              {session.landing_route && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">الصفحة المقصودة:</span>
+                  <span className="text-white">{session.landing_route}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-400">الحالة:</span>
                 <span className="text-emerald-400 font-bold">نشطة</span>
@@ -346,29 +425,42 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
             </div>
           </div>
 
-          {session.device_fingerprint && (
+          {session.device_info && (
             <div className="bg-white/5 rounded-xl p-4">
-              <h3 className="text-white font-bold mb-3">بصمة الجهاز</h3>
+              <h3 className="text-white font-bold mb-3">معلومات الجهاز</h3>
               <div className="space-y-2 text-sm">
-                {session.device_fingerprint.browser && (
+                {session.device_info.browser && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">المتصفح:</span>
-                    <span className="text-white">{session.device_fingerprint.browser}</span>
+                    <span className="text-white">{session.device_info.browser}</span>
                   </div>
                 )}
-                {session.device_fingerprint.os && (
+                {session.device_info.os && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">نظام التشغيل:</span>
-                    <span className="text-white">{session.device_fingerprint.os}</span>
+                    <span className="text-white">{session.device_info.os}</span>
                   </div>
                 )}
-                {session.device_fingerprint.screenResolution && (
+                {session.device_info.screenResolution && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">دقة الشاشة:</span>
-                    <span className="text-white">{session.device_fingerprint.screenResolution}</span>
+                    <span className="text-white">{session.device_info.screenResolution}</span>
+                  </div>
+                )}
+                {session.device_info.language && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">اللغة:</span>
+                    <span className="text-white">{session.device_info.language}</span>
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {session.user_agent && (
+            <div className="bg-white/5 rounded-xl p-4">
+              <h3 className="text-white font-bold mb-3">User Agent</h3>
+              <p className="text-gray-400 text-xs font-mono break-all">{session.user_agent}</p>
             </div>
           )}
 

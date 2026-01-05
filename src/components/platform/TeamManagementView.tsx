@@ -106,8 +106,8 @@ export default function TeamManagementView() {
         supabase.from('platform_staff').select('id', { count: 'exact', head: true }),
         supabase.from('platform_staff').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('platform_staff').select('id', { count: 'exact', head: true }).is('qr_code', null),
-        supabase.from('staff_access_devices').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('staff_access_log').select('id', { count: 'exact', head: true }).gte('logged_in_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('platform_staff_sessions').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('staff_access_log').select('id', { count: 'exact', head: true }).gte('access_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
       ]);
 
       const qrEnabledCount = (staffResult.count || 0) - (qrResult.count || 0);
