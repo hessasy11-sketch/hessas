@@ -13,9 +13,13 @@ import {
   Leaf,
   Gavel,
   Calculator,
-  TrendingUp
+  TrendingUp,
+  Send,
+  Copy,
+  Mail
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import InviteAssignModal from './InviteAssignModal';
 
 interface Authority {
   id: string;
@@ -53,6 +57,25 @@ interface RoleFromCatalog {
   max_assignments: number | null;
 }
 
+interface Invitation {
+  id: string;
+  invite_code: string;
+  invitee_name: string;
+  invitee_phone: string;
+  authority_role: string;
+  role_name_ar: string;
+  role_name_en: string;
+  scope_type: string;
+  scope_farm_id: string | null;
+  farm_name: string | null;
+  status: string;
+  notes: string | null;
+  invited_by: string;
+  invited_at: string;
+  expires_at: string;
+  is_expired: boolean;
+}
+
 interface AuthorityPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -63,9 +86,12 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
   const [authorities, setAuthorities] = useState<Authority[]>([]);
   const [availableStaff, setAvailableStaff] = useState<StaffMember[]>([]);
   const [rolesFromCatalog, setRolesFromCatalog] = useState<RoleFromCatalog[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleFromCatalog | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,15 +103,17 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
     try {
       const departmentParam = department === 'all' ? null : department;
 
-      const [authoritiesRes, staffRes, rolesRes] = await Promise.all([
+      const [authoritiesRes, staffRes, rolesRes, invitationsRes] = await Promise.all([
         supabase.rpc('get_current_authorities'),
         supabase.rpc('get_available_staff_for_authority'),
-        supabase.rpc('get_active_authority_roles', { p_department: departmentParam })
+        supabase.rpc('get_active_authority_roles', { p_department: departmentParam }),
+        supabase.rpc('get_active_invitations', { p_include_expired: false })
       ]);
 
       if (authoritiesRes.data) setAuthorities(authoritiesRes.data);
       if (staffRes.data) setAvailableStaff(staffRes.data);
       if (rolesRes.data) setRolesFromCatalog(rolesRes.data);
+      if (invitationsRes.data) setInvitations(invitationsRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -187,6 +215,26 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
     return colors[roleCode] || 'bg-slate-100 text-slate-700 border-slate-300';
   };
 
+  const handleCopyInviteCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    if (!confirm('هل أنت متأكد من إلغاء هذه الدعوة؟')) return;
+
+    const { data, error } = await supabase.rpc('cancel_invitation', {
+      p_invitation_id: invitationId,
+      p_cancelled_by: 'GM',
+      p_reason: 'إلغاء من Authority Panel'
+    });
+
+    if (!error && data?.success) {
+      loadData();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -202,12 +250,21 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
               <p className="text-slate-300 text-sm">Authority Panel - إدارة GM فقط</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+            >
+              <Send className="w-4 h-4" />
+              دعوة وتعيين
+            </button>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
@@ -222,7 +279,100 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
               <p className="text-slate-600">لا توجد أدوار متاحة في الكتالوج</p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="space-y-6">
+              {invitations.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-bold text-slate-900">الدعوات المعلقة</h3>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                      {invitations.length}
+                    </span>
+                  </div>
+                  <div className="grid gap-3 mb-6">
+                    {invitations.map((invitation) => {
+                      const Icon = getRoleIcon(invitation.authority_role);
+                      return (
+                        <div
+                          key={invitation.id}
+                          className="border-2 border-blue-200 bg-blue-50 rounded-xl p-4"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center flex-shrink-0 ${getRoleColor(invitation.authority_role)}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <h4 className="text-base font-bold text-slate-900">{invitation.invitee_name}</h4>
+                                  <span className="text-xs text-slate-500">({invitation.invitee_phone})</span>
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold flex items-center gap-1">
+                                    <Mail className="w-3 h-3" />
+                                    مدعو
+                                  </span>
+                                </div>
+
+                                <div className="text-sm text-slate-700 mb-2">
+                                  <span className="font-bold">{invitation.role_name_ar}</span>
+                                  <span className="text-slate-500 mx-2">•</span>
+                                  <span className="text-slate-600">النطاق: {invitation.scope_type}</span>
+                                  {invitation.farm_name && (
+                                    <>
+                                      <span className="text-slate-500 mx-2">•</span>
+                                      <span className="text-slate-600">{invitation.farm_name}</span>
+                                    </>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                                    <span className="text-xs text-slate-600">كود الدعوة:</span>
+                                    <span className="text-sm font-bold text-slate-900 font-mono tracking-wider">
+                                      {invitation.invite_code}
+                                    </span>
+                                    <button
+                                      onClick={() => handleCopyInviteCode(invitation.invite_code)}
+                                      className="p-1 hover:bg-slate-100 rounded transition-colors"
+                                      title="نسخ الكود"
+                                    >
+                                      {copiedCode === invitation.invite_code ? (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                      ) : (
+                                        <Copy className="w-4 h-4 text-slate-500" />
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  <div className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    ينتهي: {new Date(invitation.expires_at).toLocaleDateString('ar-SA')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleCancelInvitation(invitation.id)}
+                              className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" />
+                              إلغاء
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="w-5 h-5 text-slate-600" />
+                  <h3 className="text-lg font-bold text-slate-900">الصلاحيات الحالية</h3>
+                </div>
+                <div className="grid gap-4">
               {rolesFromCatalog.map((role) => {
                 const authority = authorities.find((a) => a.authority_role === role.role_code);
                 const Icon = getRoleIcon(role.role_code);
@@ -381,6 +531,8 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
                   </div>
                 );
               })}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -395,11 +547,17 @@ export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: 
             setShowAssignModal(false);
             setSelectedRole(null);
           }}
-          getRoleLabel={getRoleLabel}
           getRoleIcon={getRoleIcon}
           getRoleColor={getRoleColor}
         />
       )}
+
+      <InviteAssignModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        roles={rolesFromCatalog}
+        onSuccess={loadData}
+      />
     </div>
   );
 }
