@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Crown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import AdminEntryModal from './AdminEntryModal';
 
 export function HiddenAdminButton() {
   const [taps, setTaps] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
 
   const MAX_TAPS = 5;
   const TAP_TIMEOUT = 3000;
@@ -15,12 +15,12 @@ export function HiddenAdminButton() {
     if (taps >= MAX_TAPS) {
       setIsAnimating(true);
       setTimeout(() => {
-        navigate('/hq');
+        setShowModal(true);
         setTaps(0);
         setIsAnimating(false);
       }, 500);
     }
-  }, [taps, navigate]);
+  }, [taps]);
 
   useEffect(() => {
     if (taps > 0 && taps < MAX_TAPS) {
@@ -116,6 +116,8 @@ export function HiddenAdminButton() {
           </div>
         )}
       </button>
+
+      {showModal && <AdminEntryModal onClose={() => setShowModal(false)} />}
     </>
   );
 }

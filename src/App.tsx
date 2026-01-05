@@ -26,6 +26,13 @@ import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
+import HQDashboard from './components/platform/HQDashboard';
+import B2BSection from './components/platform/B2BSection';
+import B2FSectionHQ from './components/platform/B2FSection';
+import FarmDetailPage from './components/platform/FarmDetailPage';
+import FinanceSection from './components/platform/FinanceSection';
+import MarketingSection from './components/platform/MarketingSection';
+import PartnersSection from './components/platform/PartnersSection';
 import PlatformCommandCenter from './components/platform/PlatformCommandCenter';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
@@ -447,13 +454,13 @@ function MainApp() {
 function App() {
   return (
     <Routes>
-      <Route path="/hq" element={
-        <PlatformCommandCenter
-          onClose={() => {}}
-          onNavigateToB2F={() => {}}
-          onNavigateToAuctions={() => {}}
-        />
-      } />
+      <Route path="/hq" element={<HQDashboard />} />
+      <Route path="/hq/b2b" element={<B2BSection />} />
+      <Route path="/hq/b2f" element={<B2FSectionHQ />} />
+      <Route path="/hq/b2f/farms/:farmId" element={<FarmDetailPage />} />
+      <Route path="/hq/finance" element={<FinanceSection />} />
+      <Route path="/hq/marketing" element={<MarketingSection />} />
+      <Route path="/hq/partners" element={<PartnersSection />} />
       <Route path="/admin/auctions" element={<AuctionsAdminPage />} />
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
       <Route path="/admin/settings" element={<SettingsAdminPage />} />
