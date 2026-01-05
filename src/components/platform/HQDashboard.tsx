@@ -31,22 +31,12 @@ export function HQDashboard() {
   });
 
   useEffect(() => {
-    checkAccess();
-    loadStats();
-  }, []);
-
-  const checkAccess = () => {
-    console.log('🔐 HQDashboard - checkAccess called');
     const session = adminSessionManager.getSession();
-    console.log('  - Session:', session);
-    if (!session) {
-      console.log('  ❌ NO SESSION FOUND - Redirecting to /admin/access');
-      navigate('/admin/access', { replace: true });
-      return;
+    if (session) {
+      setPlatformRole(session.role);
+      loadStats();
     }
-    console.log('  ✅ Session valid - Role:', session.role);
-    setPlatformRole(session.role);
-  };
+  }, []);
 
   const loadStats = async () => {
     try {
