@@ -9,7 +9,7 @@ export default function AdminEntryModal({ onClose }: AdminEntryModalProps) {
   const navigate = useNavigate();
 
   const handleEnter = () => {
-    navigate('/hq');
+    navigate('/admin/operations-room');
     onClose();
   };
 
