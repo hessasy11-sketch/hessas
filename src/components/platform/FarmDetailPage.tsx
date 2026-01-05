@@ -21,7 +21,6 @@ import {
   FileCheck
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import OpsLiteHub from '../B2F/farmCommand/OpsLiteHub';
 import FarmTeamManagement from './FarmTeamManagement';
 import FarmTasksManagement from './FarmTasksManagement';
 
@@ -48,7 +47,7 @@ interface FarmStats {
   monthly_net: number;
 }
 
-type Tab = 'overview' | 'team' | 'tasks' | 'ops';
+type Tab = 'overview' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculator';
 
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
@@ -59,7 +58,6 @@ export default function FarmDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [operationalFarmId, setOperationalFarmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (farmId) {
@@ -82,16 +80,6 @@ export default function FarmDetailPage() {
       if (!farmData) throw new Error('المزرعة غير موجودة');
 
       setFarm(farmData);
-
-      const { data: opFarmData } = await supabase
-        .from('fc_operational_farms')
-        .select('id')
-        .eq('reference_farm_id', farmId)
-        .maybeSingle();
-
-      if (opFarmData) {
-        setOperationalFarmId(opFarmData.id);
-      }
 
       const readinessResult = await supabase.rpc('calculate_farm_readiness', {
         p_farm_id: farmId
@@ -346,10 +334,10 @@ export default function FarmDetailPage() {
         {/* Tabs */}
         <div className="bg-white rounded-2xl shadow-xl mb-8">
           <div className="border-b border-gray-200">
-            <div className="flex gap-4 p-4">
+            <div className="flex gap-2 p-4 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'overview'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
@@ -359,8 +347,19 @@ export default function FarmDetailPage() {
                 نظرة عامة
               </button>
               <button
+                onClick={() => setActiveTab('contents')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'contents'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <Package className="w-5 h-5" />
+                محتويات المزرعة
+              </button>
+              <button
                 onClick={() => setActiveTab('team')}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'team'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
@@ -371,43 +370,42 @@ export default function FarmDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('tasks')}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'tasks'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
                 }`}
               >
                 <FileCheck className="w-5 h-5" />
-                مهام المزرعة
+                مهام التشغيل
               </button>
               <button
-                onClick={() => setActiveTab('ops')}
-                disabled={!operationalFarmId || farm?.operational_status === 'setup'}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors ${
-                  activeTab === 'ops'
+                onClick={() => setActiveTab('equipment')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'equipment'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
-                } ${(!operationalFarmId || farm?.operational_status === 'setup') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                }`}
               >
-                <Activity className="w-5 h-5" />
-                التشغيل (Ops Lite)
-                {(!operationalFarmId || farm?.operational_status === 'setup') && (
-                  <Lock className="w-4 h-4 text-gray-400" />
-                )}
+                <Wrench className="w-5 h-5" />
+                المعدات
+              </button>
+              <button
+                onClick={() => setActiveTab('calculator')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'calculator'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <DollarSign className="w-5 h-5" />
+                الحاسبة
               </button>
             </div>
           </div>
 
           {/* Tab Content */}
           <div className="p-6">
-            {activeTab === 'team' && (
-              <FarmTeamManagement farmId={farmId!} farmName={farm.name} />
-            )}
-
-            {activeTab === 'tasks' && (
-              <FarmTasksManagement farmId={farmId!} farmName={farm.name} />
-            )}
-
             {activeTab === 'overview' && (
               <>
                 {/* Stats Grid */}
@@ -527,15 +525,52 @@ export default function FarmDetailPage() {
                     </div>
                   </div>
                 </div>
-        </>
-      )}
+              </>
+            )}
 
-      {activeTab === 'ops' && operationalFarmId && (
-        <OpsLiteHub operationalFarmId={operationalFarmId} />
-      )}
+            {activeTab === 'contents' && (
+              <div className="text-center py-16">
+                <Package className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">محتويات المزرعة</h3>
+                <p className="text-gray-500">
+                  هنا سيتم عرض جميع محتويات المزرعة من أشجار ومحاصيل ومنتجات
+                </p>
+                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
+              </div>
+            )}
+
+            {activeTab === 'team' && (
+              <FarmTeamManagement farmId={farmId!} farmName={farm.name} />
+            )}
+
+            {activeTab === 'tasks' && (
+              <FarmTasksManagement farmId={farmId!} farmName={farm.name} />
+            )}
+
+            {activeTab === 'equipment' && (
+              <div className="text-center py-16">
+                <Wrench className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">المعدات</h3>
+                <p className="text-gray-500">
+                  هنا سيتم عرض جميع معدات المزرعة وأدواتها وحالتها التشغيلية
+                </p>
+                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
+              </div>
+            )}
+
+            {activeTab === 'calculator' && (
+              <div className="text-center py-16">
+                <DollarSign className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">الحاسبة المالية</h3>
+                <p className="text-gray-500">
+                  هنا سيتم عرض تفاصيل المداخيل والمصاريف والحسابات المالية للمزرعة
+                </p>
+                <p className="text-sm text-gray-400 mt-4">قيد التطوير - المرحلة القادمة</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-</div>
-);
+  );
 }
