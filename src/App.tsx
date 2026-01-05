@@ -42,7 +42,6 @@ import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
-import ExecutiveOpsRoom from './components/platform/ExecutiveOpsRoom';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -461,7 +460,6 @@ function App() {
   return (
     <Routes>
       <Route path="/hq" element={<HQDashboard />} />
-      <Route path="/hq/executive-ops" element={<ExecutiveOpsRoom />} />
       <Route path="/hq/b2b" element={<B2BSection />} />
       <Route path="/hq/b2f" element={<B2FSectionHQ />} />
       <Route path="/hq/b2f/farms/:farmId" element={<FarmOperationalDetail />} />
