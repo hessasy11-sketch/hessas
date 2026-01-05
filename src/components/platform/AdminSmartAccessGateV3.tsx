@@ -82,7 +82,7 @@ export function AdminSmartAccessGateV3() {
 
       if (!result.requires_pin) {
         console.log('✨ Step 4a: NO PIN REQUIRED - Creating session directly');
-        await adminSessionManager.createSession({
+        const sessionCreated = await adminSessionManager.createSession({
           staff_id: result.staff.id,
           user_id: result.staff.user_id || '',
           full_name: result.staff.full_name,
@@ -92,6 +92,31 @@ export function AdminSmartAccessGateV3() {
           is_super_admin: result.staff.role === 'super_admin',
           is_platform_owner: result.staff.role === 'platform_owner',
         });
+
+        if (!sessionCreated) {
+          console.error('❌ CRITICAL: Session creation failed!');
+          setErrorMessage('فشل في حفظ الجلسة. حاول مرة أخرى.');
+          setScanStatus('rejected');
+          setTimeout(() => {
+            setScanStatus('ready');
+            setErrorMessage('');
+          }, 4000);
+          return;
+        }
+
+        const verifySession = adminSessionManager.getSession();
+        if (!verifySession) {
+          console.error('❌ CRITICAL: Session not found after creation!');
+          setErrorMessage('فشل في حفظ الجلسة. حاول مرة أخرى.');
+          setScanStatus('rejected');
+          setTimeout(() => {
+            setScanStatus('ready');
+            setErrorMessage('');
+          }, 4000);
+          return;
+        }
+
+        console.log('✅ Session verified successfully:', verifySession.staff_id);
 
         await registerDeviceAccess(
           result.staff.id,
@@ -164,11 +189,10 @@ export function AdminSmartAccessGateV3() {
     console.log('  - defaultRoute:', defaultRoute);
 
     setShowPinModal(false);
-    setScanStatus('valid');
 
     if (staffInfo && deviceInfo) {
       console.log('  - Creating admin session...');
-      await adminSessionManager.createSession({
+      const sessionCreated = await adminSessionManager.createSession({
         staff_id: staffInfo.id,
         user_id: staffInfo.user_id || '',
         full_name: staffInfo.full_name,
@@ -179,8 +203,30 @@ export function AdminSmartAccessGateV3() {
         is_platform_owner: staffInfo.role === 'platform_owner',
       });
 
+      if (!sessionCreated) {
+        console.error('❌ CRITICAL: Session creation failed after PIN!');
+        setErrorMessage('فشل في حفظ الجلسة. حاول مرة أخرى.');
+        setScanStatus('rejected');
+        setTimeout(() => {
+          setScanStatus('ready');
+          setErrorMessage('');
+        }, 4000);
+        return;
+      }
+
       const savedSession = adminSessionManager.getSession();
-      console.log('  - Session saved:', savedSession);
+      if (!savedSession) {
+        console.error('❌ CRITICAL: Session not found after PIN verification!');
+        setErrorMessage('فشل في حفظ الجلسة. حاول مرة أخرى.');
+        setScanStatus('rejected');
+        setTimeout(() => {
+          setScanStatus('ready');
+          setErrorMessage('');
+        }, 4000);
+        return;
+      }
+
+      console.log('✅ Session verified successfully after PIN:', savedSession.staff_id);
 
       await registerDeviceAccess(
         staffInfo.id,
@@ -191,12 +237,21 @@ export function AdminSmartAccessGateV3() {
         true,
         true
       );
-    }
 
-    console.log('🎯 Navigating after PIN success to:', defaultRoute || '/hq');
-    setTimeout(() => {
-      navigate(defaultRoute || '/hq');
-    }, 2000);
+      setScanStatus('valid');
+      console.log('🎯 Navigating after PIN success to:', defaultRoute || '/hq');
+      setTimeout(() => {
+        navigate(defaultRoute || '/hq');
+      }, 2000);
+    } else {
+      console.error('❌ Missing staffInfo or deviceInfo');
+      setErrorMessage('حدث خطأ. حاول مرة أخرى.');
+      setScanStatus('rejected');
+      setTimeout(() => {
+        setScanStatus('ready');
+        setErrorMessage('');
+      }, 4000);
+    }
   };
 
   const handlePinCancel = () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useCategories } from './hooks/useCategories';
 import { useAuctions } from './hooks/useAuctions';
@@ -34,6 +34,7 @@ import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
+import { adminSessionManager } from './utils/adminSessionManager';
 import type { Database } from './lib/database.types';
 
 type AuctionInsert = Database['public']['Tables']['auctions']['Insert'];
@@ -447,6 +448,11 @@ function MainApp() {
 }
 
 function App() {
+  useEffect(() => {
+    console.log('🚀 App initialized - Loading session from storage');
+    adminSessionManager.loadFromStorage();
+  }, []);
+
   return (
     <Routes>
       <Route path="/admin/access" element={<AdminSmartAccessGateV3 />} />

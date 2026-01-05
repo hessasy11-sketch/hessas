@@ -28,10 +28,37 @@ const SESSION_KEY = 'platform_staff_session';
 const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
 
 export const adminSessionManager = {
-  async createSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at' | 'session_token' | 'db_session_id'>): Promise<void> {
+  setSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at'>): void {
     const now = Date.now();
+    const session: AdminSession = {
+      ...sessionData,
+      created_at: now,
+      last_activity_at: now,
+    };
 
     try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      console.log('✅ Session saved to localStorage:', SESSION_KEY);
+      console.log('   - Staff ID:', session.staff_id);
+      console.log('   - Role:', session.role);
+      console.log('   - Full Name:', session.full_name);
+
+      const verify = localStorage.getItem(SESSION_KEY);
+      if (verify) {
+        console.log('✅ VERIFIED: Session exists in localStorage');
+      } else {
+        console.error('❌ CRITICAL: Session NOT found after saving!');
+      }
+    } catch (error) {
+      console.error('❌ Exception saving session:', error);
+      throw error;
+    }
+  },
+
+  async createSession(sessionData: Omit<AdminSession, 'created_at' | 'last_activity_at' | 'session_token' | 'db_session_id'>): Promise<boolean> {
+    try {
+      console.log('🔄 Creating session for:', sessionData.staff_id);
+
       const { data: dbSession, error } = await supabase
         .from('platform_staff_sessions')
         .insert({
@@ -50,22 +77,29 @@ export const adminSessionManager = {
         .single();
 
       if (error) {
-        console.error('Error creating database session:', error);
-        return;
+        console.error('❌ Error creating database session:', error);
+        return false;
       }
 
-      const session: AdminSession = {
+      console.log('✅ DB session created:', dbSession.id);
+
+      this.setSession({
         ...sessionData,
-        created_at: now,
-        last_activity_at: now,
         session_token: dbSession.session_token,
         db_session_id: dbSession.id,
-      };
+      });
 
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      console.log('✅ Session created successfully in DB and localStorage');
+      const savedSession = this.getSession();
+      if (!savedSession) {
+        console.error('❌ CRITICAL: Session not saved properly!');
+        return false;
+      }
+
+      console.log('✅ Session creation complete and verified');
+      return true;
     } catch (error) {
-      console.error('Exception creating session:', error);
+      console.error('❌ Exception creating session:', error);
+      return false;
     }
   },
 
@@ -78,7 +112,7 @@ export const adminSessionManager = {
 
       if (!parsedSession.session_token) {
         console.log('❌ No session token found in localStorage');
-        this.destroySession();
+        this.clearSession();
         return null;
       }
 
@@ -107,13 +141,13 @@ export const adminSessionManager = {
 
       if (error) {
         console.error('Error restoring session from DB:', error);
-        this.destroySession();
+        this.clearSession();
         return null;
       }
 
       if (!dbSession || !dbSession.staff) {
         console.log('❌ Session not found in DB or inactive');
-        this.destroySession();
+        this.clearSession();
         return null;
       }
 
@@ -122,7 +156,7 @@ export const adminSessionManager = {
 
       if (idleTime > IDLE_TIMEOUT_MS) {
         console.log('❌ Session expired (idle timeout)');
-        await this.destroySession();
+        await this.logout();
         return null;
       }
 
@@ -153,7 +187,7 @@ export const adminSessionManager = {
       return restoredSession;
     } catch (error) {
       console.error('Exception restoring session:', error);
-      this.destroySession();
+      this.clearSession();
       return null;
     }
   },
@@ -161,21 +195,53 @@ export const adminSessionManager = {
   getSession(): AdminSession | null {
     try {
       const sessionData = localStorage.getItem(SESSION_KEY);
-      if (!sessionData) return null;
+      if (!sessionData) {
+        return null;
+      }
 
       const session: AdminSession = JSON.parse(sessionData);
 
       if (this.isSessionExpired(session)) {
-        this.destroySession();
+        console.log('⏱️ Session expired - clearing');
+        this.clearSession();
         return null;
       }
 
       return session;
     } catch (error) {
-      console.error('Error reading admin session:', error);
-      this.destroySession();
+      console.error('❌ Error reading admin session:', error);
+      this.clearSession();
       return null;
     }
+  },
+
+  loadFromStorage(): AdminSession | null {
+    console.log('🔄 Loading session from storage...');
+    const session = this.getSession();
+    if (session) {
+      console.log('✅ Session loaded successfully');
+      console.log('   - Staff ID:', session.staff_id);
+      console.log('   - Role:', session.role);
+      console.log('   - Full Name:', session.full_name);
+      return session;
+    } else {
+      console.log('ℹ️ No valid session found in storage');
+      return null;
+    }
+  },
+
+  clearSession(): void {
+    try {
+      localStorage.removeItem(SESSION_KEY);
+      console.log('🗑️ Session cleared from localStorage');
+    } catch (error) {
+      console.error('❌ Error clearing session:', error);
+    }
+  },
+
+  isSessionValid(): boolean {
+    const session = this.getSession();
+    return session !== null;
   },
 
   isSessionExpired(session: AdminSession): boolean {
@@ -184,13 +250,16 @@ export const adminSessionManager = {
     return idleTime > IDLE_TIMEOUT_MS;
   },
 
-  async updateActivity(): Promise<void> {
+  refreshActivity(): void {
     const session = this.getSession();
     if (!session) return;
 
     session.last_activity_at = Date.now();
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  },
 
+  async updateActivity(): Promise<void> {
+    this.refreshActivity();
     await this.updateActivityInDB();
   },
 
@@ -210,7 +279,8 @@ export const adminSessionManager = {
     }
   },
 
-  async destroySession(): Promise<void> {
+  async logout(): Promise<void> {
+    console.log('🚪 Logout initiated');
     const session = this.getSession();
 
     if (session?.db_session_id) {
@@ -225,12 +295,15 @@ export const adminSessionManager = {
 
         console.log('✅ Session ended in database');
       } catch (error) {
-        console.error('Error ending session in DB:', error);
+        console.error('❌ Error ending session in DB:', error);
       }
     }
 
-    localStorage.removeItem(SESSION_KEY);
-    console.log('✅ Session destroyed from localStorage');
+    this.clearSession();
+  },
+
+  async destroySession(): Promise<void> {
+    await this.logout();
   },
 
   isAuthenticated(): boolean {
