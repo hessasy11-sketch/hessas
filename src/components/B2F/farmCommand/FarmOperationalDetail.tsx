@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import FarmTeamsManagement from './FarmTeamsManagement';
 
 type TabId = 'command' | 'contents' | 'teams' | 'technicians' | 'equipment' | 'facilities' | 'finance' | 'events';
 
@@ -222,25 +223,29 @@ export default function FarmOperationalDetail() {
 
       {/* المحتوى */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          {currentTab && (
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-6">
-                <currentTab.icon className="w-10 h-10 text-emerald-600" />
+        {activeTab === 'teams' && <FarmTeamsManagement farmId={farm.id} />}
+
+        {activeTab !== 'teams' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            {currentTab && (
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-6">
+                  <currentTab.icon className="w-10 h-10 text-emerald-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {currentTab.label}
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {currentTab.description}
+                </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+                  <Package className="w-4 h-4" />
+                  <span>قيد التطوير - سيتم إضافة الوظائف قريباً</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {currentTab.label}
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {currentTab.description}
-              </p>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                <Package className="w-4 h-4" />
-                <span>قيد التطوير - سيتم إضافة الوظائف قريباً</span>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
