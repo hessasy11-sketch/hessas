@@ -26,14 +26,14 @@ import { AuctionDetailsNew } from './components/AuctionDetailsNew';
 import { AuctionForm } from './components/AuctionForm';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import B2FSection from './components/B2FSection';
-import { AdminSmartAccessGateV3 } from './components/platform/AdminSmartAccessGateV3';
-import { AdminSessionGuard } from './components/platform/AdminSessionGuard';
+import DevGateway from './components/platform/DevGateway';
+import HQGuard from './components/platform/HQGuard';
+import PlatformCommandCenter from './components/platform/PlatformCommandCenter';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
-import { adminSessionManager } from './utils/adminSessionManager';
 import type { Database } from './lib/database.types';
 
 type AuctionInsert = Database['public']['Tables']['auctions']['Insert'];
@@ -447,18 +447,22 @@ function MainApp() {
 }
 
 function App() {
-  useEffect(() => {
-    console.log('🚀 App initialized - Loading session from storage');
-    adminSessionManager.loadFromStorage();
-  }, []);
-
   return (
     <Routes>
-      <Route path="/admin/access" element={<AdminSmartAccessGateV3 />} />
-      <Route path="/admin/auctions" element={<AdminSessionGuard><AuctionsAdminPage /></AdminSessionGuard>} />
-      <Route path="/admin/b2f" element={<AdminSessionGuard><B2FAdminPage /></AdminSessionGuard>} />
-      <Route path="/admin/settings" element={<AdminSessionGuard><SettingsAdminPage /></AdminSessionGuard>} />
-      <Route path="*" element={<MainApp />} />
+      <Route path="/" element={<DevGateway />} />
+      <Route path="/hq" element={
+        <HQGuard>
+          <PlatformCommandCenter
+            onClose={() => {}}
+            onNavigateToB2F={() => {}}
+            onNavigateToAuctions={() => {}}
+          />
+        </HQGuard>
+      } />
+      <Route path="/admin/auctions" element={<HQGuard><AuctionsAdminPage /></HQGuard>} />
+      <Route path="/admin/b2f" element={<HQGuard><B2FAdminPage /></HQGuard>} />
+      <Route path="/admin/settings" element={<HQGuard><SettingsAdminPage /></HQGuard>} />
+      <Route path="/app" element={<MainApp />} />
     </Routes>
   );
 }

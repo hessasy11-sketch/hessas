@@ -15,7 +15,7 @@ export function HiddenAdminButton() {
     if (taps >= MAX_TAPS) {
       setIsAnimating(true);
       setTimeout(() => {
-        navigate('/admin/access');
+        navigate('/');
         setTaps(0);
         setIsAnimating(false);
       }, 500);
