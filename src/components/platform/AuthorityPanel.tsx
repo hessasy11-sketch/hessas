@@ -44,9 +44,10 @@ interface StaffMember {
 interface AuthorityPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  department?: 'b2f' | 'b2b' | 'finance' | 'marketing' | 'all';
 }
 
-export default function AuthorityPanel({ isOpen, onClose }: AuthorityPanelProps) {
+export default function AuthorityPanel({ isOpen, onClose, department = 'all' }: AuthorityPanelProps) {
   const [authorities, setAuthorities] = useState<Authority[]>([]);
   const [availableStaff, setAvailableStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,6 +137,7 @@ export default function AuthorityPanel({ isOpen, onClose }: AuthorityPanelProps)
       b2f_assistant: 'مساعد B2F',
       national_farms_manager: 'مدير المزارع الوطني',
       b2b_assistant: 'مساعد B2B',
+      b2b_supervisor: 'مشرف المزادات',
       accountant: 'المحاسب',
       marketing_manager: 'مدير التسويق'
     };
@@ -147,6 +149,7 @@ export default function AuthorityPanel({ isOpen, onClose }: AuthorityPanelProps)
       b2f_assistant: Leaf,
       national_farms_manager: Crown,
       b2b_assistant: Gavel,
+      b2b_supervisor: Users,
       accountant: Calculator,
       marketing_manager: TrendingUp
     };
@@ -158,19 +161,39 @@ export default function AuthorityPanel({ isOpen, onClose }: AuthorityPanelProps)
       b2f_assistant: 'bg-emerald-100 text-emerald-700 border-emerald-300',
       national_farms_manager: 'bg-purple-100 text-purple-700 border-purple-300',
       b2b_assistant: 'bg-blue-100 text-blue-700 border-blue-300',
+      b2b_supervisor: 'bg-cyan-100 text-cyan-700 border-cyan-300',
       accountant: 'bg-amber-100 text-amber-700 border-amber-300',
       marketing_manager: 'bg-pink-100 text-pink-700 border-pink-300'
     };
     return colors[role] || 'bg-slate-100 text-slate-700 border-slate-300';
   };
 
-  const roles = [
-    'b2f_assistant',
-    'national_farms_manager',
-    'b2b_assistant',
-    'accountant',
-    'marketing_manager'
-  ];
+  // تحديد الأدوار بناءً على القسم
+  const getRolesForDepartment = () => {
+    if (department === 'b2f') {
+      return ['b2f_assistant', 'national_farms_manager'];
+    }
+    if (department === 'b2b') {
+      return ['b2b_assistant', 'b2b_supervisor'];
+    }
+    if (department === 'finance') {
+      return ['accountant'];
+    }
+    if (department === 'marketing') {
+      return ['marketing_manager'];
+    }
+    // إذا كان 'all' يعرض كل الأدوار
+    return [
+      'b2f_assistant',
+      'national_farms_manager',
+      'b2b_assistant',
+      'b2b_supervisor',
+      'accountant',
+      'marketing_manager'
+    ];
+  };
+
+  const roles = getRolesForDepartment();
 
   if (!isOpen) return null;
 

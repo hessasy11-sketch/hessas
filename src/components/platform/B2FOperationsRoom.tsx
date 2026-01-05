@@ -369,7 +369,7 @@ export default function B2FOperationsRoom() {
         </div>
       </div>
 
-      <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} />
+      <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} department="b2f" />
 
       <DecisionRejectModal
         isOpen={rejectModalOpen}

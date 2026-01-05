@@ -407,7 +407,7 @@ export default function B2BAuctionsOpsRoom() {
         </div>
       </div>
 
-      <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} />
+      <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} department="b2b" />
 
       <DecisionRejectModal
         isOpen={rejectModalOpen}
