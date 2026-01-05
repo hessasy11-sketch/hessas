@@ -13,7 +13,11 @@ import {
   Target,
   Crown,
   Shield,
-  Layers
+  Layers,
+  Activity,
+  ArrowRight,
+  Calculator,
+  TrendingUp
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
