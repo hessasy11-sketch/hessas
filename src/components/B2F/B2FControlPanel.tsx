@@ -155,7 +155,7 @@ export default function B2FControlPanel({ onClose }: B2FControlPanelProps) {
       tabs: [
         {
           id: 'farms' as TabId,
-          title: '1. إدارة المزارع',
+          title: '1. إضافة مزارع',
           icon: Sprout,
           gradient: 'from-emerald-500 to-teal-600',
           iconBg: 'from-emerald-400 to-teal-500',
