@@ -14,10 +14,14 @@ import {
   AlertCircle,
   Eye,
   BarChart3,
-  FileText
+  FileText,
+  ShieldAlert,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useVisitsTracking } from '../../hooks/useVisitsTracking';
+import { useAbsoluteControl } from '../../hooks/useAbsoluteControl';
+import AbsoluteControlModal from './AbsoluteControlModal';
 
 interface B2FPulse {
   active_requests: number;
@@ -40,8 +44,11 @@ export default function OperationsRoomHub() {
   const [b2fPulse, setB2fPulse] = useState<B2FPulse | null>(null);
   const [b2bPulse, setB2bPulse] = useState<B2BPulse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showControlModal, setShowControlModal] = useState(false);
+  const [controlMode, setControlMode] = useState<'activate' | 'deactivate'>('activate');
 
   const { summary, loadSummary } = useVisitsTracking();
+  const { session, loading: controlLoading, activate, deactivate } = useAbsoluteControl();
 
   useEffect(() => {
     loadPulse();
@@ -74,6 +81,32 @@ export default function OperationsRoomHub() {
     }
   };
 
+  const handleControlClick = () => {
+    if (session.isActive) {
+      setControlMode('deactivate');
+    } else {
+      setControlMode('activate');
+    }
+    setShowControlModal(true);
+  };
+
+  const handleControlConfirm = async (reason?: string) => {
+    const staffId = 'gm-001';
+    const staffName = 'المدير العام';
+
+    if (controlMode === 'activate' && reason) {
+      const result = await activate(reason, staffId, staffName);
+      if (result.success) {
+        setShowControlModal(false);
+      }
+    } else if (controlMode === 'deactivate') {
+      const result = await deactivate(staffId, staffName);
+      if (result.success) {
+        setShowControlModal(false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir="rtl">
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 shadow-xl">
@@ -93,6 +126,28 @@ export default function OperationsRoomHub() {
 
             <div className="flex items-center gap-3">
               <button
+                onClick={handleControlClick}
+                disabled={controlLoading}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all disabled:opacity-50 ${
+                  session.isActive
+                    ? 'bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 animate-pulse'
+                    : 'bg-red-500/20 border border-red-500/30 hover:bg-red-500/30'
+                }`}
+              >
+                {session.isActive ? (
+                  <>
+                    <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                    <span className="text-emerald-200 text-sm">وضع نشط</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="w-4 h-4 text-red-300" />
+                    <span className="text-red-200 text-sm">السيطرة المطلقة</span>
+                  </>
+                )}
+              </button>
+
+              <button
                 onClick={() => navigate('/admin/operations-room/logs')}
                 className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/20 border border-blue-500/30 rounded-xl hover:bg-blue-500/30 transition-colors"
               >
@@ -100,9 +155,9 @@ export default function OperationsRoomHub() {
                 <span className="text-blue-200 text-sm font-medium">السجل القيادي</span>
               </button>
 
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
-                <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span className="text-emerald-300 text-sm font-medium">مباشر</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-500/20 border border-slate-500/30 rounded-xl">
+                <Activity className="w-4 h-4 text-slate-400 animate-pulse" />
+                <span className="text-slate-300 text-sm font-medium">مباشر</span>
               </div>
             </div>
           </div>
@@ -171,6 +226,34 @@ export default function OperationsRoomHub() {
           </div>
         )}
 
+        {/* Sensitive Commands Demo Link */}
+        {session.isActive && (
+          <div className="mb-8 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center animate-pulse">
+                  <ShieldAlert className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-red-900 mb-1">
+                    الأوامر الحساسة متاحة الآن
+                  </h3>
+                  <p className="text-red-700 text-sm">
+                    وضع السيطرة المطلقة نشط - يمكنك الوصول إلى الأوامر الحساسة
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/admin/operations-room/sensitive-commands')}
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
+              >
+                <span>عرض الأوامر</span>
+                <ShieldAlert className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-2 gap-8">
           <OperationCard
             title="استثمار المزارع"
@@ -211,6 +294,16 @@ export default function OperationsRoomHub() {
           />
         </div>
       </div>
+
+      {showControlModal && (
+        <AbsoluteControlModal
+          mode={controlMode}
+          currentReason={session.reason}
+          onConfirm={handleControlConfirm}
+          onCancel={() => setShowControlModal(false)}
+          loading={controlLoading}
+        />
+      )}
     </div>
   );
 }
