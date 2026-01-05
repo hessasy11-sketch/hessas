@@ -21,7 +21,9 @@ import {
   Shield
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useDecisionQueue } from '../../hooks/useDecisionQueue';
 import AuthorityPanel from './AuthorityPanel';
+import DecisionRejectModal from './DecisionRejectModal';
 
 interface Pulse {
   visits_today: number;
@@ -85,6 +87,13 @@ export default function B2BAuctionsOpsRoom() {
   const [loading, setLoading] = useState(true);
   const [selectedAuction, setSelectedAuction] = useState<string | null>(null);
   const [showAuthority, setShowAuthority] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedDecisionForReject, setSelectedDecisionForReject] = useState<Decision | null>(null);
+
+  const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2b');
+
+  // استخدام staff_id مؤقت للتجربة - في الإنتاج سيأتي من الـ session
+  const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
 
   useEffect(() => {
     loadData();
@@ -151,25 +160,34 @@ export default function B2BAuctionsOpsRoom() {
   };
 
   const handleApproveDecision = async (decisionId: string) => {
-    const { data, error } = await supabase.rpc('exec_approve_decision', {
-      p_decision_id: decisionId,
-      p_approved_by: 'system',
-      p_notes: 'موافقة من غرفة العمليات'
-    });
+    const result = await approveDecision(
+      decisionId,
+      CURRENT_STAFF_ID,
+      'تمت الموافقة من غرفة عمليات B2B'
+    );
 
-    if (!error && data?.success) {
+    if (result.success) {
       loadData();
     }
   };
 
-  const handleRejectDecision = async (decisionId: string) => {
-    const { data, error } = await supabase.rpc('exec_reject_decision', {
-      p_decision_id: decisionId,
-      p_rejected_by: 'system',
-      p_notes: 'رفض من غرفة العمليات'
-    });
+  const handleRejectClick = (decision: Decision) => {
+    setSelectedDecisionForReject(decision);
+    setRejectModalOpen(true);
+  };
 
-    if (!error && data?.success) {
+  const handleConfirmReject = async (reason: string) => {
+    if (!selectedDecisionForReject) return;
+
+    const result = await rejectDecision(
+      selectedDecisionForReject.id,
+      CURRENT_STAFF_ID,
+      reason
+    );
+
+    if (result.success) {
+      setRejectModalOpen(false);
+      setSelectedDecisionForReject(null);
       loadData();
     }
   };
@@ -313,7 +331,8 @@ export default function B2BAuctionsOpsRoom() {
                     key={decision.id}
                     decision={decision}
                     onApprove={handleApproveDecision}
-                    onReject={handleRejectDecision}
+                    onReject={() => handleRejectClick(decision)}
+                    loading={actionLoading}
                   />
                 ))}
 
@@ -329,6 +348,17 @@ export default function B2BAuctionsOpsRoom() {
       </div>
 
       <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} />
+
+      <DecisionRejectModal
+        isOpen={rejectModalOpen}
+        onClose={() => {
+          setRejectModalOpen(false);
+          setSelectedDecisionForReject(null);
+        }}
+        onConfirm={handleConfirmReject}
+        decisionTitle={selectedDecisionForReject?.auction_title || 'القرار'}
+        loading={actionLoading}
+      />
     </div>
   );
 }
@@ -474,7 +504,7 @@ function AuctionRadarCard({ auction, isSelected, onSelect, onToggleStatus, onExt
   );
 }
 
-function DecisionCard({ decision, onApprove, onReject }: any) {
+function DecisionCard({ decision, onApprove, onReject, loading }: any) {
   const getDecisionLabel = (type: string) => {
     const labels: Record<string, string> = {
       pause_auction: 'إيقاف مزاد',
@@ -518,17 +548,19 @@ function DecisionCard({ decision, onApprove, onReject }: any) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => onApprove(decision.id)}
-          className="flex-1 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+          disabled={loading}
+          className="flex-1 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4" />
-          موافقة
+          {loading ? 'جاري...' : 'موافقة'}
         </button>
         <button
-          onClick={() => onReject(decision.id)}
-          className="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+          onClick={() => onReject()}
+          disabled={loading}
+          className="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           <XCircle className="w-4 h-4" />
-          رفض
+          {loading ? 'جاري...' : 'رفض'}
         </button>
       </div>
     </div>
