@@ -16,9 +16,11 @@ import {
   Zap,
   FileText,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import AuthorityPanel from './AuthorityPanel';
 
 interface Pulse {
   visits_today: number;
@@ -80,6 +82,7 @@ export default function B2FOperationsRoom() {
   const [logs, setLogs] = useState<ExecutiveLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+  const [showAuthority, setShowAuthority] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -165,9 +168,18 @@ export default function B2FOperationsRoom() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
-              <Activity className="w-4 h-4 text-emerald-300 animate-pulse" />
-              <span className="text-emerald-200 text-sm font-medium">مباشر</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAuthority(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-xl hover:bg-amber-500/30 transition-colors"
+              >
+                <Shield className="w-4 h-4 text-amber-300" />
+                <span className="text-amber-200 text-sm font-medium">الصلاحيات</span>
+              </button>
+              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
+                <Activity className="w-4 h-4 text-emerald-300 animate-pulse" />
+                <span className="text-emerald-200 text-sm font-medium">مباشر</span>
+              </div>
             </div>
           </div>
 
@@ -286,6 +298,8 @@ export default function B2FOperationsRoom() {
           </div>
         </div>
       </div>
+
+      <AuthorityPanel isOpen={showAuthority} onClose={() => setShowAuthority(false)} />
     </div>
   );
 }
