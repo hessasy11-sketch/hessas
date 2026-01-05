@@ -108,7 +108,7 @@ export default function ApprovalRequestsPanel() {
                       <div>المزرعة: {request.farm.name}</div>
                     )}
                     {request.requester && (
-                      <div>الطالب: {request.requester.name_ar}</div>
+                      <div>الطالب: {request.requester?.user?.full_name || 'غير محدد'}</div>
                     )}
                     <div>التاريخ: {new Date(request.created_at).toLocaleString('ar-SA')}</div>
                   </div>

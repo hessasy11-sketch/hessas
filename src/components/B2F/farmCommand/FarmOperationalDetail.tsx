@@ -89,7 +89,9 @@ interface OperationalFarm {
   current_occupancy: number;
   total_capacity: number;
   manager: {
-    name_ar: string;
+    user: {
+      full_name: string;
+    } | null;
   } | null;
   reference_farm: {
     name: string;
@@ -119,7 +121,9 @@ export default function FarmOperationalDetail() {
         .from('fc_operational_farms')
         .select(`
           *,
-          manager:platform_staff!farm_manager_id(name_ar),
+          manager:platform_staff!farm_manager_id(
+            user:profiles!user_id(full_name)
+          ),
           reference_farm:b2f_farms!reference_farm_id(name, location, city)
         `)
         .eq('id', farmId)
@@ -182,7 +186,7 @@ export default function FarmOperationalDetail() {
                   {farm.manager && (
                     <>
                       <span>•</span>
-                      <span>المدير: {farm.manager.name_ar}</span>
+                      <span>المدير: {farm.manager?.user?.full_name || 'غير محدد'}</span>
                     </>
                   )}
                 </div>

@@ -13,7 +13,9 @@ interface ApprovalRequest {
   review_notes: string | null;
   created_at: string;
   requester: {
-    name_ar: string;
+    user: {
+      full_name: string;
+    } | null;
   } | null;
   farm: {
     name: string;
@@ -38,7 +40,9 @@ export function useApprovalRequests() {
         .from('fc_approval_requests')
         .select(`
           *,
-          requester:platform_staff!requested_by(name_ar),
+          requester:platform_staff!requested_by(
+            user:profiles!user_id(full_name)
+          ),
           farm:b2f_farms(name)
         `)
         .order('created_at', { ascending: false });

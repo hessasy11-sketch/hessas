@@ -115,7 +115,9 @@ export function useFarmSetup(farmId: string | null) {
           team_role,
           team_leader_id,
           is_active,
-          team_leader:platform_staff!team_leader_id(name_ar)
+          team_leader:platform_staff!team_leader_id(
+            user:profiles!user_id(full_name)
+          )
         `)
         .eq('operational_farm_id', opFarm.id)
         .order('created_at');
@@ -134,7 +136,7 @@ export function useFarmSetup(farmId: string | null) {
             team_name: team.team_name,
             team_role: team.team_role,
             team_leader_id: team.team_leader_id,
-            team_leader_name: team.team_leader?.name_ar || null,
+            team_leader_name: team.team_leader?.user?.full_name || null,
             members_count: count || 0,
             is_active: team.is_active
           };

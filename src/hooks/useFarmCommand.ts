@@ -107,7 +107,7 @@ export function useFarmCommand() {
 
         const managerResult = await supabase
           .from('fc_operational_farms')
-          .select('manager:platform_staff!farm_manager_id(name_ar)')
+          .select('manager:platform_staff!farm_manager_id(user:profiles!user_id(full_name))')
           .eq('reference_farm_id', farm.id)
           .maybeSingle();
 
@@ -118,7 +118,7 @@ export function useFarmCommand() {
           city: farm.city || '',
           operational_status: farm.operational_status || 'setup',
           suspended_at: farm.suspended_at,
-          manager_name: managerResult.data?.manager?.name_ar || null,
+          manager_name: managerResult.data?.manager?.user?.full_name || null,
           readiness_score,
           teams_count,
           open_issues,
