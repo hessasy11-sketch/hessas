@@ -43,6 +43,7 @@ import SensitiveCommandsDemo from './components/platform/SensitiveCommandsDemo';
 import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
+import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -460,6 +461,8 @@ function MainApp() {
 function App() {
   return (
     <Routes>
+      <Route path="/admin/invite" element={<InviteAcceptancePage />} />
+
       <Route path="/admin/operations-room" element={<OperationsRoomHub />} />
       <Route path="/admin/operations-room/logs" element={<ExecutiveLogsView />} />
       <Route path="/admin/operations-room/sensitive-commands" element={<SensitiveCommandsDemo />} />
