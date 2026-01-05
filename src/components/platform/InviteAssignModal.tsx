@@ -36,6 +36,8 @@ interface InviteAssignModalProps {
   roles: RoleFromCatalog[];
   onSuccess: () => void;
   preselectedRole?: string;
+  scopeType?: 'platform' | 'b2f' | 'b2b' | 'farm';
+  selectedFarmId?: string;
 }
 
 export default function InviteAssignModal({
@@ -43,13 +45,15 @@ export default function InviteAssignModal({
   onClose,
   roles,
   onSuccess,
-  preselectedRole
+  preselectedRole,
+  scopeType: initialScopeType = 'platform',
+  selectedFarmId: initialSelectedFarmId = ''
 }: InviteAssignModalProps) {
   const [inviteeName, setInviteeName] = useState('');
   const [inviteePhone, setInviteePhone] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
-  const [scopeType, setScopeType] = useState<'platform' | 'b2f' | 'b2b' | 'farm'>('platform');
-  const [selectedFarmId, setSelectedFarmId] = useState('');
+  const [scopeType, setScopeType] = useState<'platform' | 'b2f' | 'b2b' | 'farm'>(initialScopeType);
+  const [selectedFarmId, setSelectedFarmId] = useState(initialSelectedFarmId);
   const [notes, setNotes] = useState('');
   const [expiryDays, setExpiryDays] = useState(30);
   const [farms, setFarms] = useState<Farm[]>([]);
@@ -58,10 +62,18 @@ export default function InviteAssignModal({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (isOpen && preselectedRole) {
-      setSelectedRole(preselectedRole);
+    if (isOpen) {
+      if (preselectedRole) {
+        setSelectedRole(preselectedRole);
+      }
+      if (initialScopeType) {
+        setScopeType(initialScopeType);
+      }
+      if (initialSelectedFarmId) {
+        setSelectedFarmId(initialSelectedFarmId);
+      }
     }
-  }, [isOpen, preselectedRole]);
+  }, [isOpen, preselectedRole, initialScopeType, initialSelectedFarmId]);
 
   useEffect(() => {
     if (isOpen && scopeType === 'farm') {
