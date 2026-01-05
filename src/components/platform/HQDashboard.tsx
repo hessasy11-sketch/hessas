@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Building2, Leaf, Calculator, TrendingUp, Users, ArrowRight } from 'lucide-react';
+import HQFarmCommandCard from './HQFarmCommandCard';
 
 interface DepartmentCard {
   id: string;
@@ -75,6 +76,11 @@ export default function HQDashboard() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             مركز القيادة لمتابعة أقسام المنصة واتخاذ القرارات الإدارية.
           </p>
+        </div>
+
+        {/* Farm Command Card - Featured */}
+        <div className="mb-8">
+          <HQFarmCommandCard />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

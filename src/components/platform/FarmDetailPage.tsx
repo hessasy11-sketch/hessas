@@ -1,133 +1,444 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, LayoutDashboard, Users, Cog, DollarSign, TrendingUp, FileText, Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  MapPin,
+  User,
+  Users,
+  Package,
+  Wrench,
+  DollarSign,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  Lock,
+  TrendingUp,
+  TrendingDown,
+  Loader2,
+  Edit,
+  Activity
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
-type Tab = 'overview' | 'team' | 'operations' | 'investment' | 'finance' | 'reports';
-
-interface TabConfig {
-  id: Tab;
-  label: string;
-  icon: typeof LayoutDashboard;
-  description: string;
+interface FarmDetail {
+  id: string;
+  name: string;
+  location: string;
+  city: string;
+  operational_status: string;
+  suspended_at: string | null;
+  suspended_reason: string | null;
+  created_at: string;
 }
 
-const tabs: TabConfig[] = [
-  {
-    id: 'overview',
-    label: 'نظرة عامة',
-    icon: LayoutDashboard,
-    description: 'ملخص حالة المزرعة والمؤشرات الأساسية.',
-  },
-  {
-    id: 'team',
-    label: 'فريق المزرعة',
-    icon: Users,
-    description: 'إدارة مدير المزرعة والمهندسين والمشرفين والعمال.',
-  },
-  {
-    id: 'operations',
-    label: 'التشغيل',
-    icon: Cog,
-    description: 'متابعة الأعمال اليومية والمهام (يُفعل لاحقًا).',
-  },
-  {
-    id: 'investment',
-    label: 'الاستثمار',
-    icon: TrendingUp,
-    description: 'إدارة المستثمرين والعقود المرتبطة بالمزرعة.',
-  },
-  {
-    id: 'finance',
-    label: 'المالية',
-    icon: DollarSign,
-    description: 'مصروفات المزرعة وإيراداتها ورسوم الصيانة.',
-  },
-  {
-    id: 'reports',
-    label: 'التقارير',
-    icon: FileText,
-    description: 'تقارير تشغيلية واستثمارية قابلة للمراجعة.',
-  },
-];
+interface FarmStats {
+  readiness_score: number;
+  manager_name: string | null;
+  teams_count: number;
+  contents_count: number;
+  equipment_count: number;
+  open_issues: number;
+  monthly_revenue: number;
+  monthly_expenses: number;
+  monthly_net: number;
+}
 
 export default function FarmDetailPage() {
-  const { farmId } = useParams();
+  const { farmId } = useParams<{ farmId: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-  const currentTab = tabs.find(t => t.id === activeTab);
+  const [farm, setFarm] = useState<FarmDetail | null>(null);
+  const [stats, setStats] = useState<FarmStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (farmId) {
+      loadFarmDetails();
+    }
+  }, [farmId]);
+
+  const loadFarmDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: farmData, error: farmError } = await supabase
+        .from('b2f_farms')
+        .select('*')
+        .eq('id', farmId)
+        .maybeSingle();
+
+      if (farmError) throw farmError;
+      if (!farmData) throw new Error('المزرعة غير موجودة');
+
+      setFarm(farmData);
+
+      const readinessResult = await supabase.rpc('calculate_farm_readiness', {
+        p_farm_id: farmId
+      });
+
+      const [teamsResult, contentsResult, equipmentResult, issuesResult, financialResult] =
+        await Promise.all([
+          supabase
+            .from('fc_farm_teams')
+            .select('id', { count: 'exact' })
+            .eq('farm_id', farmId)
+            .eq('is_active', true),
+          supabase
+            .from('fc_farm_contents')
+            .select('id', { count: 'exact' })
+            .eq('farm_id', farmId),
+          supabase
+            .from('fc_equipment')
+            .select('id', { count: 'exact' })
+            .eq('farm_id', farmId),
+          supabase
+            .from('fc_issue_reports')
+            .select('id', { count: 'exact' })
+            .eq('farm_id', farmId)
+            .in('status', ['reported', 'acknowledged', 'in_progress']),
+          supabase
+            .from('fc_financial_ledger')
+            .select('entry_type, amount')
+            .eq('farm_id', farmId)
+            .gte(
+              'transaction_date',
+              new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+            )
+        ]);
+
+      const managerResult = await supabase
+        .from('fc_operational_farms')
+        .select('manager:platform_staff!farm_manager_id(name_ar)')
+        .eq('reference_farm_id', farmId)
+        .maybeSingle();
+
+      let monthly_revenue = 0;
+      let monthly_expenses = 0;
+      if (financialResult.data) {
+        monthly_revenue = financialResult.data
+          .filter((r: any) => r.entry_type === 'revenue')
+          .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+        monthly_expenses = financialResult.data
+          .filter((r: any) => r.entry_type === 'expense')
+          .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+      }
+
+      setStats({
+        readiness_score: readinessResult.data || 0,
+        manager_name: managerResult.data?.manager?.name_ar || null,
+        teams_count: teamsResult.count || 0,
+        contents_count: contentsResult.count || 0,
+        equipment_count: equipmentResult.count || 0,
+        open_issues: issuesResult.count || 0,
+        monthly_revenue,
+        monthly_expenses,
+        monthly_net: monthly_revenue - monthly_expenses
+      });
+    } catch (err: any) {
+      console.error('Error loading farm details:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusConfig = (status: string) => {
+    const configs: Record<string, any> = {
+      setup: {
+        label: 'إعداد',
+        icon: Clock,
+        color: 'bg-blue-100 text-blue-700',
+        borderColor: 'border-blue-200'
+      },
+      active: {
+        label: 'نشطة',
+        icon: CheckCircle,
+        color: 'bg-green-100 text-green-700',
+        borderColor: 'border-green-200'
+      },
+      suspended: {
+        label: 'موقوفة',
+        icon: Lock,
+        color: 'bg-red-100 text-red-700',
+        borderColor: 'border-red-200'
+      }
+    };
+    return configs[status] || configs.setup;
+  };
+
+  const getReadinessColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 50) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ar-SA', {
+      style: 'currency',
+      currency: 'SAR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const handleRequestStatusChange = async () => {
+    const newStatus = prompt('أدخل الحالة الجديدة (setup, active, suspended):');
+    if (!newStatus) return;
+
+    if (!['setup', 'active', 'suspended'].includes(newStatus)) {
+      alert('حالة غير صحيحة');
+      return;
+    }
+
+    const reason = prompt('أدخل سبب التغيير:');
+    if (!reason) return;
+
+    try {
+      const { error } = await supabase.rpc('create_approval_request', {
+        p_request_type: 'change_status',
+        p_farm_id: farmId,
+        p_requested_by: 'current_user_id',
+        p_request_data: { new_status: newStatus, reason }
+      });
+
+      if (error) throw error;
+
+      alert('تم إنشاء طلب التغيير بنجاح. في انتظار الموافقة.');
+    } catch (err: any) {
+      alert('حدث خطأ: ' + err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (error || !farm || !stats) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">حدث خطأ</h2>
+          <p className="text-gray-600">{error || 'المزرعة غير موجودة'}</p>
+          <button
+            onClick={() => navigate('/admin/b2f/farm-command')}
+            className="mt-6 px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+          >
+            العودة إلى القيادة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const statusConfig = getStatusConfig(farm.operational_status);
+  const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
         <button
-          onClick={() => navigate('/hq/b2f')}
-          className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors mb-8"
+          onClick={() => navigate('/admin/b2f/farm-command')}
+          className="flex items-center gap-2 text-gray-700 hover:text-emerald-600 mb-6 transition-colors"
         >
-          <ArrowRight className="w-5 h-5 rotate-180" />
-          العودة للمزارع
+          <ArrowLeft className="w-5 h-5" />
+          العودة إلى القيادة
         </button>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-2xl">🌳</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                مزرعة الخير
-              </h1>
-              <p className="text-gray-600">
-                الرياض • مدير المزرعة: أحمد محمد
-              </p>
-            </div>
-          </div>
-          <p className="text-gray-600 mt-4">
-            مركز إدارة المزرعة وتشغيلها واستثمارها.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          <div className="border-b border-gray-200 overflow-x-auto">
-            <div className="flex gap-2 p-2 min-w-max">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 whitespace-nowrap ${
-                      activeTab === tab.id
-                        ? 'bg-green-100 text-green-700 shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="p-12">
-            {currentTab && (
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
-                  <currentTab.icon className="w-10 h-10 text-green-600" />
+        {/* Farm Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-4 mb-3">
+                <h1 className="text-4xl font-black text-gray-900">{farm.name}</h1>
+                <span
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${statusConfig.color}`}
+                >
+                  <StatusIcon className="w-5 h-5" />
+                  {statusConfig.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600 mb-2">
+                <MapPin className="w-5 h-5" />
+                <span className="text-lg">
+                  {farm.city}
+                  {farm.location && ` • ${farm.location}`}
+                </span>
+              </div>
+              {stats.manager_name && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <User className="w-5 h-5" />
+                  <span>المدير: {stats.manager_name}</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  {currentTab.label}
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {currentTab.description}
-                </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm">
-                  <Package className="w-4 h-4" />
-                  <span>Skeleton فقط – التطوير لاحقًا</span>
+              )}
+            </div>
+
+            {/* Readiness Score */}
+            <div className="text-center bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
+              <div className={`text-6xl font-black mb-2 ${getReadinessColor(stats.readiness_score)}`}>
+                {stats.readiness_score}%
+              </div>
+              <p className="text-sm font-medium text-gray-700">درجة الجاهزية</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
+            <button
+              onClick={handleRequestStatusChange}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              طلب تغيير الحالة
+            </button>
+            <button
+              onClick={() => navigate(`/admin/b2f/farm-command/farms/${farmId}/operations`)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              <Activity className="w-4 h-4" />
+              عرض العمليات
+            </button>
+          </div>
+
+          {/* Suspended Info */}
+          {farm.operational_status === 'suspended' && farm.suspended_at && (
+            <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-red-600" />
+                <div className="flex-1">
+                  <p className="font-semibold text-red-900">
+                    المزرعة موقوفة منذ {new Date(farm.suspended_at).toLocaleDateString('ar-SA')}
+                  </p>
+                  {farm.suspended_reason && (
+                    <p className="text-sm text-red-700 mt-1">السبب: {farm.suspended_reason}</p>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Teams */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.teams_count}</p>
+                <p className="text-sm text-gray-600">فرق العمل</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contents */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-purple-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Package className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.contents_count}</p>
+                <p className="text-sm text-gray-600">المحتويات</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Equipment */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Wrench className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.equipment_count}</p>
+                <p className="text-sm text-gray-600">المعدات</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Issues */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.open_issues}</p>
+                <p className="text-sm text-gray-600">أعطال مفتوحة</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <DollarSign className="w-7 h-7 text-emerald-600" />
+            الملخص المالي - الشهر الحالي
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Revenue */}
+            <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                <p className="text-sm font-medium text-green-900">الإيرادات</p>
+              </div>
+              <p className="text-3xl font-black text-green-600">
+                {formatCurrency(stats.monthly_revenue)}
+              </p>
+            </div>
+
+            {/* Expenses */}
+            <div className="p-6 bg-red-50 rounded-xl border-2 border-red-200">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className="w-5 h-5 text-red-600" />
+                <p className="text-sm font-medium text-red-900">المصاريف</p>
+              </div>
+              <p className="text-3xl font-black text-red-600">
+                {formatCurrency(stats.monthly_expenses)}
+              </p>
+            </div>
+
+            {/* Net */}
+            <div
+              className={`p-6 rounded-xl border-2 ${
+                stats.monthly_net >= 0
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-orange-50 border-orange-200'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {stats.monthly_net >= 0 ? (
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <TrendingDown className="w-5 h-5 text-orange-600" />
+                )}
+                <p
+                  className={`text-sm font-medium ${
+                    stats.monthly_net >= 0 ? 'text-blue-900' : 'text-orange-900'
+                  }`}
+                >
+                  الصافي
+                </p>
+              </div>
+              <p
+                className={`text-3xl font-black ${
+                  stats.monthly_net >= 0 ? 'text-blue-600' : 'text-orange-600'
+                }`}
+              >
+                {formatCurrency(Math.abs(stats.monthly_net))}
+              </p>
+            </div>
           </div>
         </div>
       </div>
