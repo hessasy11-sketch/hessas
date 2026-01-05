@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useDecisionQueue } from '../../hooks/useDecisionQueue';
+import { useMasterActions } from '../../hooks/useMasterActions';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
 
@@ -89,6 +90,7 @@ export default function B2FOperationsRoom() {
   const [selectedDecisionForReject, setSelectedDecisionForReject] = useState<Decision | null>(null);
 
   const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2f');
+  const { toggleFarmBookings, loading: masterActionLoading } = useMasterActions();
 
   // استخدام staff_id مؤقت للتجربة - في الإنتاج سيأتي من الـ session
   const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
@@ -120,14 +122,14 @@ export default function B2FOperationsRoom() {
   };
 
   const handleToggleBookings = async (farmId: string, enabled: boolean) => {
-    const { data, error } = await supabase.rpc('exec_toggle_farm_bookings', {
-      p_farm_id: farmId,
-      p_enabled: enabled,
-      p_performed_by: 'system',
-      p_notes: `تم ${enabled ? 'تفعيل' : 'إيقاف'} الحجوزات`
-    });
+    const result = await toggleFarmBookings(
+      farmId,
+      enabled,
+      CURRENT_STAFF_ID,
+      `تم ${enabled ? 'فتح' : 'إيقاف'} الحجوزات - إجراء تنفيذي مباشر`
+    );
 
-    if (!error && data?.success) {
+    if (result.success) {
       loadData();
     }
   };
@@ -252,6 +254,7 @@ export default function B2FOperationsRoom() {
                     isSelected={selectedFarm === farm.id}
                     onSelect={() => setSelectedFarm(farm.id)}
                     onToggleBookings={handleToggleBookings}
+                    loading={masterActionLoading}
                   />
                 ))}
 
@@ -346,7 +349,7 @@ function PulseCard({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings }: any) {
+function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings, loading }: any) {
   return (
     <div
       className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer ${isSelected ? 'bg-emerald-50' : ''}`}
@@ -379,14 +382,15 @@ function FarmRadarCard({ farm, isSelected, onSelect, onToggleBookings }: any) {
             e.stopPropagation();
             onToggleBookings(farm.id, !farm.bookings_enabled);
           }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+          disabled={loading}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             farm.bookings_enabled
               ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
               : 'bg-red-100 text-red-700 hover:bg-red-200'
           }`}
         >
           <Power className="w-3 h-3 inline mr-1" />
-          {farm.bookings_enabled ? 'حجوزات مفتوحة' : 'حجوزات مغلقة'}
+          {loading ? 'جاري...' : (farm.bookings_enabled ? 'حجوزات مفتوحة' : 'حجوزات مغلقة')}
         </button>
       </div>
 

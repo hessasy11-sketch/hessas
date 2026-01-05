@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useDecisionQueue } from '../../hooks/useDecisionQueue';
+import { useMasterActions } from '../../hooks/useMasterActions';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
 
@@ -91,6 +92,7 @@ export default function B2BAuctionsOpsRoom() {
   const [selectedDecisionForReject, setSelectedDecisionForReject] = useState<Decision | null>(null);
 
   const { approveDecision, rejectDecision, loading: actionLoading } = useDecisionQueue('b2b');
+  const { extendAuctionTime, loading: masterActionLoading } = useMasterActions();
 
   // استخدام staff_id مؤقت للتجربة - في الإنتاج سيأتي من الـ session
   const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
@@ -134,15 +136,15 @@ export default function B2BAuctionsOpsRoom() {
     }
   };
 
-  const handleExtendTime = async (auctionId: string, hours: number) => {
-    const { data, error } = await supabase.rpc('exec_extend_auction_time', {
-      p_auction_id: auctionId,
-      p_hours_to_add: hours,
-      p_performed_by: 'system',
-      p_notes: `تم تمديد المزاد ${hours} ساعة`
-    });
+  const handleExtendTime = async (auctionId: string, minutes: number) => {
+    const result = await extendAuctionTime(
+      auctionId,
+      minutes,
+      CURRENT_STAFF_ID,
+      `تمديد ${minutes} دقيقة - إجراء تنفيذي مباشر`
+    );
 
-    if (!error && data?.success) {
+    if (result.success) {
       loadData();
     }
   };
@@ -281,6 +283,7 @@ export default function B2BAuctionsOpsRoom() {
                     onToggleStatus={handleToggleStatus}
                     onExtendTime={handleExtendTime}
                     onApproveResult={handleApproveResult}
+                    loading={masterActionLoading}
                   />
                 ))}
 
@@ -375,7 +378,7 @@ function PulseCard({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function AuctionRadarCard({ auction, isSelected, onSelect, onToggleStatus, onExtendTime, onApproveResult }: any) {
+function AuctionRadarCard({ auction, isSelected, onSelect, onToggleStatus, onExtendTime, onApproveResult, loading }: any) {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       active: 'bg-emerald-100 text-emerald-700',
@@ -464,12 +467,13 @@ function AuctionRadarCard({ auction, isSelected, onSelect, onToggleStatus, onExt
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onExtendTime(auction.id, 24);
+              onExtendTime(auction.id, 15);
             }}
-            className="flex-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors flex items-center justify-center gap-1"
+            disabled={loading}
+            className="flex-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
           >
             <TimerReset className="w-3 h-3" />
-            تمديد 24س
+            {loading ? 'جاري...' : 'تمديد 15د'}
           </button>
           {auction.total_bids > 0 && (
             <button
