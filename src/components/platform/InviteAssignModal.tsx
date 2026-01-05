@@ -35,13 +35,15 @@ interface InviteAssignModalProps {
   onClose: () => void;
   roles: RoleFromCatalog[];
   onSuccess: () => void;
+  preselectedRole?: string;
 }
 
 export default function InviteAssignModal({
   isOpen,
   onClose,
   roles,
-  onSuccess
+  onSuccess,
+  preselectedRole
 }: InviteAssignModalProps) {
   const [inviteeName, setInviteeName] = useState('');
   const [inviteePhone, setInviteePhone] = useState('');
@@ -54,6 +56,12 @@ export default function InviteAssignModal({
   const [loading, setLoading] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && preselectedRole) {
+      setSelectedRole(preselectedRole);
+    }
+  }, [isOpen, preselectedRole]);
 
   useEffect(() => {
     if (isOpen && scopeType === 'farm') {
