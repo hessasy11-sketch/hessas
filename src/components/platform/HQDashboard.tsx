@@ -118,7 +118,7 @@ export default function HQDashboard() {
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
             <button
-              onClick={() => navigate('/hq/b2f')}
+              onClick={() => navigate('/admin/b2f')}
               className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-2xl"
             >
               <div className="flex items-start justify-between mb-6">
@@ -159,7 +159,7 @@ export default function HQDashboard() {
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
             <button
-              onClick={() => navigate('/hq/b2b')}
+              onClick={() => navigate('/admin/auctions')}
               className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-2xl"
             >
               <div className="flex items-start justify-between mb-6">
@@ -201,7 +201,7 @@ export default function HQDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Finance */}
           <button
-            onClick={() => navigate('/hq/finance')}
+            onClick={() => navigate('/admin/operations-room/finance')}
             className="group bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 hover:border-amber-300 transition-all duration-300 hover:shadow-xl"
           >
             <div className="flex items-center gap-4 mb-4">
@@ -233,7 +233,7 @@ export default function HQDashboard() {
 
           {/* Marketing */}
           <button
-            onClick={() => navigate('/hq/marketing')}
+            onClick={() => navigate('/admin/operations-room/marketing')}
             className="group bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl"
           >
             <div className="flex items-center gap-4 mb-4">
@@ -265,7 +265,7 @@ export default function HQDashboard() {
 
           {/* Partners */}
           <button
-            onClick={() => navigate('/hq/partners')}
+            onClick={() => navigate('/admin/operations-room/partners')}
             className="group bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200 hover:border-orange-300 transition-all duration-300 hover:shadow-xl"
           >
             <div className="flex items-center gap-4 mb-4">
