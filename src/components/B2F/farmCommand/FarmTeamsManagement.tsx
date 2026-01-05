@@ -13,7 +13,7 @@ interface Team {
   team_leader_id: string | null;
   is_active: boolean;
   leader: {
-    name_ar: string;
+    full_name: string;
   } | null;
   members_count: number;
 }
@@ -21,14 +21,14 @@ interface Team {
 interface FarmRole {
   id: string;
   role_code: string;
-  role_name_ar: string;
+  role_name_ar: string; // Keep this as is - it's for roles
   role_name_en: string;
   hierarchy_level: number;
 }
 
 interface StaffMember {
   id: string;
-  name_ar: string;
+  full_name: string;
   staff_code: string;
 }
 
@@ -56,7 +56,7 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
         .from('fc_farm_teams')
         .select(`
           *,
-          leader:platform_staff!team_leader_id(name_ar),
+          leader:platform_staff!team_leader_id(full_name),
           members:fc_team_members(count)
         `)
         .eq('farm_id', farmId)
@@ -83,7 +83,7 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
       // جلب الموظفين المتاحين
       const { data: staffData } = await supabase
         .from('platform_staff')
-        .select('id, name_ar, staff_code')
+        .select('id, full_name, staff_code')
         .eq('is_active', true)
         .limit(50);
 
@@ -232,7 +232,7 @@ export default function FarmTeamsManagement({ farmId }: { farmId: string }) {
                   </p>
                   {team.leader && (
                     <p className="text-sm text-emerald-600 mt-2">
-                      القائد: {team.leader.name_ar}
+                      القائد: {team.leader.full_name}
                     </p>
                   )}
                 </div>

@@ -10,7 +10,7 @@ interface Task {
   priority: string;
   scheduled_date: string;
   status: string;
-  assigned_to_staff: { name_ar: string } | null;
+  assigned_to_staff: { full_name: string } | null;
 }
 
 export default function DailyTasksView({ farmId }: { farmId: string }) {
@@ -31,7 +31,7 @@ export default function DailyTasksView({ farmId }: { farmId: string }) {
         .from('fc_daily_tasks')
         .select(`
           *,
-          assigned_to_staff:platform_staff(name_ar)
+          assigned_to_staff:platform_staff(full_name)
         `)
         .eq('farm_id', farmId)
         .order('scheduled_date', { ascending: false });
@@ -146,7 +146,7 @@ export default function DailyTasksView({ farmId }: { farmId: string }) {
                       {new Date(task.scheduled_date).toLocaleDateString('ar-SA')}
                     </span>
                     {task.assigned_to_staff && (
-                      <span>المسؤول: {task.assigned_to_staff.name_ar}</span>
+                      <span>المسؤول: {task.assigned_to_staff.full_name}</span>
                     )}
                   </div>
                 </div>

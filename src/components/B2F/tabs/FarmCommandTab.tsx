@@ -25,7 +25,7 @@ interface OperationalFarm {
   born_at: string;
   last_activity_at: string;
   manager: {
-    name_ar: string;
+    full_name: string;
   } | null;
   reference_farm: {
     name: string;
@@ -67,7 +67,7 @@ export default function FarmCommandTab() {
         .from('fc_operational_farms')
         .select(`
           *,
-          manager:platform_staff!farm_manager_id(name_ar),
+          manager:platform_staff!farm_manager_id(full_name),
           reference_farm:b2f_farms!reference_farm_id(name, location, city)
         `)
         .order('born_at', { ascending: false });
@@ -272,7 +272,7 @@ export default function FarmCommandTab() {
                   {farm.manager && (
                     <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
                       <Users className="w-4 h-4" />
-                      <span>المدير: {farm.manager.name_ar}</span>
+                      <span>المدير: {farm.manager.full_name}</span>
                     </div>
                   )}
 

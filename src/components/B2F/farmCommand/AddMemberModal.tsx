@@ -11,7 +11,7 @@ interface AddMemberModalProps {
 
 interface StaffMember {
   id: string;
-  name_ar: string;
+  full_name: string;
   staff_code: string;
 }
 
@@ -37,10 +37,10 @@ export default function AddMemberModal({ teamId, teamName, onClose, onSuccess }:
 
       const { data, error } = await supabase
         .from('platform_staff')
-        .select('id, name_ar, staff_code')
+        .select('id, full_name, staff_code')
         .eq('is_active', true)
         .not('id', 'in', `(${existingIds.join(',') || 'null'})`)
-        .order('name_ar');
+        .order('full_name');
 
       if (error) throw error;
       setAvailableStaff(data || []);
@@ -125,7 +125,7 @@ export default function AddMemberModal({ teamId, teamName, onClose, onSuccess }:
                 <option value="">اختر موظف</option>
                 {availableStaff.map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.name_ar} ({staff.staff_code})
+                    {staff.full_name} ({staff.staff_code})
                   </option>
                 ))}
               </select>

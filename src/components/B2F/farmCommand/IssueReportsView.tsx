@@ -10,7 +10,7 @@ interface IssueReport {
   severity: string;
   status: string;
   reported_at: string;
-  reported_by_staff: { name_ar: string } | null;
+  reported_by_staff: { full_name: string } | null;
 }
 
 export default function IssueReportsView({ farmId }: { farmId: string }) {
@@ -27,7 +27,7 @@ export default function IssueReportsView({ farmId }: { farmId: string }) {
         .from('fc_issue_reports')
         .select(`
           *,
-          reported_by_staff:platform_staff!reported_by(name_ar)
+          reported_by_staff:platform_staff!reported_by(full_name)
         `)
         .eq('farm_id', farmId)
         .order('reported_at', { ascending: false });
@@ -109,7 +109,7 @@ export default function IssueReportsView({ farmId }: { farmId: string }) {
                   <div className="text-sm text-gray-600">
                     <span>{report.issue_category}</span>
                     {report.reported_by_staff && (
-                      <span className="mr-3">• البلاغ من: {report.reported_by_staff.name_ar}</span>
+                      <span className="mr-3">• البلاغ من: {report.reported_by_staff.full_name}</span>
                     )}
                     <span className="mr-3">
                       • {new Date(report.reported_at).toLocaleString('ar-SA')}
