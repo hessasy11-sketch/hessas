@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MapPin,
@@ -9,19 +10,61 @@ import {
   ExternalLink,
   User,
   History,
-  Activity
+  Activity,
+  DollarSign,
+  TrendingDown,
+  AlertOctagon
 } from 'lucide-react';
 import { FarmRadarData } from '../../hooks/useFarmRadar';
 import FarmDecisionActionsMenu from './FarmDecisionActionsMenu';
+import { supabase } from '../../lib/supabase';
 
 interface FarmRadarCardProps {
   farm: FarmRadarData;
 }
 
+interface FinancialSummary {
+  last_30_days: {
+    expenses: number;
+    income: number;
+    net: number;
+  };
+  pending_approval: {
+    count: number;
+    amount: number;
+  };
+  alert: {
+    level: string;
+    message: string | null;
+  };
+}
+
 export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
   const navigate = useNavigate();
+  const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
+  const [loadingFinancial, setLoadingFinancial] = useState(true);
 
   const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
+
+  useEffect(() => {
+    loadFinancialSummary();
+  }, [farm.id]);
+
+  const loadFinancialSummary = async () => {
+    try {
+      setLoadingFinancial(true);
+      const { data, error } = await supabase.rpc('get_farm_financial_summary_for_radar', {
+        p_farm_id: farm.id
+      });
+
+      if (error) throw error;
+      setFinancialSummary(data);
+    } catch (error: any) {
+      console.error('Error loading financial summary:', error);
+    } finally {
+      setLoadingFinancial(false);
+    }
+  };
 
   const getTimeAgo = (dateString: string | null) => {
     if (!dateString) return 'لا يوجد نشاط';
@@ -84,6 +127,35 @@ export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
         return 'إنشاء مزرعة';
       default:
         return 'حدث';
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ar-SA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getAlertColor = (level: string) => {
+    switch (level) {
+      case 'critical':
+        return 'from-red-500 to-red-600';
+      case 'warning':
+        return 'from-amber-500 to-amber-600';
+      default:
+        return 'from-slate-500 to-slate-600';
+    }
+  };
+
+  const getAlertBorderColor = (level: string) => {
+    switch (level) {
+      case 'critical':
+        return 'border-red-400';
+      case 'warning':
+        return 'border-amber-400';
+      default:
+        return 'border-slate-300';
     }
   };
 
@@ -214,6 +286,61 @@ export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
           <Activity className="w-6 h-6 text-slate-400 mx-auto mb-1" />
           <p className="text-xs text-slate-500">لا توجد أحداث حتى الآن</p>
         </div>
+      )}
+
+      {/* Financial Summary */}
+      {!loadingFinancial && financialSummary && (
+        <>
+          {/* Alert Banner (if any) */}
+          {financialSummary.alert.level !== 'normal' && financialSummary.alert.message && (
+            <div
+              className={`mb-3 bg-gradient-to-r ${getAlertColor(financialSummary.alert.level)} rounded-lg p-3 border-2 ${getAlertBorderColor(financialSummary.alert.level)}`}
+            >
+              <div className="flex items-start gap-2">
+                <AlertOctagon className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white">
+                    {financialSummary.alert.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Financial Stats */}
+          <div className="mb-3 bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-slate-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-slate-600" />
+              <span className="text-xs font-bold text-slate-700">
+                ملخص مالي (آخر 30 يوم)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white rounded-lg p-2 border border-red-200">
+                <div className="flex items-center gap-1 mb-1">
+                  <TrendingDown className="w-3 h-3 text-red-500" />
+                  <span className="text-xs text-slate-600">مصروفات</span>
+                </div>
+                <p className="text-sm font-bold text-red-600">
+                  {formatCurrency(financialSummary.last_30_days.expenses)} ر.س
+                </p>
+              </div>
+
+              {financialSummary.pending_approval.count > 0 && (
+                <div className="bg-white rounded-lg p-2 border border-amber-200">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Clock className="w-3 h-3 text-amber-500" />
+                    <span className="text-xs text-slate-600">معلق</span>
+                  </div>
+                  <p className="text-xs font-bold text-amber-600">
+                    {financialSummary.pending_approval.count} ({formatCurrency(financialSummary.pending_approval.amount)} ر.س)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Action Buttons */}
