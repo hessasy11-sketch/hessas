@@ -41,7 +41,32 @@ export default function GatewayGuard({ children }: Props) {
       return;
     }
 
-    const savedSession = localStorage.getItem('staff_session');
+    // Try staff_session first
+    let savedSession = localStorage.getItem('staff_session');
+
+    // Fallback to platform_staff_session if staff_session doesn't exist
+    if (!savedSession) {
+      const platformSession = localStorage.getItem('platform_staff_session');
+      if (platformSession) {
+        try {
+          const parsed = JSON.parse(platformSession);
+          // Convert platform_staff_session to staff_session format
+          const converted = {
+            staffId: parsed.staff_id,
+            staffName: parsed.full_name,
+            role: parsed.role,
+            department: parsed.department,
+            loginAt: new Date(parsed.created_at).toISOString()
+          };
+          localStorage.setItem('staff_session', JSON.stringify(converted));
+          savedSession = JSON.stringify(converted);
+          console.log('✅ Converted platform_staff_session to staff_session');
+        } catch (err) {
+          console.error('Error converting session:', err);
+        }
+      }
+    }
+
     if (!savedSession) {
       console.warn('🚫 NO SESSION - Redirecting to gateway');
       navigate('/admin/gateway?error=no_session', { replace: true });
@@ -51,8 +76,8 @@ export default function GatewayGuard({ children }: Props) {
     try {
       const session: StaffSession = JSON.parse(savedSession);
 
-      if (session.role === 'general_manager') {
-        console.log('✅ GM BYPASS - Full access granted');
+      if (session.role === 'general_manager' || session.role === 'super_admin') {
+        console.log('✅ GM/SUPER_ADMIN BYPASS - Full access granted');
         setChecking(false);
         return;
       }
@@ -66,7 +91,8 @@ export default function GatewayGuard({ children }: Props) {
           reason: 'Route not allowed for this role'
         });
         setError('لا تملك صلاحية للوصول إلى هذه الصفحة');
-        navigate('/admin/gateway?error=access_denied', { replace: true });
+        // Don't redirect, just show error
+        setChecking(false);
         return;
       }
 

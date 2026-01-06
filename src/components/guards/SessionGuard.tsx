@@ -21,7 +21,31 @@ export default function SessionGuard({ children }: SessionGuardProps) {
       console.log('🔐 SessionGuard: Checking session for:', location.pathname);
 
       // تحقق من جلسة staff_session الجديدة أولاً
-      const staffSessionData = localStorage.getItem('staff_session');
+      let staffSessionData = localStorage.getItem('staff_session');
+
+      // Fallback to platform_staff_session if staff_session doesn't exist
+      if (!staffSessionData) {
+        const platformSession = localStorage.getItem('platform_staff_session');
+        if (platformSession) {
+          try {
+            const parsed = JSON.parse(platformSession);
+            // Convert platform_staff_session to staff_session format
+            const converted = {
+              staffId: parsed.staff_id,
+              staffName: parsed.full_name,
+              role: parsed.role,
+              department: parsed.department,
+              loginAt: new Date(parsed.created_at).toISOString()
+            };
+            localStorage.setItem('staff_session', JSON.stringify(converted));
+            staffSessionData = JSON.stringify(converted);
+            console.log('✅ SessionGuard: Converted platform_staff_session to staff_session');
+          } catch (err) {
+            console.error('Error converting session:', err);
+          }
+        }
+      }
+
       if (staffSessionData) {
         try {
           const staffSession = JSON.parse(staffSessionData);
@@ -30,6 +54,10 @@ export default function SessionGuard({ children }: SessionGuardProps) {
             console.log('   - Staff ID:', staffSession.staffId);
             console.log('   - Role:', staffSession.role);
             console.log('   - Department:', staffSession.department);
+
+            // Update activity timestamp
+            adminSessionManager.refreshActivity();
+
             setHasSession(true);
             setLoading(false);
             return;
@@ -69,6 +97,7 @@ export default function SessionGuard({ children }: SessionGuardProps) {
       setLoading(false);
     } catch (error) {
       console.error('❌ SessionGuard: Error checking session:', error);
+      // Don't clear session on error, just deny access
       setHasSession(false);
       setLoading(false);
     }
