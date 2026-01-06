@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import FarmTeamManagement from './FarmTeamManagement';
+import FarmPositionsManagement from './FarmPositionsManagement';
 import FarmTasksManagement from './FarmTasksManagement';
 import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
 import EquipmentView from '../B2F/farmCommand/EquipmentView';
@@ -551,7 +552,16 @@ export default function FarmDetailPage() {
             )}
 
             {activeTab === 'team' && (
-              <FarmTeamManagement farmId={farmId!} farmName={farm.name} />
+              <div className="space-y-8">
+                {/* Farm Positions Management */}
+                <FarmPositionsManagement farmId={farmId!} farmName={farm.name} />
+
+                {/* Divider */}
+                <div className="border-t-2 border-gray-200"></div>
+
+                {/* Legacy Team Management */}
+                <FarmTeamManagement farmId={farmId!} farmName={farm.name} />
+              </div>
             )}
 
             {activeTab === 'tasks' && (
