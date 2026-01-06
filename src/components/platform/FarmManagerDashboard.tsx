@@ -98,15 +98,28 @@ export default function FarmManagerDashboard() {
       setLoading(true);
       setError(null);
 
+      // تنظيف الجلسات القديمة
+      const oldSession = localStorage.getItem('simplified_session');
+      if (oldSession) {
+        localStorage.removeItem('simplified_session');
+      }
+
       const savedSession = localStorage.getItem('staff_session');
       if (!savedSession) {
-        throw new Error('لا توجد جلسة نشطة');
+        // إذا لم توجد جلسة، توجيه للدخول
+        setError('الرجاء تسجيل الدخول أولاً');
+        setTimeout(() => navigate('/login-simplified'), 2000);
+        return;
       }
 
       const session = JSON.parse(savedSession);
       setManagerName(session.staffName || 'مدير المزرعة');
 
       const staffId = session.staffId;
+
+      if (!staffId) {
+        throw new Error('معرف الموظف غير موجود في الجلسة');
+      }
 
       // Get farm manager's farm using farm_team table
       const { data: farmData, error: farmError } = await supabase

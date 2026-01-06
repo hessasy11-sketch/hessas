@@ -25,6 +25,10 @@ export default function SimplifiedLogin() {
     setLoading(true);
 
     try {
+      // تنظيف الجلسات القديمة
+      localStorage.removeItem('simplified_session');
+      localStorage.removeItem('staff_session');
+
       // استدعاء دالة تسجيل الدخول
       const { data, error: loginError } = await supabase
         .rpc('simplified_login', {
