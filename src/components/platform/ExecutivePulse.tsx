@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Activity, AlertTriangle, DollarSign, Calendar, Clock, TrendingUp, CheckCircle, XCircle, Radar, Sprout, Gavel, ArrowRight } from 'lucide-react';
 import ExecutiveAlertsPanel from './ExecutiveAlertsPanel';
 import QuickActionButtons from './QuickActionButtons';
+import BackToGatewayButton from './BackToGatewayButton';
 
 export default function ExecutivePulse() {
   const { data, loading, error } = useExecutivePulse();
@@ -84,6 +85,8 @@ export default function ExecutivePulse() {
 
   return (
     <div className="space-y-6">
+      <BackToGatewayButton />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
         <div className="flex items-center justify-between">

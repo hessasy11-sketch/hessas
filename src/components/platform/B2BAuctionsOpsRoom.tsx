@@ -26,6 +26,7 @@ import { useMasterActions } from '../../hooks/useMasterActions';
 import { useVisitsTracking } from '../../hooks/useVisitsTracking';
 import AuthorityPanel from './AuthorityPanel';
 import DecisionRejectModal from './DecisionRejectModal';
+import BackToGatewayButton from './BackToGatewayButton';
 
 interface Pulse {
   visits_today: number;
@@ -202,6 +203,8 @@ export default function B2BAuctionsOpsRoom() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50" dir="rtl">
+      <BackToGatewayButton />
+
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700 shadow-xl">
         <div className="max-w-[1600px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">

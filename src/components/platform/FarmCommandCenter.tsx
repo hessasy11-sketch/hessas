@@ -4,6 +4,7 @@ import { useFarmCommand } from '../../hooks/useFarmCommand';
 import FarmCommandCard from './FarmCommandCard';
 import ApprovalRequestsPanel from './ApprovalRequestsPanel';
 import SmartAlertsPanel from './SmartAlertsPanel';
+import BackToGatewayButton from './BackToGatewayButton';
 
 type View = 'overview' | 'approvals' | 'alerts';
 
@@ -30,6 +31,8 @@ export default function FarmCommandCenter() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
+      <BackToGatewayButton />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">

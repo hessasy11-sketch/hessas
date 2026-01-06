@@ -64,12 +64,17 @@ export default function CrownSmartGateway() {
     setUserId(staffId);
     setShowLogin(false);
 
-    // إذا لم يكن GM، اذهب مباشرة إلى my-work
-    if (role !== 'general_manager') {
-      setTimeout(() => {
+    console.log('🎯 SMART LANDING - Role:', role);
+
+    setTimeout(() => {
+      if (role === 'general_manager') {
+        console.log('👑 GM detected - Navigating to Command Room');
+        navigate('/admin/operations-room/global');
+      } else {
+        console.log('👤 Staff detected - Navigating to My Work');
         navigate('/admin/my-work');
-      }, 500);
-    }
+      }
+    }, 500);
   };
 
   const handleLogout = () => {

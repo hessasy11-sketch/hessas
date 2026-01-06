@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Package } from 'lucide-react';
+import BackToGatewayButton from './BackToGatewayButton';
 
 export default function MarketingSection() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+      <BackToGatewayButton />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <button
           onClick={() => navigate('/hq')}

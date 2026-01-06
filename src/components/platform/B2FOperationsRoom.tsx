@@ -17,6 +17,7 @@ import NewBornFarmsAlert from './NewBornFarmsAlert';
 import ExpenseApprovalsView from './ExpenseApprovalsView';
 import FarmsComparisonPanel from './FarmsComparisonPanel';
 import ClusterMetricsPanel from './ClusterMetricsPanel';
+import BackToGatewayButton from './BackToGatewayButton';
 
 type Tab = 'radar' | 'clusters' | 'expenses';
 
@@ -32,6 +33,8 @@ export default function B2FOperationsRoom() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-slate-50" dir="rtl">
+      <BackToGatewayButton />
+
       <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 border-b border-emerald-700 shadow-xl">
         <div className="max-w-[1600px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
