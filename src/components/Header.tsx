@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Globe, Leaf } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import AdminLoginModal from './AdminLoginModal';
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -8,14 +8,14 @@ interface HeaderProps {
 
 export function Header({ onNavigate }: HeaderProps) {
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
-  const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
   };
 
   const handleLoginClick = () => {
-    navigate('/login');
+    setShowLoginModal(true);
   };
 
   return (
@@ -75,6 +75,11 @@ export function Header({ onNavigate }: HeaderProps) {
           </div>
         </div>
       </div>
+
+      <AdminLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </header>
   );
 }
