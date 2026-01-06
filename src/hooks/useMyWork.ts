@@ -9,6 +9,11 @@ interface Task {
   priority: string;
   due_date: string | null;
   created_at: string;
+  source: 'staff' | 'farm';
+  farm_id?: string;
+  farm_name?: string;
+  requires_proof?: boolean;
+  proof_url?: string | null;
 }
 
 interface ApprovalItem {
@@ -95,16 +100,71 @@ export function useMyWork(staffId?: string) {
   const fetchMyTasks = async (): Promise<Task[]> => {
     if (!staffId) return [];
 
-    const { data, error } = await supabase
+    const allTasks: Task[] = [];
+
+    // جلب من staff_tasks
+    const { data: staffTasksData, error: staffError } = await supabase
       .from('staff_tasks')
       .select('*')
       .eq('assigned_to', staffId)
       .in('status', ['pending', 'in_progress', 'under_review'])
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
+    if (staffError) {
+      console.error('Error fetching staff tasks:', staffError);
+    } else if (staffTasksData) {
+      allTasks.push(
+        ...staffTasksData.map((task: any) => ({
+          id: task.id,
+          title: task.title || 'مهمة',
+          description: task.description,
+          status: task.status,
+          priority: task.priority || 'medium',
+          due_date: task.due_date,
+          created_at: task.created_at,
+          source: 'staff' as const,
+          requires_proof: task.requires_proof || false,
+          proof_url: task.proof_url,
+        }))
+      );
+    }
+
+    // جلب من farm_tasks
+    const { data: farmTasksData, error: farmError } = await supabase
+      .from('farm_tasks')
+      .select(`
+        *,
+        farm:b2f_farms!inner(id, name)
+      `)
+      .eq('assigned_to_user_id', staffId)
+      .in('status', ['pending', 'in_progress', 'awaiting_approval'])
+      .order('created_at', { ascending: false });
+
+    if (farmError) {
+      console.error('Error fetching farm tasks:', farmError);
+    } else if (farmTasksData) {
+      allTasks.push(
+        ...farmTasksData.map((task: any) => ({
+          id: task.id,
+          title: task.task_title || 'مهمة مزرعة',
+          description: task.task_description,
+          status: task.status,
+          priority: task.priority || 'medium',
+          due_date: task.due_date,
+          created_at: task.created_at,
+          source: 'farm' as const,
+          farm_id: task.farm_id,
+          farm_name: task.farm?.name,
+          requires_proof: task.requires_proof || false,
+          proof_url: task.proof_url,
+        }))
+      );
+    }
+
+    // ترتيب حسب التاريخ
+    allTasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return allTasks.slice(0, 20);
   };
 
   const fetchMyApprovals = async (): Promise<ApprovalItem[]> => {
@@ -165,21 +225,22 @@ export function useMyWork(staffId?: string) {
     if (!staffId) return [];
 
     const alerts: Alert[] = [];
+    const now = new Date();
 
     try {
-      const { data: tasks } = await supabase
+      // تحقق من staff_tasks
+      const { data: staffTasks } = await supabase
         .from('staff_tasks')
         .select('*')
         .eq('assigned_to', staffId)
         .not('due_date', 'is', null);
 
-      if (tasks) {
-        const now = new Date();
-        tasks.forEach((task: any) => {
+      if (staffTasks) {
+        staffTasks.forEach((task: any) => {
           const dueDate = new Date(task.due_date);
           if (dueDate < now && task.status !== 'completed') {
             alerts.push({
-              id: `overdue-${task.id}`,
+              id: `overdue-staff-${task.id}`,
               type: 'overdue',
               message: `مهمة متأخرة: ${task.title}`,
               task_id: task.id,
@@ -190,7 +251,7 @@ export function useMyWork(staffId?: string) {
             task.status !== 'completed'
           ) {
             alerts.push({
-              id: `urgent-${task.id}`,
+              id: `urgent-staff-${task.id}`,
               type: 'urgent',
               message: `مهمة عاجلة: ${task.title} (تنتهي خلال 24 ساعة)`,
               task_id: task.id,
@@ -200,19 +261,75 @@ export function useMyWork(staffId?: string) {
         });
       }
 
-      const { data: proofsData } = await supabase
+      // تحقق من farm_tasks
+      const { data: farmTasks } = await supabase
+        .from('farm_tasks')
+        .select('*')
+        .eq('assigned_to_user_id', staffId)
+        .not('due_date', 'is', null);
+
+      if (farmTasks) {
+        farmTasks.forEach((task: any) => {
+          const dueDate = new Date(task.due_date);
+          if (dueDate < now && task.status !== 'completed') {
+            alerts.push({
+              id: `overdue-farm-${task.id}`,
+              type: 'overdue',
+              message: `مهمة مزرعة متأخرة: ${task.task_title}`,
+              task_id: task.id,
+              created_at: task.due_date,
+            });
+          } else if (
+            dueDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000 &&
+            task.status !== 'completed'
+          ) {
+            alerts.push({
+              id: `urgent-farm-${task.id}`,
+              type: 'urgent',
+              message: `مهمة مزرعة عاجلة: ${task.task_title} (تنتهي خلال 24 ساعة)`,
+              task_id: task.id,
+              created_at: task.due_date,
+            });
+          }
+        });
+      }
+
+      // تحقق من الإثباتات الناقصة - staff_tasks
+      const { data: staffProofs } = await supabase
         .from('staff_tasks')
         .select('*')
         .eq('assigned_to', staffId)
-        .eq('status', 'completed')
+        .eq('requires_proof', true)
+        .in('status', ['completed', 'under_review'])
         .is('proof_url', null);
 
-      if (proofsData && proofsData.length > 0) {
-        proofsData.forEach((task: any) => {
+      if (staffProofs && staffProofs.length > 0) {
+        staffProofs.forEach((task: any) => {
           alerts.push({
-            id: `proof-${task.id}`,
+            id: `proof-staff-${task.id}`,
             type: 'missing_proof',
             message: `إثبات ناقص: ${task.title}`,
+            task_id: task.id,
+            created_at: task.created_at,
+          });
+        });
+      }
+
+      // تحقق من الإثباتات الناقصة - farm_tasks
+      const { data: farmProofs } = await supabase
+        .from('farm_tasks')
+        .select('*')
+        .eq('assigned_to_user_id', staffId)
+        .eq('requires_proof', true)
+        .in('status', ['completed', 'awaiting_approval'])
+        .is('proof_url', null);
+
+      if (farmProofs && farmProofs.length > 0) {
+        farmProofs.forEach((task: any) => {
+          alerts.push({
+            id: `proof-farm-${task.id}`,
+            type: 'missing_proof',
+            message: `إثبات مزرعة ناقص: ${task.task_title}`,
             task_id: task.id,
             created_at: task.created_at,
           });
@@ -222,7 +339,13 @@ export function useMyWork(staffId?: string) {
       console.error('Error fetching alerts:', err);
     }
 
-    return alerts;
+    return alerts.sort((a, b) => {
+      if (a.type === 'overdue' && b.type !== 'overdue') return -1;
+      if (a.type !== 'overdue' && b.type === 'overdue') return 1;
+      if (a.type === 'urgent' && b.type !== 'urgent' && b.type !== 'overdue') return -1;
+      if (a.type !== 'urgent' && b.type === 'urgent' && a.type !== 'overdue') return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   };
 
   const refresh = () => {
