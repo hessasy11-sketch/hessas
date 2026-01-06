@@ -108,9 +108,9 @@ export default function FarmManagerDashboard() {
 
       const staffId = session.staffId;
 
-      // Get farm manager's farm
+      // Get farm manager's farm using farm_team table
       const { data: farmData, error: farmError } = await supabase
-        .from('farm_team_members')
+        .from('farm_team')
         .select(`
           farm_id,
           b2f_farms!inner (
@@ -121,8 +121,9 @@ export default function FarmManagerDashboard() {
             investment_type
           )
         `)
-        .eq('staff_id', staffId)
+        .eq('user_id', staffId)
         .eq('role', 'farm_manager')
+        .eq('is_active', true)
         .single();
 
       if (farmError) throw farmError;

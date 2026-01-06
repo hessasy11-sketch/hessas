@@ -47,7 +47,7 @@ export default function SimplifiedLogin() {
         loginAt: new Date().toISOString(),
       };
 
-      localStorage.setItem('simplified_session', JSON.stringify(session));
+      localStorage.setItem('staff_session', JSON.stringify(session));
 
       // التوجيه بناءً على الدور
       if (loginData.role === 'farms_manager') {
