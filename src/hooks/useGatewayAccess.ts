@@ -14,8 +14,19 @@ export interface GatewayCard {
   gradient_to?: string;
   route_path: string;
   display_order: number;
-  access_level: string;
+  allowed_roles?: string[];
+  user_role?: string;
+  access_reason?: string;
   is_gm_access: boolean;
+}
+
+export interface GatewayMappingRow {
+  card_key: string;
+  title_ar: string;
+  route_path: string;
+  allowed_roles: string[];
+  roles_count: number;
+  notes: string;
 }
 
 export function useGatewayAccess(userId?: string) {
@@ -110,6 +121,19 @@ export function useGatewayAccess(userId?: string) {
     }
   };
 
+  const getGatewayMapping = async (): Promise<GatewayMappingRow[]> => {
+    try {
+      const { data, error: err } = await supabase.rpc('get_gateway_mapping_table');
+
+      if (err) throw err;
+
+      return data || [];
+    } catch (err: any) {
+      console.error('Error loading gateway mapping:', err);
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       loadUserCards(userId);
@@ -139,6 +163,7 @@ export function useGatewayAccess(userId?: string) {
     refresh: userId ? () => loadUserCards(userId) : () => {},
     grantAccess,
     revokeAccess,
-    checkAccess
+    checkAccess,
+    getGatewayMapping
   };
 }
