@@ -14,6 +14,7 @@ import {
   Link2
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { adminSessionManager } from '../../utils/adminSessionManager';
 
 interface PendingExpense {
   id: string;
@@ -73,10 +74,17 @@ export default function ExpenseApprovalsView() {
 
     setActionLoading(expenseId);
     try {
+      // Get staff info from session
+      const session = adminSessionManager.getSession();
+      if (!session?.staff_id) {
+        throw new Error('الجلسة غير صالحة. الرجاء تسجيل الدخول مرة أخرى');
+      }
+
+      // Get staff data from database
       const { data: staffData } = await supabase
         .from('platform_staff')
         .select('id, full_name')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', session.staff_id)
         .maybeSingle();
 
       if (!staffData) {
@@ -114,10 +122,17 @@ export default function ExpenseApprovalsView() {
 
     setActionLoading(expenseId);
     try {
+      // Get staff info from session
+      const session = adminSessionManager.getSession();
+      if (!session?.staff_id) {
+        throw new Error('الجلسة غير صالحة. الرجاء تسجيل الدخول مرة أخرى');
+      }
+
+      // Get staff data from database
       const { data: staffData } = await supabase
         .from('platform_staff')
         .select('id, full_name')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', session.staff_id)
         .maybeSingle();
 
       if (!staffData) {
