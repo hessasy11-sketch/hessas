@@ -26,6 +26,7 @@ import FarmTasksManagement from './FarmTasksManagement';
 import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
 import EquipmentView from '../B2F/farmCommand/EquipmentView';
 import FinanceCalculatorView from '../B2F/farmCommand/FinanceCalculatorView';
+import ActivityTimelineTab from './ActivityTimelineTab';
 
 interface FarmDetail {
   id: string;
@@ -50,7 +51,7 @@ interface FarmStats {
   monthly_net: number;
 }
 
-type Tab = 'overview' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculator';
+type Tab = 'overview' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculator' | 'timeline';
 
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
@@ -356,6 +357,17 @@ export default function FarmDetailPage() {
                 <DollarSign className="w-5 h-5" />
                 الحاسبة
               </button>
+              <button
+                onClick={() => setActiveTab('timeline')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'timeline'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <Clock className="w-5 h-5" />
+                السجل الزمني
+              </button>
             </div>
           </div>
 
@@ -501,6 +513,10 @@ export default function FarmDetailPage() {
 
             {activeTab === 'calculator' && (
               <FinanceCalculatorView farmId={farmId!} />
+            )}
+
+            {activeTab === 'timeline' && (
+              <ActivityTimelineTab farmId={farmId!} />
             )}
           </div>
         </div>
