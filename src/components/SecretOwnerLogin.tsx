@@ -71,21 +71,28 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
       style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.97) 0%, rgba(5, 150, 105, 0.97) 100%)',
-        backdropFilter: 'blur(20px)',
+        background: 'linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%)',
       }}
-      onClick={handleClose}
     >
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '40px 40px',
+        }} />
+      </div>
+
       <div
-        className="relative w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl mx-4"
+        style={{
+          animation: 'fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
       >
         <div
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden"
+          className="bg-white rounded-[2rem] shadow-2xl overflow-hidden"
           style={{
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 100px rgba(16, 185, 129, 0.5)',
+            boxShadow: '0 30px 90px rgba(0, 0, 0, 0.4), 0 0 120px rgba(16, 185, 129, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
           }}
         >
           <div
@@ -102,29 +109,30 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
             </div>
 
             <div className="relative">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4">
-                <Crown className="w-10 h-10 text-yellow-300" strokeWidth={2.5} />
+              <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm mb-6 shadow-lg">
+                <Crown className="w-16 h-16 text-yellow-300" strokeWidth={2.5} />
               </div>
 
-              <h2 className="text-2xl font-bold text-white mb-2" style={{
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)',
+              <h2 className="text-4xl font-bold text-white mb-3" style={{
+                textShadow: '3px 3px 6px rgba(0, 0, 0, 0.4)',
+                letterSpacing: '0.5px',
               }}>
                 دخول خاص
               </h2>
 
-              <p className="text-emerald-50 text-sm">
+              <p className="text-emerald-50 text-lg font-medium">
                 الوصول الحصري لإدارة استثمار المزارع
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="p-10 space-y-8">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2" dir="rtl">
+              <label className="block text-base font-bold text-gray-700 mb-3" dir="rtl">
                 رقم الجوال
               </label>
               <div className="relative">
-                <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                <Phone className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-600" />
                 <input
                   type="tel"
                   value={phone}
@@ -133,7 +141,7 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
                     setError('');
                   }}
                   placeholder="0544433244"
-                  className="w-full pr-12 pl-4 py-4 border-2 border-gray-200 rounded-xl text-lg focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none text-center font-medium"
+                  className="w-full pr-14 pl-6 py-5 border-2 border-gray-200 rounded-2xl text-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none text-center font-semibold"
                   dir="ltr"
                   required
                 />
@@ -141,11 +149,11 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2" dir="rtl">
+              <label className="block text-base font-bold text-gray-700 mb-3" dir="rtl">
                 الرقم السري
               </label>
               <div className="relative">
-                <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                <Lock className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-600" />
                 <input
                   type="password"
                   value={pin}
@@ -155,7 +163,7 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
                   }}
                   placeholder="••••"
                   maxLength={4}
-                  className="w-full pr-12 pl-4 py-4 border-2 border-gray-200 rounded-xl text-2xl tracking-widest focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none text-center font-bold"
+                  className="w-full pr-14 pl-6 py-5 border-2 border-gray-200 rounded-2xl text-3xl tracking-widest focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none text-center font-bold"
                   dir="ltr"
                   required
                 />
@@ -163,28 +171,28 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <p className="text-sm font-bold text-red-700" dir="rtl">{error}</p>
+              <div className="flex items-center gap-3 p-5 bg-red-50 border-2 border-red-200 rounded-2xl">
+                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+                <p className="text-base font-bold text-red-700" dir="rtl">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 rounded-xl font-bold text-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-5 rounded-2xl font-bold text-xl text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 background: isLoading
                   ? 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)'
                   : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 boxShadow: isLoading
                   ? 'none'
-                  : '0 6px 20px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  : '0 8px 24px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
               }}
             >
               {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin" />
                   جاري التحقق...
                 </span>
               ) : (
@@ -195,17 +203,30 @@ export default function SecretOwnerLogin({ isOpen, onClose }: SecretOwnerLoginPr
             <button
               type="button"
               onClick={handleClose}
-              className="w-full py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-all"
+              className="w-full py-4 rounded-2xl font-semibold text-base text-gray-600 hover:bg-gray-100 transition-all"
             >
               إلغاء
             </button>
           </form>
         </div>
 
-        <p className="text-center text-white/70 text-xs mt-4" dir="rtl">
+        <p className="text-center text-white/80 text-sm mt-6 font-medium" dir="rtl">
           هذا المدخل مخصص للإدارة التنفيذية فقط
         </p>
       </div>
+
+      <style>{`
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
