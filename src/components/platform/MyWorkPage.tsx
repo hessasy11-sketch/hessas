@@ -336,7 +336,8 @@ export default function MyWorkPage() {
                 filteredTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all"
+                    className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => navigate(`/admin/tasks/${task.source}/${task.id}`)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -379,7 +380,10 @@ export default function MyWorkPage() {
                       <div className="flex gap-2">
                         {(task.status === 'pending') && (
                           <button
-                            onClick={() => handleUpdateTaskStatus(task.id, task.source, 'in_progress')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTaskStatus(task.id, task.source, 'in_progress');
+                            }}
                             disabled={updatingTask === task.id}
                             className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                           >
@@ -389,7 +393,10 @@ export default function MyWorkPage() {
                         )}
                         {(task.status === 'in_progress') && (
                           <button
-                            onClick={() => handleUpdateTaskStatus(task.id, task.source, task.source === 'farm' ? 'awaiting_approval' : 'under_review')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateTaskStatus(task.id, task.source, task.source === 'farm' ? 'awaiting_approval' : 'under_review');
+                            }}
                             disabled={updatingTask === task.id}
                             className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                           >

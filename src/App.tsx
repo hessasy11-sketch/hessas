@@ -50,6 +50,7 @@ import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
 import MyWorkPage from './components/platform/MyWorkPage';
+import TaskDetailsPage from './components/platform/TaskDetailsPage';
 import GMControlPanel from './components/platform/GMControlPanel';
 import StaffManagementPanel from './components/platform/StaffManagementPanel';
 import ViewAsBanner from './components/platform/ViewAsBanner';
@@ -511,6 +512,18 @@ function App() {
             <GatewayGuard>
             <SessionGuard>
               <MyWorkPage />
+            </SessionGuard>
+          </GatewayGuard>
+        }
+      />
+
+      {/* Task Details Page - Unified for staff and farm tasks */}
+      <Route
+        path="/admin/tasks/:taskType/:taskId"
+        element={
+          <GatewayGuard>
+            <SessionGuard>
+              <TaskDetailsPage />
             </SessionGuard>
           </GatewayGuard>
         }
