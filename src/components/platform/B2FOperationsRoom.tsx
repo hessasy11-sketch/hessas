@@ -14,6 +14,7 @@ import FarmRadarCard from './FarmRadarCard';
 import CriticalAlertsPanel from './CriticalAlertsPanel';
 import NewBornFarmsAlert from './NewBornFarmsAlert';
 import ExpenseApprovalsView from './ExpenseApprovalsView';
+import FarmsComparisonPanel from './FarmsComparisonPanel';
 
 type Tab = 'radar' | 'expenses';
 
@@ -98,6 +99,10 @@ export default function B2FOperationsRoom() {
         {activeTab === 'radar' ? (
           <>
             <NewBornFarmsAlert />
+
+            <div className="mb-6">
+              <FarmsComparisonPanel />
+            </div>
 
             <CriticalAlertsPanel
               onFilterChange={setFilterFarmIds}
