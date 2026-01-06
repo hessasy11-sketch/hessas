@@ -83,11 +83,19 @@ export function useDecisionQueue(type: 'b2f' | 'b2b') {
     try {
       const functionName = type === 'b2f' ? 'reject_b2f_decision' : 'reject_b2b_decision';
 
-      const { data, error: rpcError } = await supabase.rpc(functionName, {
-        p_decision_id: decisionId,
-        p_rejected_by: staffId,
-        p_reason: reason
-      });
+      const params = type === 'b2f'
+        ? {
+            p_decision_id: decisionId,
+            p_rejected_by: staffId,
+            p_reason: reason
+          }
+        : {
+            p_decision_id: decisionId,
+            p_rejected_by: staffId,
+            p_reason: reason
+          };
+
+      const { data, error: rpcError } = await supabase.rpc(functionName, params);
 
       if (rpcError) {
         console.error('Error rejecting decision:', rpcError);
