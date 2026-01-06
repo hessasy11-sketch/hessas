@@ -1,31 +1,44 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface FarmCommandStats {
-  total_farms: number;
+interface FarmCommandPulse {
   active_farms: number;
-  suspended_farms: number;
-  pending_approvals: number;
-  critical_alerts: number;
+  at_risk_farms: number;
+  pending_decisions: number;
+  high_expenses_today: number;
 }
 
-interface FarmWithStats {
+interface FarmHealthCategory {
   id: string;
   name: string;
   location: string;
-  city: string;
+  created_at: string;
+  overdue_count?: number;
+}
+
+interface FarmHealthCategories {
+  newly_born: FarmHealthCategory[];
+  no_manager: FarmHealthCategory[];
+  at_risk: FarmHealthCategory[];
+  healthy: FarmHealthCategory[];
+}
+
+interface FarmCommandListItem {
+  farm_id: string;
+  farm_name: string;
+  farm_location: string;
   operational_status: string;
-  suspended_at: string | null;
   manager_name: string | null;
-  readiness_score: number;
-  teams_count: number;
-  open_issues: number;
-  monthly_net: number;
+  last_activity: string | null;
+  pending_tasks_count: number;
+  overdue_tasks_count: number;
+  bookings_enabled: boolean;
 }
 
 export function useFarmCommand() {
-  const [stats, setStats] = useState<FarmCommandStats | null>(null);
-  const [farms, setFarms] = useState<FarmWithStats[]>([]);
+  const [pulse, setPulse] = useState<FarmCommandPulse | null>(null);
+  const [healthCategories, setHealthCategories] = useState<FarmHealthCategories | null>(null);
+  const [farmsList, setFarmsList] = useState<FarmCommandListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,127 +51,149 @@ export function useFarmCommand() {
       setLoading(true);
       setError(null);
 
-      const [statsResult, farmsResult] = await Promise.all([
-        supabase.rpc('get_farm_command_stats'),
-        loadFarmsWithStats()
+      const [pulseResult, categoriesResult, listResult] = await Promise.all([
+        supabase.rpc('get_farm_command_pulse'),
+        supabase.rpc('get_farms_by_health_category'),
+        supabase.rpc('get_farms_command_list', { p_limit: 10 })
       ]);
 
-      if (statsResult.error) throw statsResult.error;
-      if (farmsResult.error) throw farmsResult.error;
+      if (pulseResult.error) throw pulseResult.error;
+      if (categoriesResult.error) throw categoriesResult.error;
+      if (listResult.error) throw listResult.error;
 
-      setStats(statsResult.data);
-      setFarms(farmsResult.data || []);
+      setPulse(pulseResult.data);
+      setHealthCategories(categoriesResult.data);
+      setFarmsList(listResult.data || []);
     } catch (err: any) {
       console.error('Error loading farm command data:', err);
-      setError(err.message);
+      setError(err.message || 'حدث خطأ في تحميل البيانات');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFarmsWithStats = async () => {
-    const { data: farms, error } = await supabase
-      .from('b2f_farms')
-      .select('*')
-      .order('name');
-
-    if (error) return { error, data: null };
-
-    const farmsWithStats = await Promise.all(
-      (farms || []).map(async (farm) => {
-        const [
-          readinessResult,
-          teamsResult,
-          issuesResult,
-          financialResult
-        ] = await Promise.all([
-          supabase.rpc('calculate_farm_readiness', { p_farm_id: farm.id }),
-          supabase
-            .from('fc_farm_teams')
-            .select('id', { count: 'exact' })
-            .eq('farm_id', farm.id)
-            .eq('is_active', true),
-          supabase
-            .from('fc_issue_reports')
-            .select('id', { count: 'exact' })
-            .eq('farm_id', farm.id)
-            .in('status', ['reported', 'acknowledged', 'in_progress']),
-          supabase
-            .from('fc_financial_ledger')
-            .select('entry_type, amount')
-            .eq('farm_id', farm.id)
-            .gte('transaction_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-        ]);
-
-        const readiness_score = readinessResult.data || 0;
-        const teams_count = teamsResult.count || 0;
-        const open_issues = issuesResult.count || 0;
-
-        let monthly_net = 0;
-        if (financialResult.data) {
-          const revenue = financialResult.data
-            .filter((r: any) => r.entry_type === 'revenue')
-            .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-          const expenses = financialResult.data
-            .filter((r: any) => r.entry_type === 'expense')
-            .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-          monthly_net = revenue - expenses;
-        }
-
-        const managerResult = await supabase
-          .from('fc_operational_farms')
-          .select('manager:platform_staff!farm_manager_id(user:profiles!user_id(full_name))')
-          .eq('reference_farm_id', farm.id)
-          .maybeSingle();
-
-        return {
-          id: farm.id,
-          name: farm.name,
-          location: farm.location || '',
-          city: farm.city || '',
-          operational_status: farm.operational_status || 'setup',
-          suspended_at: farm.suspended_at,
-          manager_name: managerResult.data?.manager?.user?.full_name || null,
-          readiness_score,
-          teams_count,
-          open_issues,
-          monthly_net
-        };
-      })
-    );
-
-    return { data: farmsWithStats, error: null };
-  };
-
-  const changeFarmStatus = async (
+  const assignManager = async (
     farmId: string,
-    newStatus: string,
+    managerId: string,
+    assignedBy: string,
     reason?: string
   ) => {
     try {
-      const { data, error } = await supabase.rpc('create_approval_request', {
-        p_request_type: 'change_status',
+      const { data, error } = await supabase.rpc('assign_farm_manager', {
         p_farm_id: farmId,
-        p_requested_by: 'current_user_id', // TODO: Get from auth
-        p_request_data: { new_status: newStatus, reason }
+        p_manager_id: managerId,
+        p_assigned_by: assignedBy,
+        p_reason: reason
       });
 
       if (error) throw error;
 
+      if (!data.success) {
+        throw new Error(data.error || 'فشل تعيين المدير');
+      }
+
       await loadData();
       return { success: true, data };
     } catch (err: any) {
-      console.error('Error changing farm status:', err);
+      console.error('Error assigning manager:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const suspendFarm = async (
+    farmId: string,
+    suspendedBy: string,
+    reason: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('suspend_farm', {
+        p_farm_id: farmId,
+        p_suspended_by: suspendedBy,
+        p_reason: reason
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'فشل تعليق المزرعة');
+      }
+
+      await loadData();
+      return { success: true, data };
+    } catch (err: any) {
+      console.error('Error suspending farm:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const toggleBookings = async (
+    farmId: string,
+    enable: boolean,
+    toggledBy: string,
+    reason?: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('toggle_farm_bookings', {
+        p_farm_id: farmId,
+        p_enable: enable,
+        p_toggled_by: toggledBy,
+        p_reason: reason
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'فشل تغيير حالة الحجوزات');
+      }
+
+      await loadData();
+      return { success: true, data };
+    } catch (err: any) {
+      console.error('Error toggling bookings:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const escalateExpenseDecision = async (
+    farmId: string,
+    expenseAmount: number,
+    expenseDescription: string,
+    requestedBy: string,
+    priority: string = 'high'
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('escalate_high_expense_decision', {
+        p_farm_id: farmId,
+        p_expense_amount: expenseAmount,
+        p_expense_description: expenseDescription,
+        p_requested_by: requestedBy,
+        p_priority: priority
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'فشل رفع القرار');
+      }
+
+      await loadData();
+      return { success: true, data };
+    } catch (err: any) {
+      console.error('Error escalating expense decision:', err);
       return { success: false, error: err.message };
     }
   };
 
   return {
-    stats,
-    farms,
+    pulse,
+    healthCategories,
+    farmsList,
     loading,
     error,
     refetch: loadData,
-    changeFarmStatus
+    assignManager,
+    suspendFarm,
+    toggleBookings,
+    escalateExpenseDecision
   };
 }
