@@ -4,7 +4,7 @@ import {
   ArrowRight,
   TrendingDown,
   DollarSign,
-  Gavel,
+  Sprout,
   Layers,
   Zap
 } from 'lucide-react';
@@ -68,18 +68,18 @@ export default function QuickActionButtons() {
       description: 'مصروفات تتجاوز 5,000 ر.س'
     },
     {
-      id: 'critical-auctions',
-      title: 'مزادات حرجة',
-      subtitle: 'مزادات لديها تقارير تحتاج مراجعة',
-      icon: Gavel,
-      color: 'purple',
-      gradient: 'from-purple-500 to-purple-600',
-      bgGradient: 'from-purple-50 to-purple-100',
-      badge: stats?.critical_auctions || 0,
-      badgeColor: 'bg-purple-100 text-purple-700',
-      path: '/admin/operations-room/b2b',
-      action: 'مزاد',
-      description: 'مزادات بها تقارير معلقة'
+      id: 'farm-command',
+      title: 'قيادة المزرعة',
+      subtitle: 'إدارة التشغيل اليومي للمزرعة',
+      icon: Sprout,
+      color: 'emerald',
+      gradient: 'from-emerald-500 to-emerald-600',
+      bgGradient: 'from-emerald-50 to-emerald-100',
+      badge: (stats?.today_tasks || 0) + (stats?.pending_expenses || 0) + (stats?.operational_alerts || 0),
+      badgeColor: 'bg-emerald-100 text-emerald-700',
+      path: '/admin/farm-command',
+      action: 'عنصر',
+      description: 'الفرق | المهام | المصروفات | السجل'
     }
   ];
 
@@ -180,7 +180,7 @@ export default function QuickActionButtons() {
       </div>
 
       {/* Info Banner */}
-      {stats && (stats.pending_decisions > 0 || stats.worst_farms > 0 || stats.high_expenses > 0 || stats.critical_auctions > 0) && (
+      {stats && (stats.pending_decisions > 0 || stats.worst_farms > 0 || stats.high_expenses > 0 || stats.today_tasks > 0 || stats.pending_expenses > 0 || stats.operational_alerts > 0) && (
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 p-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
@@ -190,7 +190,7 @@ export default function QuickActionButtons() {
               <h4 className="font-bold text-indigo-900 mb-1">إجراءات معلقة تحتاج انتباهك</h4>
               <p className="text-sm text-indigo-700 leading-relaxed">
                 لديك <strong className="text-indigo-900">
-                  {(stats.pending_decisions || 0) + (stats.worst_farms || 0) + (stats.high_expenses || 0) + (stats.critical_auctions || 0)}
+                  {(stats.pending_decisions || 0) + (stats.worst_farms || 0) + (stats.high_expenses || 0) + (stats.today_tasks || 0) + (stats.pending_expenses || 0) + (stats.operational_alerts || 0)}
                 </strong> عنصر يحتاج مراجعة أو اتخاذ قرار. استخدم الأزرار أعلاه للانتقال مباشرة.
               </p>
             </div>
@@ -199,7 +199,7 @@ export default function QuickActionButtons() {
       )}
 
       {/* Empty State */}
-      {stats && stats.pending_decisions === 0 && stats.worst_farms === 0 && stats.high_expenses === 0 && stats.critical_auctions === 0 && (
+      {stats && stats.pending_decisions === 0 && stats.worst_farms === 0 && stats.high_expenses === 0 && stats.today_tasks === 0 && stats.pending_expenses === 0 && stats.operational_alerts === 0 && (
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 text-center">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-3">
             <Zap className="w-8 h-8 text-white" />

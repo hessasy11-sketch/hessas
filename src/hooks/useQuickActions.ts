@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase';
 export interface QuickActionsStats {
   worst_farms: number;
   high_expenses: number;
-  critical_auctions: number;
   pending_decisions: number;
+  today_tasks: number;
+  pending_expenses: number;
+  operational_alerts: number;
 }
 
 export function useQuickActions() {
