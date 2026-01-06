@@ -21,7 +21,9 @@ import {
   Zap,
   Package,
   Gift,
-  RefreshCw
+  RefreshCw,
+  Link2,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
@@ -34,6 +36,8 @@ interface LedgerEntry {
   description: string | null;
   notes: string | null;
   created_by_name: string;
+  task_id: string | null;
+  task_title: string | null;
   created_at: string;
 }
 
@@ -56,17 +60,37 @@ interface MonthlySummary {
   total_entries: number;
 }
 
-interface Props {
-  farmId: string;
+interface FarmTask {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  assigned_to_name: string | null;
 }
 
-export default function FinancialLedgerTab({ farmId }: Props) {
+interface Props {
+  farmId: string;
+  preselectedTaskId?: string;
+  preselectedTaskTitle?: string;
+  onEntryAdded?: () => void;
+}
+
+export default function FinancialLedgerTab({
+  farmId,
+  preselectedTaskId,
+  preselectedTaskTitle,
+  onEntryAdded
+}: Props) {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [categories, setCategories] = useState<LedgerCategory[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
+  const [availableTasks, setAvailableTasks] = useState<FarmTask[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingTasks, setLoadingTasks] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
@@ -77,12 +101,31 @@ export default function FinancialLedgerTab({ farmId }: Props) {
     amount: '',
     entry_date: new Date().toISOString().split('T')[0],
     description: '',
-    notes: ''
+    notes: '',
+    task_id: preselectedTaskId || '',
+    task_title: preselectedTaskTitle || ''
   });
 
   useEffect(() => {
     loadData();
   }, [farmId, filterType]);
+
+  useEffect(() => {
+    if (showAddModal && availableTasks.length === 0) {
+      loadAvailableTasks();
+    }
+  }, [showAddModal]);
+
+  useEffect(() => {
+    if (preselectedTaskId) {
+      setFormData(prev => ({
+        ...prev,
+        task_id: preselectedTaskId || '',
+        task_title: preselectedTaskTitle || ''
+      }));
+      setShowAddModal(true);
+    }
+  }, [preselectedTaskId, preselectedTaskTitle]);
 
   const loadData = async () => {
     try {
@@ -114,6 +157,23 @@ export default function FinancialLedgerTab({ farmId }: Props) {
     }
   };
 
+  const loadAvailableTasks = async () => {
+    try {
+      setLoadingTasks(true);
+      const { data, error } = await supabase.rpc('get_farm_tasks_for_linking', {
+        p_farm_id: farmId,
+        p_status: null
+      });
+
+      if (error) throw error;
+      setAvailableTasks(data || []);
+    } catch (error: any) {
+      console.error('Error loading tasks:', error);
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -133,7 +193,9 @@ export default function FinancialLedgerTab({ farmId }: Props) {
         p_entry_date: formData.entry_date,
         p_description: formData.description || null,
         p_notes: formData.notes || null,
-        p_created_by_name: 'مدير المزرعة'
+        p_created_by_name: 'مدير المزرعة',
+        p_task_id: formData.task_id || null,
+        p_task_title: formData.task_title || null
       });
 
       if (error) throw error;
@@ -146,9 +208,14 @@ export default function FinancialLedgerTab({ farmId }: Props) {
           amount: '',
           entry_date: new Date().toISOString().split('T')[0],
           description: '',
-          notes: ''
+          notes: '',
+          task_id: '',
+          task_title: ''
         });
         loadData();
+        if (onEntryAdded) {
+          onEntryAdded();
+        }
       } else {
         throw new Error(data?.error || 'فشل في إضافة القيد');
       }
@@ -158,6 +225,15 @@ export default function FinancialLedgerTab({ farmId }: Props) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleTaskSelect = (taskId: string) => {
+    const task = availableTasks.find(t => t.id === taskId);
+    setFormData({
+      ...formData,
+      task_id: taskId,
+      task_title: task?.title || ''
+    });
   };
 
   const getIconComponent = (iconName: string) => {
@@ -182,6 +258,16 @@ export default function FinancialLedgerTab({ farmId }: Props) {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      in_progress: 'bg-blue-100 text-blue-700',
+      completed: 'bg-green-100 text-green-700',
+      cancelled: 'bg-gray-100 text-gray-700'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
   const filteredCategories = categories.filter(c => c.type === formData.entry_type);
@@ -355,6 +441,21 @@ export default function FinancialLedgerTab({ farmId }: Props) {
                         </div>
                       </div>
 
+                      {/* Task Link */}
+                      {entry.task_id && entry.task_title && (
+                        <div className="flex items-center gap-2 mt-2 mb-2">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                            <Link2 className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-700">
+                              مرتبط بمهمة:
+                            </span>
+                            <span className="text-sm text-blue-900">
+                              {entry.task_title}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -383,7 +484,7 @@ export default function FinancialLedgerTab({ farmId }: Props) {
       {/* Add Entry Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">
               إضافة قيد مالي جديد
             </h3>
@@ -473,6 +574,32 @@ export default function FinancialLedgerTab({ farmId }: Props) {
                 />
               </div>
 
+              {/* Task Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Link2 className="w-4 h-4" />
+                    ربط بمهمة (اختياري)
+                  </div>
+                </label>
+                <select
+                  value={formData.task_id}
+                  onChange={(e) => handleTaskSelect(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={loadingTasks}
+                >
+                  <option value="">بدون ربط</option>
+                  {availableTasks.map((task) => (
+                    <option key={task.id} value={task.id}>
+                      {task.title} ({task.status === 'pending' ? 'معلق' : task.status === 'in_progress' ? 'جاري' : 'مكتمل'})
+                    </option>
+                  ))}
+                </select>
+                {loadingTasks && (
+                  <p className="text-xs text-gray-500 mt-1">جاري تحميل المهام...</p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   الوصف
@@ -509,7 +636,19 @@ export default function FinancialLedgerTab({ farmId }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setFormData({
+                      entry_type: 'expense',
+                      category_id: '',
+                      amount: '',
+                      entry_date: new Date().toISOString().split('T')[0],
+                      description: '',
+                      notes: '',
+                      task_id: '',
+                      task_title: ''
+                    });
+                  }}
                   disabled={submitting}
                   className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                 >

@@ -17,10 +17,12 @@ import {
   Bug,
   Wrench,
   ShoppingCart,
-  Search
+  Search,
+  DollarSign
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import TaskProofManagement from './TaskProofManagement';
+import FinancialLedgerTab from '../B2F/tabs/FinancialLedgerTab';
 
 interface FarmTask {
   task_id: string;
@@ -68,6 +70,10 @@ export default function FarmTasksManagement({ farmId, farmName }: FarmTasksManag
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Modal لإضافة مصروف مرتبط بمهمة
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -450,6 +456,20 @@ export default function FarmTasksManagement({ farmId, farmName }: FarmTasksManag
                         </button>
                       </>
                     )}
+
+                    {/* Add Expense Button for Completed Tasks */}
+                    {task.status === 'approved' && (
+                      <button
+                        onClick={() => {
+                          setSelectedTask({ id: task.task_id, title: task.title });
+                          setShowExpenseModal(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition-colors"
+                      >
+                        <DollarSign className="w-4 h-4" />
+                        إضافة مصروف
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -469,6 +489,41 @@ export default function FarmTasksManagement({ farmId, farmName }: FarmTasksManag
             loadData();
           }}
         />
+      )}
+
+      {/* Expense Modal */}
+      {showExpenseModal && selectedTask && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">إضافة مصروف مرتبط بالمهمة</h3>
+                <p className="text-sm text-gray-600 mt-1">المهمة: {selectedTask.title}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowExpenseModal(false);
+                  setSelectedTask(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+            <div className="p-6">
+              <FinancialLedgerTab
+                farmId={farmId}
+                preselectedTaskId={selectedTask.id}
+                preselectedTaskTitle={selectedTask.title}
+                onEntryAdded={() => {
+                  setShowExpenseModal(false);
+                  setSelectedTask(null);
+                  loadData();
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
