@@ -63,6 +63,16 @@ interface Counts {
   totalApprovals: number;
 }
 
+interface StaffScope {
+  scopeType: 'GLOBAL' | 'DEPARTMENT' | 'FARM';
+  scopeBoard: 'B2F' | 'B2B' | 'Finance' | 'Marketing' | null;
+  role: string;
+  department: string | null;
+  farmIds: string[];
+  isGlobal: boolean;
+  canAccessAllFarms: boolean;
+}
+
 interface MyWorkData {
   tasks: Task[];
   approvals: Approval[];
@@ -70,6 +80,7 @@ interface MyWorkData {
   counts: Counts;
   role: string;
   isGM: boolean;
+  scope?: StaffScope;
 }
 
 export function useMyWork() {
@@ -123,6 +134,7 @@ export function useMyWork() {
         },
         role: result.role || '',
         isGM: result.isGM || false,
+        scope: result.scope || undefined,
       });
     } catch (err) {
       console.error('Error fetching my work:', err);

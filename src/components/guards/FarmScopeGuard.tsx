@@ -1,106 +1,79 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom';
-import { adminSessionManager } from '../../utils/adminSessionManager';
-import { supabase } from '../../lib/supabase';
-import { Lock } from 'lucide-react';
+import { useStaffScope } from '../../hooks/useStaffScope';
+import { AlertTriangle } from 'lucide-react';
 
 interface FarmScopeGuardProps {
   children: React.ReactNode;
   farmIdParam?: string;
   redirectTo?: string;
+  showError?: boolean;
 }
 
+/**
+ * Guard to protect farm-specific routes
+ * Uses the unified scope system to check farm access
+ * Supports GLOBAL, DEPARTMENT, and FARM scopes
+ */
 export default function FarmScopeGuard({
   children,
   farmIdParam = 'farmId',
-  redirectTo = '/admin/b2f'
+  redirectTo = '/admin/my-work',
+  showError = false,
 }: FarmScopeGuardProps) {
   const location = useLocation();
   const params = useParams();
-  const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
+  const { scope, loading, canAccessFarm, checkFarmAccess } = useStaffScope();
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const farmId = params[farmIdParam];
+
   useEffect(() => {
-    checkFarmAccess();
-  }, [location.pathname, params]);
+    const verifyAccess = async () => {
+      console.log('🌾 FarmScopeGuard: Checking farm access');
+      console.log('   Route:', location.pathname);
+      console.log('   Farm ID:', farmId);
+      console.log('   Scope:', scope);
 
-  const checkFarmAccess = async () => {
-    console.log('🌾 FarmScopeGuard: Checking farm access');
-    console.log('   Route:', location.pathname);
-    console.log('   Params:', params);
+      if (loading) return;
 
-    const session = adminSessionManager.getSession();
-
-    if (!session) {
-      console.log('❌ FarmScopeGuard: No session found');
-      setErrorMessage('لا توجد جلسة نشطة');
-      setHasAccess(false);
-      setLoading(false);
-      return;
-    }
-
-    if (session.is_super_admin || session.is_platform_owner) {
-      console.log('✅ FarmScopeGuard: Access granted (Super Admin/Owner)');
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    const targetFarmId = params[farmIdParam];
-
-    if (!targetFarmId) {
-      console.log('⚠️ FarmScopeGuard: No farm ID in route - allowing access');
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    console.log('   Target Farm ID:', targetFarmId);
-    console.log('   Staff ID:', session.staff_id);
-
-    try {
-      const { data: membership, error } = await supabase
-        .from('b2f_farm_team')
-        .select('id, farm_id, staff_id, role')
-        .eq('farm_id', targetFarmId)
-        .eq('staff_id', session.staff_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ FarmScopeGuard: Database error:', error);
-        setErrorMessage('خطأ في التحقق من الصلاحيات');
+      if (!scope) {
+        console.log('❌ FarmScopeGuard: No scope data');
+        setErrorMessage('لا توجد معلومات الصلاحيات');
         setHasAccess(false);
-        setLoading(false);
         return;
       }
 
-      if (!membership) {
-        console.log('🚫 FarmScopeGuard: No farm membership found');
-        console.log(`   Staff ${session.staff_id} is NOT a member of farm ${targetFarmId}`);
+      // If no farm ID in URL, allow access (list pages)
+      if (!farmId) {
+        console.log('⚠️ FarmScopeGuard: No farm ID in route - allowing access');
+        setHasAccess(true);
+        return;
+      }
+
+      // Check access using scope system
+      const canAccess = await checkFarmAccess(farmId);
+
+      if (canAccess) {
+        console.log('✅ FarmScopeGuard: Access granted');
+        console.log('   Scope Type:', scope.scopeType);
+        console.log('   Farm accessible:', canAccess);
+      } else {
+        console.log('🚫 FarmScopeGuard: Access denied');
+        console.log('   Scope Type:', scope.scopeType);
+        console.log('   Allowed farms:', scope.farmIds);
         setErrorMessage('ليس لديك صلاحية الوصول إلى هذه المزرعة');
-        setHasAccess(false);
-        setLoading(false);
-        return;
       }
 
-      console.log('✅ FarmScopeGuard: Access granted');
-      console.log('   Membership ID:', membership.id);
-      console.log('   Farm Role:', membership.role);
+      setHasAccess(canAccess);
+    };
 
-      adminSessionManager.setCurrentFarm(targetFarmId);
+    verifyAccess();
+  }, [scope, loading, farmId, location.pathname, checkFarmAccess]);
 
-      setHasAccess(true);
-      setLoading(false);
-    } catch (error) {
-      console.error('❌ FarmScopeGuard: Exception:', error);
-      setErrorMessage('خطأ في التحقق من الصلاحيات');
-      setHasAccess(false);
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  // Loading state
+  if (loading || hasAccess === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
@@ -112,8 +85,33 @@ export default function FarmScopeGuard({
     );
   }
 
+  // Access denied
   if (!hasAccess) {
     console.log('🚫 FarmScopeGuard: Access denied - redirecting to:', redirectTo);
+
+    if (showError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              ليس لديك صلاحية
+            </h2>
+            <p className="text-slate-600 mb-6">
+              {errorMessage || 'عذراً، ليس لديك صلاحية الوصول إلى هذه المزرعة'}
+            </p>
+            <button
+              onClick={() => window.location.href = redirectTo}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              العودة إلى صفحة العمل
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <Navigate
