@@ -31,6 +31,7 @@ import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import B2BAuctionsOpsRoom from './components/platform/B2BAuctionsOpsRoom';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
+import FarmOperationalDashboard from './components/platform/FarmOperationalDashboard';
 import SimplifiedLogin from './components/SimplifiedLogin';
 import GMLoginPage from './components/platform/GMLoginPage';
 import HQDashboard from './components/platform/HQDashboard';
@@ -397,6 +398,7 @@ function App() {
       <Route path="/admin/farms-manager-dashboard" element={<FarmsManagerDashboard />} />
       <Route path="/admin/farm-manager-dashboard" element={<FarmManagerDashboard />} />
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
+      <Route path="/admin/b2f/farms/:farmId" element={<FarmOperationalDashboard />} />
       <Route path="/admin/b2b-operations" element={<B2BAuctionsOpsRoom />} />
       <Route path="/admin/farm-command" element={<FarmCommandCenter />} />
 

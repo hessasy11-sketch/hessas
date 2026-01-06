@@ -89,7 +89,7 @@ export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
   };
 
   const handleOpenDashboard = () => {
-    navigate(`/admin/b2f/farm-command/farms/${farm.id}`);
+    navigate(`/admin/b2f/farms/${farm.id}`);
   };
 
   const handleOpenTimeline = () => {
