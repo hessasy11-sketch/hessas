@@ -17,7 +17,10 @@ import {
   Activity,
   ArrowRight,
   Calculator,
-  TrendingUp
+  TrendingUp,
+  Sprout,
+  ClipboardList,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -27,6 +30,9 @@ interface SystemPulse {
   finance_pending: number;
   marketing_visits: number;
   critical_alerts: number;
+  farm_command_today_tasks: number;
+  farm_command_pending_expenses: number;
+  farm_command_operational_alerts: number;
 }
 
 export default function HQDashboard() {
@@ -42,11 +48,12 @@ export default function HQDashboard() {
 
   const loadSystemPulse = async () => {
     try {
-      const [b2fRes, b2bRes, financeRes, marketingRes] = await Promise.all([
+      const [b2fRes, b2bRes, financeRes, marketingRes, farmCommandRes] = await Promise.all([
         supabase.rpc('get_executive_pulse_b2f'),
         supabase.rpc('get_executive_pulse_b2b'),
         supabase.rpc('get_executive_pulse_finance'),
-        supabase.rpc('get_executive_pulse_marketing')
+        supabase.rpc('get_executive_pulse_marketing'),
+        supabase.rpc('get_quick_actions_stats')
       ]);
 
       setPulse({
@@ -54,7 +61,10 @@ export default function HQDashboard() {
         b2b_active: b2bRes.data?.active_auctions || 0,
         finance_pending: financeRes.data?.pending_reviews || 0,
         marketing_visits: marketingRes.data?.platform_total || 0,
-        critical_alerts: (b2fRes.data?.critical_alerts || 0) + (b2bRes.data?.no_bids || 0)
+        critical_alerts: (b2fRes.data?.critical_alerts || 0) + (b2bRes.data?.no_bids || 0),
+        farm_command_today_tasks: farmCommandRes.data?.today_tasks || 0,
+        farm_command_pending_expenses: farmCommandRes.data?.pending_expenses || 0,
+        farm_command_operational_alerts: farmCommandRes.data?.operational_alerts || 0
       });
     } catch (error) {
       console.error('Error loading system pulse:', error);
@@ -155,43 +165,43 @@ export default function HQDashboard() {
             </button>
           </div>
 
-          {/* B2B Section */}
+          {/* Farm Command Section */}
           <div className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
             <button
-              onClick={() => navigate('/admin/auctions')}
-              className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-2xl"
+              onClick={() => navigate('/admin/farm-command')}
+              className="relative w-full bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-2xl"
             >
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <Building2 className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <Sprout className="w-8 h-8 text-white" />
                   </div>
                   <div className="text-right">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-1">مزاد الشركات</h3>
-                    <p className="text-slate-600 text-sm">Business Auctions Platform</p>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-1">قيادة المزرعة</h3>
+                    <p className="text-slate-600 text-sm">مدير المزرعة + الفريق</p>
                   </div>
                 </div>
-                <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-2 transition-all" />
+                <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-2 transition-all" />
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <div className="text-2xl font-bold text-blue-900">{pulse?.b2b_active || 0}</div>
-                  <div className="text-xs text-blue-700 mt-1">مزادات نشطة</div>
+                  <div className="text-2xl font-bold text-blue-900">{pulse?.farm_command_today_tasks || 0}</div>
+                  <div className="text-xs text-blue-700 mt-1">مهام اليوم</div>
                 </div>
-                <div className="bg-emerald-50 rounded-xl p-4">
-                  <div className="text-2xl font-bold text-emerald-900">156</div>
-                  <div className="text-xs text-emerald-700 mt-1">مزايدات اليوم</div>
+                <div className="bg-orange-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-orange-900">{pulse?.farm_command_pending_expenses || 0}</div>
+                  <div className="text-xs text-orange-700 mt-1">مصروفات معلقة</div>
                 </div>
-                <div className="bg-amber-50 rounded-xl p-4">
-                  <div className="text-2xl font-bold text-amber-900">42</div>
-                  <div className="text-xs text-amber-700 mt-1">مباعة</div>
+                <div className="bg-red-50 rounded-xl p-4">
+                  <div className="text-2xl font-bold text-red-900">{pulse?.farm_command_operational_alerts || 0}</div>
+                  <div className="text-xs text-red-700 mt-1">تنبيهات تشغيل</div>
                 </div>
               </div>
 
               <p className="text-slate-600 leading-relaxed">
-                إدارة المزادات التجارية للشركات والمؤسسات ومتابعة النشاط التجاري والمزايدات.
+                إدارة التشغيل اليومي للمزرعة (الفرق – المهام – المصروفات – السجل الزمني)
               </p>
             </button>
           </div>

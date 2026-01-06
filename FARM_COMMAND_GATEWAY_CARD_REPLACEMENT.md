@@ -36,7 +36,9 @@ export interface QuickActionsStats {
 
 ### 3. بطاقة قيادة المزرعة
 
-**ملف:** `src/components/platform/QuickActionButtons.tsx`
+**الملفات الأساسية:**
+- `src/components/platform/HQDashboard.tsx` (البطاقة الرئيسية في مركز القيادة)
+- `src/components/platform/QuickActionButtons.tsx` (بطاقة إضافية في Executive Pulse)
 
 #### البطاقة المستبدلة (قديم - B2B)
 ```typescript
@@ -137,9 +139,10 @@ export interface QuickActionsStats {
 ## الملفات المعدلة
 
 1. ✅ `src/hooks/useQuickActions.ts` - تحديث interface
-2. ✅ `src/components/platform/QuickActionButtons.tsx` - استبدال البطاقة
-3. ✅ `src/App.tsx` - إضافة المسار الجديد
-4. ✅ `supabase/migrations/` - تحديث دالة get_quick_actions_stats
+2. ✅ `src/components/platform/HQDashboard.tsx` - **استبدال البطاقة الرئيسية** ⭐
+3. ✅ `src/components/platform/QuickActionButtons.tsx` - استبدال البطاقة الفرعية
+4. ✅ `src/App.tsx` - إضافة المسار الجديد
+5. ✅ `supabase/migrations/` - تحديث دالة get_quick_actions_stats
 
 ---
 
