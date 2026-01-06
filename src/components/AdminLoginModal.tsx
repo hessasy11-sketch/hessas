@@ -24,43 +24,45 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
 
     try {
       const { data, error: loginError } = await supabase.rpc('simplified_login', {
-        p_phone: phone,
-        p_password: password
+        phone_number: phone,
+        user_password: password
       });
 
       if (loginError) throw loginError;
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setError('رقم الجوال أو كلمة المرور غير صحيحة');
         setLoading(false);
         return;
       }
 
+      const staff = data[0];
+
       // حفظ الجلسة
       const sessionData = {
-        staffId: data.staff_id,
-        staffName: data.full_name,
-        role: data.role,
-        farmId: data.farm_id,
-        farmName: data.farm_name,
+        staffId: staff.id,
+        staffName: staff.full_name,
+        role: staff.role,
+        farmId: staff.farm_id,
+        farmName: staff.farm_name,
         loginAt: new Date().toISOString()
       };
 
       localStorage.setItem('simplified_session', JSON.stringify(sessionData));
 
       // توجيه حسب الدور
-      if (data.role === 'farms_manager') {
+      if (staff.role === 'farms_manager') {
         navigate('/admin/farms-manager-dashboard');
-      } else if (data.role === 'farm_manager') {
+      } else if (staff.role === 'farm_manager') {
         navigate('/admin/farm-manager-dashboard');
       } else {
         navigate('/admin/b2f');
       }
 
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'حدث خطأ أثناء تسجيل الدخول');
+      setError('حدث خطأ أثناء تسجيل الدخول');
     } finally {
       setLoading(false);
     }

@@ -29,7 +29,6 @@ import B2FSection from './components/B2FSection';
 import FarmsManagerDashboard from './components/FarmsManagerDashboard';
 import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
-import SimplifiedLogin from './components/SimplifiedLogin';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -371,9 +370,6 @@ function App() {
     <Routes>
       {/* الواجهة العامة الكاملة - مزاد الشركات + استثمار الأشجار */}
       <Route path="/" element={<MainApp />} />
-
-      {/* صفحة تسجيل الدخول للموظفين */}
-      <Route path="/login" element={<SimplifiedLogin />} />
 
       {/* مسارات Admin مخفية - للموظفين فقط */}
       <Route path="/admin/farms-manager-dashboard" element={<FarmsManagerDashboard />} />
