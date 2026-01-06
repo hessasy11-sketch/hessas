@@ -29,6 +29,7 @@ import B2FSection from './components/B2FSection';
 import FarmsManagerDashboard from './components/FarmsManagerDashboard';
 import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
+import B2BAuctionsOpsRoom from './components/platform/B2BAuctionsOpsRoom';
 import SimplifiedLogin from './components/SimplifiedLogin';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
@@ -379,6 +380,7 @@ function App() {
       <Route path="/admin/farms-manager-dashboard" element={<FarmsManagerDashboard />} />
       <Route path="/admin/farm-manager-dashboard" element={<FarmManagerDashboard />} />
       <Route path="/admin/b2f" element={<B2FAdminPage />} />
+      <Route path="/admin/b2b-operations" element={<B2BAuctionsOpsRoom />} />
 
       {/* أي مسار آخر → الواجهة العامة */}
       <Route path="*" element={<MainApp />} />

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 interface LoginResponse {
   staff_id: string;
   full_name: string;
-  role: 'farms_manager' | 'farm_manager';
+  role: 'farms_manager' | 'farm_manager' | 'super_admin';
   farm_id?: string;
   farm_name?: string;
 }
@@ -58,6 +58,8 @@ export default function SimplifiedLogin() {
         navigate('/admin/farms-manager-dashboard');
       } else if (loginData.role === 'farm_manager') {
         navigate('/admin/farm-manager-dashboard');
+      } else if (loginData.role === 'super_admin') {
+        navigate('/admin/b2b-operations');
       }
 
     } catch (err: any) {
