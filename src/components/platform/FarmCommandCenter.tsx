@@ -14,6 +14,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import AssignFarmManagerModal from './AssignFarmManagerModal';
+import B2FDecisionQueuePanel from './B2FDecisionQueuePanel';
 
 interface KPIs {
   active_farms: number;
@@ -79,6 +80,7 @@ const FarmCommandCenter: React.FC = () => {
   const [hasPendingExpenses, setHasPendingExpenses] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedFarmForAssign, setSelectedFarmForAssign] = useState<Farm | null>(null);
+  const [showDecisionQueue, setShowDecisionQueue] = useState(false);
 
   useEffect(() => {
     loadAllData();
@@ -247,7 +249,10 @@ const FarmCommandCenter: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setShowDecisionQueue(!showDecisionQueue)}
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <FileCheck className="w-5 h-5 text-red-600" />
@@ -258,6 +263,12 @@ const FarmCommandCenter: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {showDecisionQueue && (
+        <div className="mb-6">
+          <B2FDecisionQueuePanel />
         </div>
       )}
 
