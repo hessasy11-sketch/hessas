@@ -33,6 +33,7 @@ import B2BAuctionsOpsRoom from './components/platform/B2BAuctionsOpsRoom';
 import B2FOperationsRoom from './components/platform/B2FOperationsRoom';
 import OperationsRoomHub from './components/platform/OperationsRoomHub';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
+import FarmCommandOperationsRoom from './pages/FarmCommandOperationsRoom';
 import FarmOperationalDashboard from './components/platform/FarmOperationalDashboard';
 import SimplifiedLogin from './components/SimplifiedLogin';
 import GMLoginPage from './components/platform/GMLoginPage';
@@ -405,6 +406,7 @@ function App() {
       <Route path="/admin/operations-room/b2f" element={<B2FOperationsRoom />} />
       <Route path="/admin/b2b-operations" element={<B2BAuctionsOpsRoom />} />
       <Route path="/admin/farm-command" element={<FarmCommandCenter />} />
+      <Route path="/admin/farm-command-ops" element={<FarmCommandOperationsRoom />} />
 
       {/* أي مسار آخر → الواجهة العامة */}
       <Route path="*" element={<MainApp />} />
