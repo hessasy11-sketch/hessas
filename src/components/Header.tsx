@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Globe, Leaf } from 'lucide-react';
-import AdminLoginModal from './AdminLoginModal';
+import { useState, useRef } from 'react';
+import { Globe, Crown } from 'lucide-react';
+import SecretOwnerLogin from './SecretOwnerLogin';
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -9,13 +9,33 @@ interface HeaderProps {
 export function Header({ onNavigate }: HeaderProps) {
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
   };
 
-  const handleLoginClick = () => {
-    setShowLoginModal(true);
+  const handleSecretClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+
+    if (newCount >= 5) {
+      setShowLoginModal(true);
+      setClickCount(0);
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+      return;
+    }
+
+    clickTimerRef.current = setTimeout(() => {
+      setClickCount(0);
+    }, 3000);
   };
 
   return (
@@ -33,16 +53,17 @@ export function Header({ onNavigate }: HeaderProps) {
         <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
           <div className="flex items-center gap-2">
             <button
-              onClick={handleLoginClick}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-green-900 bg-gradient-to-r from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 backdrop-blur-sm border border-green-300 transition-all shadow-md hover:shadow-lg"
+              onClick={handleSecretClick}
+              className="p-2 rounded-lg transition-all hover:opacity-100"
               style={{
-                boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                opacity: 0.5,
+                background: 'transparent',
               }}
-              title="تسجيل الدخول للموظفين"
+              title=""
             >
-              <Leaf className="w-4 sm:w-4 h-4 sm:h-4 text-green-600" />
-              <span className="hidden sm:inline font-bold">دخول الموظفين</span>
+              <Crown className="w-4 h-4 text-yellow-300" strokeWidth={2} />
             </button>
+
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-emerald-900 bg-white/70 hover:bg-white/90 backdrop-blur-sm border border-white/30 transition-all shadow-sm hover:shadow-md"
@@ -76,7 +97,7 @@ export function Header({ onNavigate }: HeaderProps) {
         </div>
       </div>
 
-      <AdminLoginModal
+      <SecretOwnerLogin
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
       />
