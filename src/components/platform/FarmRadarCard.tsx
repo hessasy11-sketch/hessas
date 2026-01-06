@@ -10,6 +10,7 @@ import {
   User
 } from 'lucide-react';
 import { FarmRadarData } from '../../hooks/useFarmRadar';
+import FarmDecisionActionsMenu from './FarmDecisionActionsMenu';
 
 interface FarmRadarCardProps {
   farm: FarmRadarData;
@@ -17,6 +18,8 @@ interface FarmRadarCardProps {
 
 export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
   const navigate = useNavigate();
+
+  const CURRENT_STAFF_ID = '00000000-0000-0000-0000-000000000001';
 
   const getTimeAgo = (dateString: string | null) => {
     if (!dateString) return 'لا يوجد نشاط';
@@ -63,6 +66,15 @@ export default function FarmRadarCard({ farm }: FarmRadarCardProps) {
             {farm.location}
           </p>
         </div>
+
+        <FarmDecisionActionsMenu
+          farm={{
+            id: farm.id,
+            name: farm.name,
+            bookings_enabled: farm.bookings_enabled
+          }}
+          requestedBy={CURRENT_STAFF_ID}
+        />
       </div>
 
       <div className="mb-3">
