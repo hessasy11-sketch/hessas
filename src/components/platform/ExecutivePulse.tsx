@@ -2,6 +2,7 @@ import { useExecutivePulse } from '../../hooks/useExecutivePulse';
 import { useNavigate } from 'react-router-dom';
 import { Activity, AlertTriangle, DollarSign, Calendar, Clock, TrendingUp, CheckCircle, XCircle, Radar, Sprout, Gavel, ArrowRight } from 'lucide-react';
 import ExecutiveAlertsPanel from './ExecutiveAlertsPanel';
+import QuickActionButtons from './QuickActionButtons';
 
 export default function ExecutivePulse() {
   const { data, loading, error } = useExecutivePulse();
@@ -103,6 +104,9 @@ export default function ExecutivePulse() {
 
       {/* Executive Alerts Panel */}
       <ExecutiveAlertsPanel />
+
+      {/* Quick Action Buttons */}
+      <QuickActionButtons />
 
       {/* Main Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
