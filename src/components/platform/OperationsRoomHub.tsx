@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Leaf, Crown, CheckCircle2, Clock, AlertCircle, Filter } from 'lucide-react';
+import { Building2, Leaf, Crown, CheckCircle2, Clock, AlertCircle, Filter, FileText, CheckCheck, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import GatewayCard from './GatewayCard';
 
@@ -28,12 +28,26 @@ interface Decision {
   context: any;
 }
 
+interface ExecutiveLog {
+  id: string;
+  source: 'b2f' | 'b2b';
+  action_type: string;
+  title: string;
+  performed_by: string;
+  performer_name: string;
+  result: 'success' | 'failure' | 'partial';
+  created_at: string;
+  context: any;
+}
+
 export default function OperationsRoomHub() {
   const navigate = useNavigate();
   const [b2fKPIs, setB2fKPIs] = useState<B2FKPIs | null>(null);
   const [b2bKPIs, setB2bKPIs] = useState<B2BKPIs | null>(null);
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [logs, setLogs] = useState<ExecutiveLog[]>([]);
   const [filter, setFilter] = useState<'all' | 'b2f' | 'b2b'>('all');
+  const [activeTab, setActiveTab] = useState<'decisions' | 'logs'>('decisions');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,6 +75,12 @@ export default function OperationsRoomHub() {
       if (decisionsData) {
         setDecisions(decisionsData);
       }
+
+      // Load executive logs
+      const { data: logsData } = await supabase.rpc('get_executive_logs_for_gm', { limit_count: 50 });
+      if (logsData) {
+        setLogs(logsData);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -71,6 +91,10 @@ export default function OperationsRoomHub() {
   const filteredDecisions = filter === 'all'
     ? decisions
     : decisions.filter(d => d.source === filter);
+
+  const filteredLogs = filter === 'all'
+    ? logs
+    : logs.filter(l => l.source === filter);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir="rtl">
@@ -151,22 +175,28 @@ export default function OperationsRoomHub() {
           />
         </div>
 
-        {/* Decision Queue Section */}
+        {/* Decision Queue & Executive Log Section */}
         <div className="mt-12">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Header */}
+            {/* Header with Tabs */}
             <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 px-6 py-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-amber-600" />
+                    {activeTab === 'decisions' ? (
+                      <CheckCircle2 className="w-5 h-5 text-amber-600" />
+                    ) : (
+                      <FileText className="w-5 h-5 text-amber-600" />
+                    )}
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">
-                      قرارات بانتظار اعتماد المدير العام
+                      {activeTab === 'decisions' ? 'قرارات بانتظار اعتماد المدير العام' : 'السجل القيادي'}
                     </h2>
                     <p className="text-sm text-slate-600 mt-0.5">
-                      Decisions Pending General Manager Approval
+                      {activeTab === 'decisions'
+                        ? 'Decisions Pending General Manager Approval'
+                        : 'Executive Actions Log - Last 50 Actions'}
                     </p>
                   </div>
                 </div>
@@ -181,7 +211,7 @@ export default function OperationsRoomHub() {
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    الكل ({decisions.length})
+                    الكل ({activeTab === 'decisions' ? decisions.length : logs.length})
                   </button>
                   <button
                     onClick={() => setFilter('b2f')}
@@ -191,7 +221,9 @@ export default function OperationsRoomHub() {
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    مزارع ({decisions.filter(d => d.source === 'b2f').length})
+                    مزارع ({activeTab === 'decisions'
+                      ? decisions.filter(d => d.source === 'b2f').length
+                      : logs.filter(l => l.source === 'b2f').length})
                   </button>
                   <button
                     onClick={() => setFilter('b2b')}
@@ -201,102 +233,201 @@ export default function OperationsRoomHub() {
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    مزادات ({decisions.filter(d => d.source === 'b2b').length})
+                    مزادات ({activeTab === 'decisions'
+                      ? decisions.filter(d => d.source === 'b2b').length
+                      : logs.filter(l => l.source === 'b2b').length})
                   </button>
                 </div>
               </div>
+
+              {/* Tab Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('decisions')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === 'decisions'
+                      ? 'bg-white text-amber-600 shadow-sm border-2 border-amber-200'
+                      : 'text-slate-600 hover:bg-white/50'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  القرارات المعلقة ({decisions.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('logs')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === 'logs'
+                      ? 'bg-white text-amber-600 shadow-sm border-2 border-amber-200'
+                      : 'text-slate-600 hover:bg-white/50'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  السجل القيادي (50)
+                </button>
+              </div>
             </div>
 
-            {/* Decisions List */}
+            {/* Content Area */}
             <div className="divide-y divide-slate-100">
               {loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
                   <p className="text-slate-600 mt-3">جاري التحميل...</p>
                 </div>
-              ) : filteredDecisions.length === 0 ? (
-                <div className="p-12 text-center">
-                  <CheckCircle2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                    لا توجد قرارات معلقة
-                  </h3>
-                  <p className="text-slate-600">
-                    جميع القرارات تم اعتمادها أو لا يوجد قرارات جديدة
-                  </p>
-                </div>
-              ) : (
-                filteredDecisions.map((decision) => (
-                  <div
-                    key={decision.id}
-                    className="p-6 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      {/* Decision Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          {/* Source Badge */}
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                              decision.source === 'b2f'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-blue-100 text-blue-700'
-                            }`}
-                          >
-                            {decision.source === 'b2f' ? 'مزارع' : 'مزادات'}
-                          </span>
-
-                          {/* Priority Badge */}
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                              decision.priority === 'urgent'
-                                ? 'bg-red-100 text-red-700'
+              ) : activeTab === 'decisions' ? (
+                // Decisions Tab
+                filteredDecisions.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <CheckCircle2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      لا توجد قرارات معلقة
+                    </h3>
+                    <p className="text-slate-600">
+                      جميع القرارات تم اعتمادها أو لا يوجد قرارات جديدة
+                    </p>
+                  </div>
+                ) : (
+                  filteredDecisions.map((decision) => (
+                    <div
+                      key={decision.id}
+                      className="p-6 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                decision.source === 'b2f'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              {decision.source === 'b2f' ? 'مزارع' : 'مزادات'}
+                            </span>
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                decision.priority === 'urgent'
+                                  ? 'bg-red-100 text-red-700'
+                                  : decision.priority === 'high'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {decision.priority === 'urgent'
+                                ? 'عاجل'
                                 : decision.priority === 'high'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {decision.priority === 'urgent'
-                              ? 'عاجل'
-                              : decision.priority === 'high'
-                              ? 'مرتفع'
-                              : decision.priority === 'normal'
-                              ? 'عادي'
-                              : 'منخفض'}
-                          </span>
+                                ? 'مرتفع'
+                                : decision.priority === 'normal'
+                                ? 'عادي'
+                                : 'منخفض'}
+                            </span>
+                          </div>
+                          <h3 className="text-base font-semibold text-slate-900 mb-1">
+                            {decision.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-slate-600">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="w-4 h-4" />
+                              {new Date(decision.created_at).toLocaleDateString('ar-SA', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            <span>•</span>
+                            <span>بواسطة: {decision.requester_name}</span>
+                          </div>
                         </div>
-
-                        <h3 className="text-base font-semibold text-slate-900 mb-1">
-                          {decision.title}
-                        </h3>
-
-                        <div className="flex items-center gap-4 text-sm text-slate-600">
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4" />
-                            {new Date(decision.created_at).toLocaleDateString('ar-SA', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                          <span>•</span>
-                          <span>بواسطة: {decision.requester_name}</span>
+                        <div className="flex gap-2">
+                          <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium">
+                            اعتماد
+                          </button>
+                          <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
+                            رفض
+                          </button>
                         </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2">
-                        <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium">
-                          اعتماد
-                        </button>
-                        <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
-                          رفض
-                        </button>
                       </div>
                     </div>
+                  ))
+                )
+              ) : (
+                // Executive Logs Tab
+                filteredLogs.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      لا توجد سجلات
+                    </h3>
+                    <p className="text-slate-600">
+                      لم يتم تنفيذ أي إجراءات قيادية بعد
+                    </p>
                   </div>
-                ))
+                ) : (
+                  filteredLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-6 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                log.source === 'b2f'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              {log.source === 'b2f' ? 'مزارع' : 'مزادات'}
+                            </span>
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                log.result === 'success'
+                                  ? 'bg-green-100 text-green-700'
+                                  : log.result === 'failure'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {log.result === 'success' ? (
+                                <span className="flex items-center gap-1">
+                                  <CheckCheck className="w-3 h-3" />
+                                  نجح
+                                </span>
+                              ) : log.result === 'failure' ? (
+                                <span className="flex items-center gap-1">
+                                  <XCircle className="w-3 h-3" />
+                                  فشل
+                                </span>
+                              ) : (
+                                'جزئي'
+                              )}
+                            </span>
+                          </div>
+                          <h3 className="text-base font-semibold text-slate-900 mb-1">
+                            {log.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-slate-600">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="w-4 h-4" />
+                              {new Date(log.created_at).toLocaleDateString('ar-SA', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            <span>•</span>
+                            <span>نفذ بواسطة: {log.performer_name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
               )}
             </div>
           </div>
