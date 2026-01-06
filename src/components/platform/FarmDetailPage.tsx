@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   MapPin,
@@ -57,12 +57,16 @@ type Tab = 'overview' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculato
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [farm, setFarm] = useState<FarmDetail | null>(null);
   const [stats, setStats] = useState<FarmStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  // Get tab from URL or default to 'overview'
+  const initialTab = (searchParams.get('tab') as Tab) || 'overview';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   useEffect(() => {
     if (farmId) {
