@@ -50,7 +50,10 @@ import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
 import MyWorkPage from './components/platform/MyWorkPage';
+import GMControlPanel from './components/platform/GMControlPanel';
+import ViewAsBanner from './components/platform/ViewAsBanner';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
+import { ImpersonationProvider } from './contexts/ImpersonationContext';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -467,18 +470,32 @@ function MainApp() {
 
 function App() {
   return (
-    <Routes>
-      {/* Public route: Invite acceptance (no session required) */}
-      <Route path="/admin/invite" element={<InviteAcceptancePage />} />
+    <ImpersonationProvider>
+      <ViewAsBanner />
+      <Routes>
+        {/* Public route: Invite acceptance (no session required) */}
+        <Route path="/admin/invite" element={<InviteAcceptancePage />} />
 
-      {/* Crown Smart Gateway - Phase 1 */}
-      <Route path="/admin/gateway" element={<CrownSmartGateway />} />
+        {/* Crown Smart Gateway - Phase 1 */}
+        <Route path="/admin/gateway" element={<CrownSmartGateway />} />
 
-      {/* My Work Page - Employee Daily Hub */}
-      <Route
-        path="/admin/my-work"
-        element={
-          <GatewayGuard>
+        {/* GM Control Panel - Absolute Control & View-As */}
+        <Route
+          path="/admin/settings/gm-control"
+          element={
+            <GatewayGuard>
+              <SessionGuard>
+                <GMControlPanel />
+              </SessionGuard>
+            </GatewayGuard>
+          }
+        />
+
+        {/* My Work Page - Employee Daily Hub */}
+        <Route
+          path="/admin/my-work"
+          element={
+            <GatewayGuard>
             <SessionGuard>
               <MyWorkPage />
             </SessionGuard>
@@ -748,6 +765,7 @@ function App() {
           ============================================ */}
       <Route path="*" element={<MainApp />} />
     </Routes>
+    </ImpersonationProvider>
   );
 }
 
