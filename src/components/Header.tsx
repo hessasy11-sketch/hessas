@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Globe, Crown } from 'lucide-react';
 
@@ -9,13 +9,30 @@ interface HeaderProps {
 export function Header({ onNavigate }: HeaderProps) {
   const navigate = useNavigate();
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
   };
 
   const handleGMAccess = () => {
-    navigate('/gm-login');
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+
+    if (newCount >= 5) {
+      setClickCount(0);
+      navigate('/gm-login');
+      return;
+    }
+
+    clickTimerRef.current = setTimeout(() => {
+      setClickCount(0);
+    }, 3000);
   };
 
   return (
@@ -39,7 +56,7 @@ export function Header({ onNavigate }: HeaderProps) {
                 opacity: 0.5,
                 background: 'transparent',
               }}
-              title="دخول المدير العام"
+              title=""
             >
               <Crown className="w-4 h-4 text-yellow-300" strokeWidth={2} />
             </button>
