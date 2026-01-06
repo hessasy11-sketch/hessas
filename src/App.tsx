@@ -49,6 +49,7 @@ import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
+import GMLoginPage from './components/platform/GMLoginPage';
 import MyWorkPage from './components/platform/MyWorkPage';
 import TaskDetailsPage from './components/platform/TaskDetailsPage';
 import GMControlPanel from './components/platform/GMControlPanel';
@@ -480,6 +481,9 @@ function App() {
 
         {/* Crown Smart Gateway - Phase 1 */}
         <Route path="/admin/gateway" element={<CrownSmartGateway />} />
+
+        {/* GM Login - Password Authentication */}
+        <Route path="/admin/gm-login" element={<GMLoginPage />} />
 
         {/* GM Control Panel - Absolute Control & View-As */}
         <Route

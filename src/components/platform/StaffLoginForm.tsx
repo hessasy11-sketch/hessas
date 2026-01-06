@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Phone, Key, Eye, EyeOff, Crown, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useStaffManagement } from '../../hooks/useStaffManagement';
 
 interface StaffLoginFormProps {
@@ -7,6 +8,7 @@ interface StaffLoginFormProps {
 }
 
 export default function StaffLoginForm({ onLoginSuccess }: StaffLoginFormProps) {
+  const navigate = useNavigate();
   const { verifyLogin } = useStaffManagement('');
 
   const [phone, setPhone] = useState('');
@@ -147,7 +149,16 @@ export default function StaffLoginForm({ onLoginSuccess }: StaffLoginFormProps) 
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+            <button
+              onClick={() => navigate('/admin/gm-login')}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+              disabled={loading}
+            >
+              <Crown className="w-5 h-5" />
+              <span>دخول المدير العام</span>
+            </button>
+
             <p className="text-sm text-center text-gray-600">
               لا تملك حساباً؟ تواصل مع المدير العام
             </p>
