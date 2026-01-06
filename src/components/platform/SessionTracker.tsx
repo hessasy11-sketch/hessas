@@ -17,7 +17,7 @@ export function SessionTracker() {
 
       if (minutes <= 0) {
         adminSessionManager.destroySession();
-        navigate('/admin/access', { replace: true });
+        navigate('/admin/gateway', { replace: true });
       } else if (minutes <= 10) {
         setShowWarning(true);
       } else {
@@ -30,7 +30,7 @@ export function SessionTracker() {
 
   const handleLogout = () => {
     adminSessionManager.destroySession();
-    navigate('/admin/access', { replace: true });
+    navigate('/admin/gateway', { replace: true });
   };
 
   if (!showWarning) return null;
