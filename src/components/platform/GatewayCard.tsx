@@ -1,96 +1,83 @@
-import { LucideIcon, CheckCircle, AlertTriangle, AlertCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, LucideIcon } from 'lucide-react';
 
-interface Props {
-  title: string;
-  icon: LucideIcon;
-  status: 'stable' | 'warning' | 'critical' | 'loading';
-  message: string;
-  onClick: () => void;
+interface KPI {
+  label: string;
+  value: number | string;
+  loading?: boolean;
 }
 
-export default function GatewayCard({ title, icon: Icon, status, message, onClick }: Props) {
-  const statusConfig = {
-    stable: {
-      gradient: 'from-emerald-500 to-teal-600',
-      bgGradient: 'from-emerald-50 to-teal-50',
-      borderColor: 'border-emerald-300',
-      icon: CheckCircle,
-      iconColor: 'text-emerald-600',
-      badgeBg: 'bg-emerald-100',
-      badgeText: 'text-emerald-800',
-      pulse: false
-    },
-    warning: {
-      gradient: 'from-amber-500 to-orange-600',
-      bgGradient: 'from-amber-50 to-orange-50',
-      borderColor: 'border-amber-300',
-      icon: AlertTriangle,
-      iconColor: 'text-amber-600',
-      badgeBg: 'bg-amber-100',
-      badgeText: 'text-amber-800',
-      pulse: true
-    },
-    critical: {
-      gradient: 'from-red-500 to-rose-600',
-      bgGradient: 'from-red-50 to-rose-50',
-      borderColor: 'border-red-400',
-      icon: AlertCircle,
-      iconColor: 'text-red-600',
-      badgeBg: 'bg-red-100',
-      badgeText: 'text-red-800',
-      pulse: true
-    },
-    loading: {
-      gradient: 'from-gray-400 to-slate-500',
-      bgGradient: 'from-gray-50 to-slate-50',
-      borderColor: 'border-gray-300',
-      icon: CheckCircle,
-      iconColor: 'text-gray-400',
-      badgeBg: 'bg-gray-100',
-      badgeText: 'text-gray-600',
-      pulse: false
-    }
-  };
+interface GatewayCardProps {
+  title: string;
+  subtitle: string;
+  icon: LucideIcon;
+  iconGradient: string;
+  borderColor: string;
+  kpis: KPI[];
+  onEnter: () => void;
+  loading?: boolean;
+}
 
-  const config = statusConfig[status];
-  const StatusIcon = config.icon;
-
+export default function GatewayCard({
+  title,
+  subtitle,
+  icon: Icon,
+  iconGradient,
+  borderColor,
+  kpis,
+  onEnter,
+  loading = false
+}: GatewayCardProps) {
   return (
-    <button
-      onClick={onClick}
-      disabled={status === 'loading'}
-      className={`group relative bg-gradient-to-br ${config.bgGradient} rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 ${config.borderColor} overflow-hidden hover:scale-[1.02] active:scale-[0.98] text-right w-full`}
-    >
-      {/* خلفية متحركة عند التحذير */}
-      {config.pulse && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 animate-pulse`}></div>
-      )}
+    <div className="group relative">
+      <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient} rounded-3xl blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-500`} />
 
-      <div className="relative">
-        {/* الأيقونة الرئيسية */}
-        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 mb-5`}>
-          <Icon className="w-8 h-8 text-white" />
-        </div>
+      <div className={`relative bg-white rounded-3xl border-2 ${borderColor} shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden`}>
+        <div className="p-8">
+          {/* Header */}
+          <div className="flex items-start gap-5 mb-8">
+            <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${iconGradient} flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+              <Icon className="w-10 h-10 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">
+                {title}
+              </h3>
+              <p className="text-slate-500 text-sm">{subtitle}</p>
+            </div>
+          </div>
 
-        {/* العنوان */}
-        <h3 className="text-xl font-bold text-gray-900 mb-3">
-          {title}
-        </h3>
+          {/* KPIs - 3 Indicators */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            {kpis.slice(0, 3).map((kpi, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-5 border border-slate-200 hover:border-slate-300 transition-all"
+              >
+                <div className="text-xs text-slate-600 font-medium mb-2">
+                  {kpi.label}
+                </div>
+                <div className="text-3xl font-bold text-slate-900">
+                  {kpi.loading ? (
+                    <div className="animate-pulse">...</div>
+                  ) : (
+                    <span>{typeof kpi.value === 'number' ? kpi.value.toLocaleString() : kpi.value}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {/* شارة الحالة */}
-        <div className={`inline-flex items-center gap-2 ${config.badgeBg} ${config.badgeText} px-4 py-2 rounded-full mb-4`}>
-          <StatusIcon className={`w-4 h-4 ${config.iconColor}`} />
-          <span className="font-bold text-sm">{message}</span>
-        </div>
-
-        {/* زر الدخول */}
-        <div className="flex items-center justify-between pt-4 border-t-2 border-gray-200/50">
-          <span className="font-bold text-gray-700 group-hover:text-gray-900 transition-colors">
-            الدخول التنفيذي
-          </span>
-          <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
+          {/* Enter Button */}
+          <button
+            onClick={onEnter}
+            disabled={loading}
+            className={`w-full flex items-center justify-center gap-3 px-8 py-5 bg-gradient-to-r ${iconGradient} text-white rounded-2xl font-bold text-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed group-hover:shadow-2xl`}
+          >
+            <span>دخول الغرفة</span>
+            <ArrowLeft className="w-6 h-6 group-hover:translate-x-[-4px] transition-transform" />
+          </button>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
