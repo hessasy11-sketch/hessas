@@ -1,8 +1,10 @@
 import { useExecutivePulse } from '../../hooks/useExecutivePulse';
-import { Activity, AlertTriangle, DollarSign, Calendar, Clock, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Activity, AlertTriangle, DollarSign, Calendar, Clock, TrendingUp, CheckCircle, XCircle, Radar, Sprout, Gavel, ArrowRight } from 'lucide-react';
 
 export default function ExecutivePulse() {
   const { data, loading, error } = useExecutivePulse();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -30,6 +32,10 @@ export default function ExecutivePulse() {
   }
 
   if (!data) return null;
+
+  const pulseData = data.pulse;
+  const b2fRadar = data.b2f_radar;
+  const b2bRadar = data.b2b_radar;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-SA', {
@@ -85,7 +91,7 @@ export default function ExecutivePulse() {
           </div>
           <div className="text-right">
             <p className="text-xs text-blue-100 mb-1">آخر تحديث</p>
-            <p className="text-sm font-medium">{formatDate(data.last_updated)}</p>
+            <p className="text-sm font-medium">{formatDate(pulseData.last_updated)}</p>
             <div className="flex items-center gap-1 mt-2 text-xs text-blue-100">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span>تحديث تلقائي</span>
@@ -107,7 +113,7 @@ export default function ExecutivePulse() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm mb-1">المزارع النشطة</h3>
-          <p className="text-4xl font-bold text-gray-900">{data.active_farms}</p>
+          <p className="text-4xl font-bold text-gray-900">{pulseData.active_farms}</p>
           <p className="text-xs text-gray-500 mt-2">مزرعة تعمل بشكل طبيعي</p>
         </div>
 
@@ -122,7 +128,7 @@ export default function ExecutivePulse() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm mb-1">المزارع المتعثرة</h3>
-          <p className="text-4xl font-bold text-gray-900">{data.struggling_farms}</p>
+          <p className="text-4xl font-bold text-gray-900">{pulseData.struggling_farms}</p>
           <p className="text-xs text-gray-500 mt-2">مزرعة موقوفة أو في صيانة</p>
         </div>
 
@@ -138,7 +144,7 @@ export default function ExecutivePulse() {
           </div>
           <h3 className="text-gray-600 text-sm mb-1">إجمالي المصروفات</h3>
           <p className="text-4xl font-bold text-gray-900">
-            {formatCurrency(data.total_expenses)}
+            {formatCurrency(pulseData.total_expenses)}
           </p>
           <p className="text-xs text-gray-500 mt-2">المصروفات المعتمدة خلال شهر</p>
         </div>
@@ -154,7 +160,7 @@ export default function ExecutivePulse() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm mb-1">الحجوزات اليوم</h3>
-          <p className="text-4xl font-bold text-gray-900">{data.bookings_today}</p>
+          <p className="text-4xl font-bold text-gray-900">{pulseData.bookings_today}</p>
           <p className="text-xs text-gray-500 mt-2">طلب حجز جديد اليوم</p>
         </div>
 
@@ -169,7 +175,7 @@ export default function ExecutivePulse() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm mb-1">القرارات المعلقة</h3>
-          <p className="text-4xl font-bold text-gray-900">{data.pending_decisions}</p>
+          <p className="text-4xl font-bold text-gray-900">{pulseData.pending_decisions}</p>
           <p className="text-xs text-gray-500 mt-2">قرار بانتظار المراجعة</p>
         </div>
 
@@ -185,7 +191,7 @@ export default function ExecutivePulse() {
           </div>
           <h3 className="text-gray-600 text-sm mb-1">معدل النشاط</h3>
           <p className="text-4xl font-bold text-gray-900">
-            {data.active_farms + data.bookings_today}
+            {pulseData.active_farms + pulseData.bookings_today}
           </p>
           <p className="text-xs text-gray-500 mt-2">إجمالي التفاعلات اليوم</p>
         </div>
@@ -206,9 +212,9 @@ export default function ExecutivePulse() {
         </div>
 
         <div className="p-6">
-          {data.recent_events && data.recent_events.length > 0 ? (
+          {pulseData.recent_events && pulseData.recent_events.length > 0 ? (
             <div className="space-y-4">
-              {data.recent_events.map((event, index) => (
+              {pulseData.recent_events.map((event, index) => (
                 <div
                   key={event.id}
                   className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
@@ -224,7 +230,7 @@ export default function ExecutivePulse() {
                         <XCircle className="w-5 h-5 text-red-600" />
                       )}
                     </div>
-                    {index < data.recent_events.length - 1 && (
+                    {index < pulseData.recent_events.length - 1 && (
                       <div className="w-0.5 h-8 bg-gray-200 mt-2"></div>
                     )}
                   </div>
@@ -264,6 +270,261 @@ export default function ExecutivePulse() {
               <p className="text-sm">سيتم عرض الأحداث هنا عند تنفيذ العمليات</p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Section Radars */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* B2F Radar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 border-b border-green-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
+                <Sprout className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-green-900">Radar استثمار المزارع (B2F)</h3>
+                <p className="text-sm text-green-600">مراقبة المزارع والعمليات</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* مزارع تحتاج تدخل */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  مزارع تحتاج تدخل
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2fRadar.farms_need_attention?.length || 0}
+                </span>
+              </div>
+              {b2fRadar.farms_need_attention && b2fRadar.farms_need_attention.length > 0 ? (
+                <div className="space-y-2">
+                  {b2fRadar.farms_need_attention.map((farm) => (
+                    <div
+                      key={farm.id}
+                      onClick={() => navigate(`/admin/operations-room/b2f/farms/${farm.id}`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-red-50 hover:bg-red-100 cursor-pointer transition-colors border border-red-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{farm.name}</p>
+                        <p className="text-xs text-red-600">{farm.issue}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-red-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزارع تحتاج تدخل</p>
+              )}
+            </div>
+
+            {/* مزارع جديدة */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-500" />
+                  مزارع جديدة
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2fRadar.new_farms?.length || 0}
+                </span>
+              </div>
+              {b2fRadar.new_farms && b2fRadar.new_farms.length > 0 ? (
+                <div className="space-y-2">
+                  {b2fRadar.new_farms.map((farm) => (
+                    <div
+                      key={farm.id}
+                      onClick={() => navigate(`/admin/operations-room/b2f/farms/${farm.id}`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors border border-blue-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{farm.name}</p>
+                        <p className="text-xs text-blue-600">
+                          منذ {Math.floor(farm.days_old)} يوم
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-blue-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزارع جديدة</p>
+              )}
+            </div>
+
+            {/* مزارع عالية المصروف */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-orange-500" />
+                  مزارع عالية المصروف
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2fRadar.high_expense_farms?.length || 0}
+                </span>
+              </div>
+              {b2fRadar.high_expense_farms && b2fRadar.high_expense_farms.length > 0 ? (
+                <div className="space-y-2">
+                  {b2fRadar.high_expense_farms.map((farm) => (
+                    <div
+                      key={farm.id}
+                      onClick={() => navigate(`/admin/operations-room/b2f/farms/${farm.id}`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-orange-50 hover:bg-orange-100 cursor-pointer transition-colors border border-orange-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{farm.name}</p>
+                        <p className="text-xs text-orange-600">
+                          {formatCurrency(farm.total_expenses)} ({farm.expense_count} مصروف)
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-orange-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزارع عالية المصروف</p>
+              )}
+            </div>
+
+            {/* Button to B2F Operations Room */}
+            <button
+              onClick={() => navigate('/admin/operations-room/b2f')}
+              className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center gap-2"
+            >
+              <Radar className="w-5 h-5" />
+              غرفة عمليات المزارع
+            </button>
+          </div>
+        </div>
+
+        {/* B2B Radar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-50 to-amber-100 p-6 border-b border-amber-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
+                <Gavel className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-amber-900">Radar مزاد الشركات (B2B)</h3>
+                <p className="text-sm text-amber-600">مراقبة المزادات والعطاءات</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* مزادات حرجة */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  مزادات حرجة
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2bRadar.critical_auctions?.length || 0}
+                </span>
+              </div>
+              {b2bRadar.critical_auctions && b2bRadar.critical_auctions.length > 0 ? (
+                <div className="space-y-2">
+                  {b2bRadar.critical_auctions.map((auction) => (
+                    <div
+                      key={auction.id}
+                      onClick={() => navigate(`/admin/operations-room/b2b`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-red-50 hover:bg-red-100 cursor-pointer transition-colors border border-red-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{auction.title}</p>
+                        <p className="text-xs text-red-600">
+                          {auction.reports_count} تقرير معلق
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-red-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزادات حرجة</p>
+              )}
+            </div>
+
+            {/* مزادات متوقفة */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <XCircle className="w-4 h-4 text-gray-500" />
+                  مزادات متوقفة
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2bRadar.stopped_auctions?.length || 0}
+                </span>
+              </div>
+              {b2bRadar.stopped_auctions && b2bRadar.stopped_auctions.length > 0 ? (
+                <div className="space-y-2">
+                  {b2bRadar.stopped_auctions.map((auction) => (
+                    <div
+                      key={auction.id}
+                      onClick={() => navigate(`/admin/operations-room/b2b`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors border border-gray-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{auction.title}</p>
+                        <p className="text-xs text-gray-600">{auction.reason}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزادات متوقفة</p>
+              )}
+            </div>
+
+            {/* مزادات قريبة الإغلاق */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-yellow-500" />
+                  مزادات قريبة الإغلاق
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {b2bRadar.closing_soon_auctions?.length || 0}
+                </span>
+              </div>
+              {b2bRadar.closing_soon_auctions && b2bRadar.closing_soon_auctions.length > 0 ? (
+                <div className="space-y-2">
+                  {b2bRadar.closing_soon_auctions.map((auction) => (
+                    <div
+                      key={auction.id}
+                      onClick={() => navigate(`/admin/operations-room/b2b`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 cursor-pointer transition-colors border border-yellow-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{auction.title}</p>
+                        <p className="text-xs text-yellow-600">
+                          {Math.floor(auction.hours_left)} ساعة متبقية | {auction.current_bids} عرض
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-yellow-600" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-3">لا توجد مزادات قريبة الإغلاق</p>
+              )}
+            </div>
+
+            {/* Button to B2B Operations Room */}
+            <button
+              onClick={() => navigate('/admin/operations-room/b2b')}
+              className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl font-semibold hover:from-amber-700 hover:to-amber-800 transition-all flex items-center justify-center gap-2"
+            >
+              <Radar className="w-5 h-5" />
+              غرفة عمليات المزادات
+            </button>
+          </div>
         </div>
       </div>
     </div>

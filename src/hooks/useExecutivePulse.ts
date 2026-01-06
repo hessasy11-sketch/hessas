@@ -23,22 +23,89 @@ interface ExecutivePulseData {
   last_updated: string;
 }
 
+interface FarmNeedAttention {
+  id: string;
+  name: string;
+  status: string;
+  issue: string;
+  pending_decisions: number;
+}
+
+interface NewFarm {
+  id: string;
+  name: string;
+  created_at: string;
+  status: string;
+  days_old: number;
+}
+
+interface HighExpenseFarm {
+  id: string;
+  name: string;
+  total_expenses: number;
+  expense_count: number;
+  avg_expense: number;
+}
+
+interface B2FRadarData {
+  farms_need_attention: FarmNeedAttention[];
+  new_farms: NewFarm[];
+  high_expense_farms: HighExpenseFarm[];
+}
+
+interface CriticalAuction {
+  id: string;
+  title: string;
+  status: string;
+  reports_count: number;
+  issue: string;
+}
+
+interface StoppedAuction {
+  id: string;
+  title: string;
+  status: string;
+  stopped_at: string;
+  reason: string;
+}
+
+interface ClosingSoonAuction {
+  id: string;
+  title: string;
+  status: string;
+  ends_at: string;
+  hours_left: number;
+  current_bids: number;
+}
+
+interface B2BRadarData {
+  critical_auctions: CriticalAuction[];
+  stopped_auctions: StoppedAuction[];
+  closing_soon_auctions: ClosingSoonAuction[];
+}
+
+interface CompleteDashboardData {
+  pulse: ExecutivePulseData;
+  b2f_radar: B2FRadarData;
+  b2b_radar: B2BRadarData;
+}
+
 export function useExecutivePulse() {
-  const [data, setData] = useState<ExecutivePulseData | null>(null);
+  const [data, setData] = useState<CompleteDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
       const { data: result, error: err } = await supabase
-        .rpc('get_executive_pulse');
+        .rpc('get_complete_executive_dashboard');
 
       if (err) throw err;
 
       setData(result);
       setError(null);
     } catch (err: any) {
-      console.error('Error loading executive pulse:', err);
+      console.error('Error loading executive dashboard:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -138,6 +205,23 @@ export function useExecutivePulse() {
       )
       .subscribe();
     subscriptions.push(logsChannel);
+
+    // الاشتراك في تغييرات المزادات (B2B Radar)
+    const auctionsChannel = supabase
+      .channel('executive-pulse-auctions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'auctions'
+        },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+    subscriptions.push(auctionsChannel);
 
     return () => {
       clearInterval(interval);
