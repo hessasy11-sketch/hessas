@@ -25,7 +25,7 @@ import FarmTeamManagement from './FarmTeamManagement';
 import FarmTasksManagement from './FarmTasksManagement';
 import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
 import EquipmentView from '../B2F/farmCommand/EquipmentView';
-import FinanceCalculatorView from '../B2F/farmCommand/FinanceCalculatorView';
+import FinancialLedgerTab from '../B2F/tabs/FinancialLedgerTab';
 import ActivityTimelineTab from './ActivityTimelineTab';
 import FarmDailySummaryCard from './FarmDailySummaryCard';
 import FarmContractsCard from './FarmContractsCard';
@@ -540,7 +540,7 @@ export default function FarmDetailPage() {
             )}
 
             {activeTab === 'calculator' && (
-              <FinanceCalculatorView farmId={farmId!} />
+              <FinancialLedgerTab farmId={farmId!} />
             )}
 
             {activeTab === 'timeline' && (
