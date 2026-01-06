@@ -55,6 +55,7 @@ import TaskDetailsPage from './components/platform/TaskDetailsPage';
 import GMControlPanel from './components/platform/GMControlPanel';
 import StaffManagementPanel from './components/platform/StaffManagementPanel';
 import ViewAsBanner from './components/platform/ViewAsBanner';
+import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
 import { ImpersonationProvider } from './contexts/ImpersonationContext';
 import { usePWA } from './hooks/usePWA';
@@ -528,6 +529,18 @@ function App() {
           <GatewayGuard>
             <SessionGuard>
               <TaskDetailsPage />
+            </SessionGuard>
+          </GatewayGuard>
+        }
+      />
+
+      {/* Farm Manager Dashboard */}
+      <Route
+        path="/admin/farm-manager-dashboard"
+        element={
+          <GatewayGuard>
+            <SessionGuard>
+              <FarmManagerDashboard />
             </SessionGuard>
           </GatewayGuard>
         }

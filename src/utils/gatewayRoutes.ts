@@ -64,6 +64,15 @@ export const GATEWAY_ROUTE_MAPPINGS: RouteMapping[] = [
     defaultRoute: '/admin/b2f/farms'
   },
   {
+    cardKey: 'farm_manager_dashboard',
+    allowedRoles: ['farm_manager'],
+    allowedRoutes: [
+      '/admin/farm-manager-dashboard',
+      '/admin/farm/:farmId/*'
+    ],
+    defaultRoute: '/admin/farm-manager-dashboard'
+  },
+  {
     cardKey: 'my_work',
     allowedRoles: ['ALL'],
     allowedRoutes: [
