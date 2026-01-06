@@ -110,13 +110,18 @@ export default function AssignFarmManagerModal({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('exec_assign_authority', {
-        p_staff_id: selectedStaffId,
-        p_authority_role: 'FARM_MANAGER',
-        p_assigned_by: 'system',
-        p_is_temporary: false,
-        p_temporary_days: null,
-        p_notes: `تعيين مدير لمزرعة ${farm.name}`
+      // Get current user/staff ID from session
+      const currentStaffId = sessionStorage.getItem('current_staff_id');
+      if (!currentStaffId) {
+        alert('لا يمكن تحديد هوية المستخدم');
+        return;
+      }
+
+      // Use new farm_command_assign_manager_v2 with auto team seeding
+      const { data, error } = await supabase.rpc('farm_command_assign_manager_v2', {
+        p_user_id: currentStaffId,
+        p_farm_id: farm.id,
+        p_new_manager_id: selectedStaffId
       });
 
       if (error) throw error;
@@ -125,9 +130,10 @@ export default function AssignFarmManagerModal({
         setAssignSuccess(true);
         setTimeout(() => {
           onClose();
+          window.location.reload(); // Refresh to show updated data
         }, 2000);
       } else {
-        alert(data?.message || 'فشل التعيين');
+        alert(data?.message_ar || data?.message || 'فشل التعيين');
       }
     } catch (error) {
       console.error('Error assigning staff:', error);
@@ -161,7 +167,7 @@ export default function AssignFarmManagerModal({
               </div>
             </div>
             <h3 className="text-2xl font-bold text-white text-center mb-2">تم التعيين بنجاح</h3>
-            <p className="text-emerald-100 text-center text-sm">تم تعيين مدير المزرعة بنجاح</p>
+            <p className="text-emerald-100 text-center text-sm">تم تعيين مدير المزرعة وإنشاء هيكل الفريق تلقائياً</p>
           </div>
 
           <div className="p-6">
@@ -262,6 +268,7 @@ export default function AssignFarmManagerModal({
                     <div className="text-sm text-blue-900">
                       <p className="font-bold mb-1">ملاحظة:</p>
                       <p>سيتم تعيين الموظف كمدير لهذه المزرعة وستُمنح له الصلاحيات الكاملة لإدارتها.</p>
+                      <p className="mt-2 text-xs text-blue-700">سيتم تلقائياً إنشاء هيكل الفريق (مشرف حقل، مهندس زراعي، فني، عامل) كمقاعد شاغرة يمكن ملؤها لاحقاً.</p>
                     </div>
                   </div>
                 </div>
