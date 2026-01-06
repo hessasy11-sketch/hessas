@@ -39,6 +39,7 @@ import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import DecisionAuthoritiesView from './components/platform/DecisionAuthoritiesView';
+import ExecutivePulse from './components/platform/ExecutivePulse';
 import ExecutiveLogsView from './components/platform/ExecutiveLogsView';
 import DecisionQueuePanel from './components/platform/DecisionQueuePanel';
 import ExecutiveDecisionsLog from './components/platform/ExecutiveDecisionsLog';
@@ -481,6 +482,17 @@ function App() {
           </SessionGuard>
         }
       />
+
+      {/* Executive Pulse Dashboard */}
+      <Route
+        path="/admin/operations-room/global"
+        element={
+          <SessionGuard>
+            <ExecutivePulse />
+          </SessionGuard>
+        }
+      />
+
       <Route
         path="/admin/operations-room/decisions"
         element={
