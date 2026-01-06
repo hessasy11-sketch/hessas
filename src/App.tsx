@@ -48,6 +48,7 @@ import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalD
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
+import CrownSmartGateway from './components/platform/CrownSmartGateway';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard } from './components/guards';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
@@ -468,6 +469,9 @@ function App() {
     <Routes>
       {/* Public route: Invite acceptance (no session required) */}
       <Route path="/admin/invite" element={<InviteAcceptancePage />} />
+
+      {/* Crown Smart Gateway - Phase 1 */}
+      <Route path="/admin/gateway" element={<CrownSmartGateway />} />
 
       {/* ============================================
           OPERATIONS ROOM ROUTES (Session + Role-based)

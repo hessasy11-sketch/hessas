@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Globe } from 'lucide-react';
+import { Globe, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import RootAccessBadge from './platform/RootAccessBadge';
 import { HiddenAdminButton } from './platform/HiddenAdminButton';
 
@@ -11,9 +12,14 @@ interface HeaderProps {
 export function Header({ onNavigate }: HeaderProps) {
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const { isPlatformOwner } = useAuth();
+  const navigate = useNavigate();
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
+  };
+
+  const handleCrownClick = () => {
+    navigate('/admin/gateway');
   };
 
   return (
@@ -31,6 +37,17 @@ export function Header({ onNavigate }: HeaderProps) {
         <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
           <div className="flex items-center gap-2">
             <HiddenAdminButton />
+            <button
+              onClick={handleCrownClick}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-purple-900 bg-gradient-to-r from-yellow-100 to-yellow-200 hover:from-yellow-200 hover:to-yellow-300 backdrop-blur-sm border border-yellow-300 transition-all shadow-md hover:shadow-lg"
+              style={{
+                boxShadow: '0 2px 8px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              }}
+              title="بوابة الدخول الذكية"
+            >
+              <Crown className="w-4 sm:w-4 h-4 sm:h-4 text-yellow-600" />
+              <span className="hidden sm:inline font-bold">البوابة</span>
+            </button>
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-emerald-900 bg-white/70 hover:bg-white/90 backdrop-blur-sm border border-white/30 transition-all shadow-sm hover:shadow-md"
