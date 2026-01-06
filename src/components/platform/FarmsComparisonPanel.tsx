@@ -9,7 +9,11 @@ import {
   Star,
   ArrowRight,
   RefreshCw,
-  BarChart3
+  BarChart3,
+  UserX,
+  BanIcon,
+  DollarSign,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -39,6 +43,12 @@ export default function FarmsComparisonPanel() {
   const [data, setData] = useState<ComparisonData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [creatingDecision, setCreatingDecision] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   useEffect(() => {
     loadComparison();
@@ -59,6 +69,47 @@ export default function FarmsComparisonPanel() {
       console.error('Error loading farms comparison:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createDecision = async (farmId: string, farmName: string, decisionType: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // منع فتح صفحة المزرعة
+
+    const key = `${farmId}-${decisionType}`;
+    setCreatingDecision(key);
+
+    try {
+      const { data: result, error } = await supabase.rpc('create_farm_decision', {
+        p_farm_id: farmId,
+        p_decision_type: decisionType,
+        p_notes: `تم إنشاء القرار تلقائياً من لوحة المقارنة للمزرعة: ${farmName}`
+      });
+
+      if (error) throw error;
+
+      setToast({
+        show: true,
+        message: result.message || 'تم إنشاء القرار بنجاح',
+        type: 'success'
+      });
+
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: 'success' });
+      }, 4000);
+
+    } catch (error: any) {
+      console.error('Error creating decision:', error);
+      setToast({
+        show: true,
+        message: 'حدث خطأ أثناء إنشاء القرار',
+        type: 'error'
+      });
+
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: 'success' });
+      }, 4000);
+    } finally {
+      setCreatingDecision(null);
     }
   };
 
@@ -209,42 +260,91 @@ export default function FarmsComparisonPanel() {
           <div className="space-y-3">
             {data.needs_attention && data.needs_attention.length > 0 ? (
               data.needs_attention.map((farm) => (
-                <button
+                <div
                   key={farm.farm_id}
-                  onClick={() => handleFarmClick(farm.farm_id)}
-                  className="w-full bg-white hover:bg-red-50 border-2 border-red-200 hover:border-red-400 rounded-lg p-4 transition-all cursor-pointer text-right group"
+                  className="bg-white border-2 border-red-200 rounded-lg p-4"
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="flex-shrink-0">
-                        <TrendingDown className="w-6 h-6 text-red-500" />
+                  <button
+                    onClick={() => handleFarmClick(farm.farm_id)}
+                    className="w-full hover:bg-red-50 rounded-lg p-2 -m-2 transition-all cursor-pointer text-right group mb-3"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex-shrink-0">
+                          <TrendingDown className="w-6 h-6 text-red-500" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-900 group-hover:text-red-700 transition-colors">
+                            {farm.farm_name}
+                          </h4>
+                          <p className="text-xs text-slate-500">
+                            {farm.farm_city} • {farm.farm_location}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-slate-900 group-hover:text-red-700 transition-colors">
-                          {farm.farm_name}
-                        </h4>
-                        <p className="text-xs text-slate-500">
-                          {farm.farm_city} • {farm.farm_location}
-                        </p>
-                      </div>
+                      <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-red-600 transition-colors flex-shrink-0" />
                     </div>
-                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-red-600 transition-colors flex-shrink-0" />
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-2xl font-black ${getScoreColor(farm.total_score)}`}>
-                        {farm.total_score}
-                      </span>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeStyles(farm.badge_color)}`}>
-                        {farm.badge}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-2xl font-black ${getScoreColor(farm.total_score)}`}>
+                          {farm.total_score}
+                        </span>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeStyles(farm.badge_color)}`}>
+                          {farm.badge}
+                        </span>
+                      </div>
+                      <span className="text-xs text-red-700 bg-red-100 px-2 py-1 rounded font-medium">
+                        {farm.main_issue}
                       </span>
                     </div>
-                    <span className="text-xs text-red-700 bg-red-100 px-2 py-1 rounded font-medium">
-                      {farm.main_issue}
-                    </span>
+                  </button>
+
+                  {/* Quick Decision Actions */}
+                  <div className="pt-3 border-t border-red-100">
+                    <p className="text-xs text-slate-600 font-medium mb-2">إجراءات سريعة:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={(e) => createDecision(farm.farm_id, farm.farm_name, 'change_farm_manager', e)}
+                        disabled={creatingDecision === `${farm.farm_id}-change_farm_manager`}
+                        className="flex items-center justify-center gap-1 px-2 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded text-xs font-bold transition-colors"
+                      >
+                        {creatingDecision === `${farm.farm_id}-change_farm_manager` ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <UserX className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">تغيير مدير</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => createDecision(farm.farm_id, farm.farm_name, 'suspend_bookings', e)}
+                        disabled={creatingDecision === `${farm.farm_id}-suspend_bookings`}
+                        className="flex items-center justify-center gap-1 px-2 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded text-xs font-bold transition-colors"
+                      >
+                        {creatingDecision === `${farm.farm_id}-suspend_bookings` ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <BanIcon className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">إيقاف حجوزات</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => createDecision(farm.farm_id, farm.farm_name, 'financial_review', e)}
+                        disabled={creatingDecision === `${farm.farm_id}-financial_review`}
+                        className="flex items-center justify-center gap-1 px-2 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded text-xs font-bold transition-colors"
+                      >
+                        {creatingDecision === `${farm.farm_id}-financial_review` ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <DollarSign className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">مراجعة مالية</span>
+                      </button>
+                    </div>
                   </div>
-                </button>
+                </div>
               ))
             ) : (
               <div className="text-center py-8">
@@ -294,6 +394,20 @@ export default function FarmsComparisonPanel() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border-2 ${
+            toast.type === 'success'
+              ? 'bg-green-500 border-green-600 text-white'
+              : 'bg-red-500 border-red-600 text-white'
+          }`}>
+            <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
+            <p className="font-bold">{toast.message}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
