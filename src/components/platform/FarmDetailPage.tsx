@@ -28,6 +28,8 @@ import EquipmentView from '../B2F/farmCommand/EquipmentView';
 import FinanceCalculatorView from '../B2F/farmCommand/FinanceCalculatorView';
 import ActivityTimelineTab from './ActivityTimelineTab';
 import FarmDailySummaryCard from './FarmDailySummaryCard';
+import FarmContractsCard from './FarmContractsCard';
+import ContractDetailsModal from './ContractDetailsModal';
 
 interface FarmDetail {
   id: string;
@@ -63,6 +65,8 @@ export default function FarmDetailPage() {
   const [stats, setStats] = useState<FarmStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+  const [showContractModal, setShowContractModal] = useState(false);
 
   // Get tab from URL or default to 'overview'
   const initialTab = (searchParams.get('tab') as Tab) || 'overview';
@@ -176,6 +180,11 @@ export default function FarmDetailPage() {
     } catch (err: any) {
       alert('حدث خطأ: ' + err.message);
     }
+  };
+
+  const handleViewContract = (contractId: string) => {
+    setSelectedContractId(contractId);
+    setShowContractModal(true);
   };
 
   if (loading) {
@@ -385,6 +394,15 @@ export default function FarmDetailPage() {
                   <FarmDailySummaryCard farmId={farmId!} />
                 </div>
 
+                {/* Contracts Card */}
+                <div className="mb-8">
+                  <FarmContractsCard
+                    farmId={farmId!}
+                    farmName={farm.name}
+                    onViewContract={handleViewContract}
+                  />
+                </div>
+
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {/* Teams */}
@@ -531,6 +549,18 @@ export default function FarmDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Contract Details Modal */}
+      {selectedContractId && (
+        <ContractDetailsModal
+          contractId={selectedContractId}
+          isOpen={showContractModal}
+          onClose={() => {
+            setShowContractModal(false);
+            setSelectedContractId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
