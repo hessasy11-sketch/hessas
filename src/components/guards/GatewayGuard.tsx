@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useGatewayAccess } from '../../hooks/useGatewayAccess';
-import { isAdminRoute, isExemptFromGuard, isRouteAllowedForUser } from '../../utils/gatewayRoutes';
-import { Shield, AlertTriangle } from 'lucide-react';
+import { isAdminRoute, isExemptFromGuard, isRouteAllowedForRole } from '../../utils/gatewayRoutes';
+import { AlertTriangle } from 'lucide-react';
+
+interface StaffSession {
+  staffId: string;
+  staffName: string;
+  role: string;
+  department?: string;
+  loginAt: string;
+}
 
 interface Props {
   children: React.ReactNode;
@@ -11,81 +18,71 @@ interface Props {
 export default function GatewayGuard({ children }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isGM, setIsGM] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { cards, loading } = useGatewayAccess(userId || undefined);
 
   useEffect(() => {
     checkAccess();
   }, [location.pathname]);
 
-  const checkAccess = async () => {
+  const checkAccess = () => {
     setChecking(true);
     setError(null);
 
     const currentPath = location.pathname;
 
-    // 1. التحقق: هل المسار إداري؟
     if (!isAdminRoute(currentPath)) {
       setChecking(false);
       return;
     }
 
-    // 2. التحقق: هل المسار مستثنى من الحماية؟
     if (isExemptFromGuard(currentPath)) {
       setChecking(false);
       return;
     }
 
-    // 3. التحقق: هل يوجد session؟
-    const currentUserId = 'current-user-id'; // TODO: get from auth context
-    if (!currentUserId) {
-      setError('لا يوجد جلسة نشطة');
+    const savedSession = localStorage.getItem('staff_session');
+    if (!savedSession) {
+      console.warn('🚫 NO SESSION - Redirecting to gateway');
       navigate('/admin/gateway?error=no_session', { replace: true });
       return;
     }
 
-    setUserId(currentUserId);
+    try {
+      const session: StaffSession = JSON.parse(savedSession);
 
-    // 4. انتظار تحميل البطاقات
-    if (loading) {
-      return;
-    }
+      if (session.role === 'general_manager') {
+        console.log('✅ GM BYPASS - Full access granted');
+        setChecking(false);
+        return;
+      }
 
-    // 5. التحقق: هل المستخدم GM؟
-    const userIsGM = cards.some(card => card.is_gm_access);
-    setIsGM(userIsGM);
+      const hasAccess = isRouteAllowedForRole(currentPath, session.role);
 
-    // 6. إذا كان GM: سماح فوري
-    if (userIsGM) {
+      if (!hasAccess) {
+        console.warn('🚫 ACCESS DENIED:', {
+          role: session.role,
+          path: currentPath,
+          reason: 'Route not allowed for this role'
+        });
+        setError('لا تملك صلاحية للوصول إلى هذه الصفحة');
+        navigate('/admin/gateway?error=access_denied', { replace: true });
+        return;
+      }
+
+      console.log('✅ ACCESS GRANTED:', {
+        role: session.role,
+        path: currentPath
+      });
       setChecking(false);
-      return;
+    } catch (err) {
+      console.error('Error parsing session:', err);
+      localStorage.removeItem('staff_session');
+      navigate('/admin/gateway?error=no_session', { replace: true });
     }
-
-    // 6.5. صفحة "عملي اليوم" مسموحة لأي موظف لديه بطاقات
-    if (currentPath === '/admin/my-work' && cards.length > 0) {
-      setChecking(false);
-      return;
-    }
-
-    // 7. التحقق: هل المسار مسموح للمستخدم؟
-    const userCardKeys = cards.map(card => card.card_key);
-    const hasAccess = isRouteAllowedForUser(currentPath, userCardKeys);
-
-    if (!hasAccess) {
-      setError('لا تملك صلاحية للوصول إلى هذه الصفحة');
-      navigate('/admin/gateway?error=no_permission', { replace: true });
-      return;
-    }
-
-    // 8. السماح بالوصول
-    setChecking(false);
   };
 
-  // شاشة التحميل
-  if (checking || loading) {
+  if (checking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">

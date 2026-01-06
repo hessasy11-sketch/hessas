@@ -1,53 +1,80 @@
-// خريطة المسارات لكل بطاقة في البوابة الذكية
-
 export interface RouteMapping {
   cardKey: string;
+  allowedRoles: string[];
   allowedRoutes: string[];
   defaultRoute: string;
 }
 
 export const GATEWAY_ROUTE_MAPPINGS: RouteMapping[] = [
   {
-    cardKey: 'command_room',
+    cardKey: 'executive_command',
+    allowedRoles: ['general_manager'],
     allowedRoutes: [
-      '/admin/operations-room/hub',
       '/admin/operations-room/global',
       '/admin/operations-room/decisions',
-      '/admin/operations-room/authorities',
+      '/admin/operations-room/executive-log',
       '/admin/operations-room/logs',
-      '/admin/operations-room/*'
+      '/admin/operations-room/authorities',
+      '/admin/hq',
+      '/admin/hq/*'
     ],
-    defaultRoute: '/admin/operations-room/hub'
+    defaultRoute: '/admin/operations-room/global'
   },
   {
-    cardKey: 'b2f_operations',
+    cardKey: 'b2f_operations_room',
+    allowedRoles: ['general_manager', 'b2f_assistant', 'national_farm_manager'],
     allowedRoutes: [
-      '/admin/b2f',
       '/admin/operations-room/b2f',
-      '/admin/b2f/*'
+      '/admin/b2f/ops-room',
+      '/admin/b2f/ops-room/*'
     ],
-    defaultRoute: '/admin/b2f'
+    defaultRoute: '/admin/operations-room/b2f'
   },
   {
-    cardKey: 'b2b_auctions',
+    cardKey: 'b2b_operations_room',
+    allowedRoles: ['general_manager', 'b2b_assistant', 'auction_supervisor'],
     allowedRoutes: [
-      '/admin/b2b',
       '/admin/operations-room/b2b',
+      '/admin/b2b',
+      '/admin/b2b/*',
       '/admin/auctions',
-      '/admin/b2b/*'
+      '/admin/auctions/*'
     ],
-    defaultRoute: '/admin/b2b'
+    defaultRoute: '/admin/operations-room/b2b'
   },
   {
     cardKey: 'farm_command',
+    allowedRoles: ['general_manager', 'national_farm_manager', 'operations_manager'],
     allowedRoutes: [
+      '/admin/b2f/farm-command',
+      '/admin/b2f/farm-command/*',
       '/admin/farms/operations',
-      '/admin/farms/*'
+      '/admin/farms/setup',
+      '/admin/farms/setup/*'
     ],
-    defaultRoute: '/admin/farms/operations'
+    defaultRoute: '/admin/b2f/farm-command'
   },
   {
-    cardKey: 'financial_management',
+    cardKey: 'farm_workspace',
+    allowedRoles: ['general_manager', 'farm_manager', 'farm_supervisor', 'farm_worker'],
+    allowedRoutes: [
+      '/admin/b2f/farms',
+      '/admin/b2f/farms/*'
+    ],
+    defaultRoute: '/admin/b2f/farms'
+  },
+  {
+    cardKey: 'my_work',
+    allowedRoles: ['ALL'],
+    allowedRoutes: [
+      '/admin/my-work',
+      '/admin/my-work/*'
+    ],
+    defaultRoute: '/admin/my-work'
+  },
+  {
+    cardKey: 'finance_center',
+    allowedRoles: ['general_manager', 'finance_manager', 'accountant', 'finance_assistant'],
     allowedRoutes: [
       '/admin/finance',
       '/admin/finance/*'
@@ -55,7 +82,8 @@ export const GATEWAY_ROUTE_MAPPINGS: RouteMapping[] = [
     defaultRoute: '/admin/finance'
   },
   {
-    cardKey: 'marketing_management',
+    cardKey: 'marketing_center',
+    allowedRoles: ['general_manager', 'marketing_manager', 'marketing_staff'],
     allowedRoutes: [
       '/admin/marketing',
       '/admin/marketing/*'
@@ -63,15 +91,29 @@ export const GATEWAY_ROUTE_MAPPINGS: RouteMapping[] = [
     defaultRoute: '/admin/marketing'
   },
   {
-    cardKey: 'team_management',
+    cardKey: 'partners_vip',
+    allowedRoles: ['general_manager', 'partners_manager'],
     allowedRoutes: [
+      '/admin/partners',
+      '/admin/partners/*'
+    ],
+    defaultRoute: '/admin/partners'
+  },
+  {
+    cardKey: 'staff_permissions',
+    allowedRoles: ['general_manager'],
+    allowedRoutes: [
+      '/admin/settings/staff',
+      '/admin/settings/staff/*',
+      '/admin/settings/gm-control',
       '/admin/team',
       '/admin/team/*'
     ],
-    defaultRoute: '/admin/team'
+    defaultRoute: '/admin/settings/staff'
   },
   {
-    cardKey: 'settings',
+    cardKey: 'platform_settings',
+    allowedRoles: ['general_manager'],
     allowedRoutes: [
       '/admin/settings',
       '/admin/settings/*'
@@ -150,4 +192,33 @@ export function getCardForRoute(route: string): string | null {
     }
   }
   return null;
+}
+
+// دالة للتحقق من الوصول بناءً على الدور مباشرة
+export function isRouteAllowedForRole(route: string, userRole: string): boolean {
+  if (userRole === 'general_manager') {
+    return true;
+  }
+
+  for (const mapping of GATEWAY_ROUTE_MAPPINGS) {
+    const routeMatches = mapping.allowedRoutes.some(allowedRoute => {
+      if (allowedRoute.endsWith('/*')) {
+        const basePath = allowedRoute.slice(0, -2);
+        return route.startsWith(basePath);
+      }
+      return route === allowedRoute;
+    });
+
+    if (routeMatches) {
+      if (mapping.allowedRoles.includes('ALL')) {
+        return true;
+      }
+      if (mapping.allowedRoles.includes(userRole)) {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  return false;
 }
