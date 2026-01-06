@@ -38,6 +38,7 @@ import B2BOperationsView from './components/platform/B2BOperationsView';
 import { AuctionsAdminPage } from './components/platform/AuctionsAdminPage';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
+import DecisionAuthoritiesView from './components/platform/DecisionAuthoritiesView';
 import ExecutiveLogsView from './components/platform/ExecutiveLogsView';
 import DecisionQueuePanel from './components/platform/DecisionQueuePanel';
 import ExecutiveDecisionsLog from './components/platform/ExecutiveDecisionsLog';
@@ -649,6 +650,16 @@ function App() {
         element={
           <SessionGuard>
             <SettingsAdminPage />
+          </SessionGuard>
+        }
+      />
+
+      {/* Decision Authorities (Session required) */}
+      <Route
+        path="/admin/settings/authority"
+        element={
+          <SessionGuard>
+            <DecisionAuthoritiesView />
           </SessionGuard>
         }
       />
