@@ -44,6 +44,7 @@ import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalD
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
+import { SessionGuard, DepartmentGuard, FarmScopeGuard } from './components/guards';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -461,28 +462,202 @@ function MainApp() {
 function App() {
   return (
     <Routes>
+      {/* Public route: Invite acceptance (no session required) */}
       <Route path="/admin/invite" element={<InviteAcceptancePage />} />
 
-      <Route path="/admin/operations-room" element={<OperationsRoomHub />} />
-      <Route path="/admin/operations-room/logs" element={<ExecutiveLogsView />} />
-      <Route path="/admin/operations-room/sensitive-commands" element={<SensitiveCommandsDemo />} />
-      <Route path="/admin/operations-room/b2f" element={<B2FOperationsRoom />} />
-      <Route path="/admin/operations-room/b2b" element={<B2BAuctionsOpsRoom />} />
-      <Route path="/admin/operations-room/finance" element={<FinanceSection />} />
-      <Route path="/admin/operations-room/marketing" element={<MarketingSection />} />
-      <Route path="/admin/operations-room/partners" element={<PartnersSection />} />
-      <Route path="/admin/operations-room/b2f/farms/:farmId" element={<FarmOperationalDetail />} />
+      {/* ============================================
+          OPERATIONS ROOM ROUTES (Session + Role-based)
+          ============================================ */}
 
-      <Route path="/admin/auctions" element={<AuctionsAdminPage />} />
-      <Route path="/admin/b2f" element={<B2FAdminPage />} />
-      <Route path="/admin/b2f/farm-command" element={<FarmCommandCenter />} />
-      <Route path="/admin/b2f/farm-command/farms/:farmId" element={<FarmDetailPage />} />
-      <Route path="/farms/:farmId" element={<FarmSetupPage />} />
-      <Route path="/admin/settings" element={<SettingsAdminPage />} />
+      {/* General Manager / Executive Routes */}
+      <Route
+        path="/admin/operations-room"
+        element={
+          <SessionGuard>
+            <OperationsRoomHub />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/admin/operations-room/logs"
+        element={
+          <SessionGuard>
+            <ExecutiveLogsView />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/admin/operations-room/sensitive-commands"
+        element={
+          <SessionGuard>
+            <SensitiveCommandsDemo />
+          </SessionGuard>
+        }
+      />
 
-      <Route path="/hq" element={<OperationsRoomHub />} />
-      <Route path="/hq/*" element={<OperationsRoomHub />} />
+      {/* B2F Operations Room (Department-restricted) */}
+      <Route
+        path="/admin/operations-room/b2f"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+              <B2FOperationsRoom />
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
 
+      {/* Farm-specific operations (Department + Farm scope) */}
+      <Route
+        path="/admin/operations-room/b2f/farms/:farmId"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+              <FarmScopeGuard farmIdParam="farmId" redirectTo="/admin/b2f">
+                <FarmOperationalDetail />
+              </FarmScopeGuard>
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* B2B Operations Room (Department-restricted) */}
+      <Route
+        path="/admin/operations-room/b2b"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
+              <B2BAuctionsOpsRoom />
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* Finance, Marketing, Partners (Executive/GM only) */}
+      <Route
+        path="/admin/operations-room/finance"
+        element={
+          <SessionGuard>
+            <FinanceSection />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/admin/operations-room/marketing"
+        element={
+          <SessionGuard>
+            <MarketingSection />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/admin/operations-room/partners"
+        element={
+          <SessionGuard>
+            <PartnersSection />
+          </SessionGuard>
+        }
+      />
+
+      {/* ============================================
+          ADMIN SECTION ROUTES (Department-specific)
+          ============================================ */}
+
+      {/* B2B Auctions Admin (Department-restricted) */}
+      <Route
+        path="/admin/auctions"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
+              <AuctionsAdminPage />
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* B2F Admin (Department-restricted) */}
+      <Route
+        path="/admin/b2f"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+              <B2FAdminPage />
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* Farm Command Center (Department-restricted) */}
+      <Route
+        path="/admin/b2f/farm-command"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+              <FarmCommandCenter />
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* Farm Detail (Department + Farm scope) */}
+      <Route
+        path="/admin/b2f/farm-command/farms/:farmId"
+        element={
+          <SessionGuard>
+            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+              <FarmScopeGuard farmIdParam="farmId" redirectTo="/admin/b2f/farm-command">
+                <FarmDetailPage />
+              </FarmScopeGuard>
+            </DepartmentGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* Farm Setup (Farm-scoped) */}
+      <Route
+        path="/farms/:farmId"
+        element={
+          <SessionGuard>
+            <FarmScopeGuard farmIdParam="farmId" redirectTo="/admin/b2f">
+              <FarmSetupPage />
+            </FarmScopeGuard>
+          </SessionGuard>
+        }
+      />
+
+      {/* Admin Settings (Session required) */}
+      <Route
+        path="/admin/settings"
+        element={
+          <SessionGuard>
+            <SettingsAdminPage />
+          </SessionGuard>
+        }
+      />
+
+      {/* ============================================
+          HQ ROUTES (Alias for Operations Room)
+          ============================================ */}
+      <Route
+        path="/hq"
+        element={
+          <SessionGuard>
+            <OperationsRoomHub />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/hq/*"
+        element={
+          <SessionGuard>
+            <OperationsRoomHub />
+          </SessionGuard>
+        }
+      />
+
+      {/* ============================================
+          PUBLIC ROUTES (No protection)
+          ============================================ */}
       <Route path="*" element={<MainApp />} />
     </Routes>
   );
