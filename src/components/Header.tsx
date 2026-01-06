@@ -1,41 +1,21 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Globe, Crown } from 'lucide-react';
-import SecretOwnerLogin from './SecretOwnerLogin';
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
 }
 
 export function Header({ onNavigate }: HeaderProps) {
+  const navigate = useNavigate();
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
-  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
   };
 
-  const handleSecretClick = () => {
-    const newCount = clickCount + 1;
-    setClickCount(newCount);
-
-    if (clickTimerRef.current) {
-      clearTimeout(clickTimerRef.current);
-    }
-
-    if (newCount >= 5) {
-      setShowLoginModal(true);
-      setClickCount(0);
-      if (clickTimerRef.current) {
-        clearTimeout(clickTimerRef.current);
-      }
-      return;
-    }
-
-    clickTimerRef.current = setTimeout(() => {
-      setClickCount(0);
-    }, 3000);
+  const handleGMAccess = () => {
+    navigate('/gm-login');
   };
 
   return (
@@ -53,13 +33,13 @@ export function Header({ onNavigate }: HeaderProps) {
         <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSecretClick}
+              onClick={handleGMAccess}
               className="p-2 rounded-lg transition-all hover:opacity-100"
               style={{
                 opacity: 0.5,
                 background: 'transparent',
               }}
-              title=""
+              title="دخول المدير العام"
             >
               <Crown className="w-4 h-4 text-yellow-300" strokeWidth={2} />
             </button>
@@ -96,11 +76,6 @@ export function Header({ onNavigate }: HeaderProps) {
           </div>
         </div>
       </div>
-
-      <SecretOwnerLogin
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-      />
     </header>
   );
 }

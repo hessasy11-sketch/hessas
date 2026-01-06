@@ -31,6 +31,7 @@ import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
 import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import B2BAuctionsOpsRoom from './components/platform/B2BAuctionsOpsRoom';
 import SimplifiedLogin from './components/SimplifiedLogin';
+import GMLoginPage from './components/platform/GMLoginPage';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -383,6 +384,9 @@ function App() {
 
       {/* صفحة تسجيل الدخول للموظفين */}
       <Route path="/login" element={<SimplifiedLogin />} />
+
+      {/* صفحة تسجيل الدخول للمدير العام */}
+      <Route path="/gm-login" element={<GMLoginPage />} />
 
       {/* مسارات Admin مخفية - للموظفين فقط */}
       <Route path="/admin/farms-manager-dashboard" element={<FarmsManagerDashboard />} />
