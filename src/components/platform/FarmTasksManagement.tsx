@@ -20,6 +20,7 @@ import {
   Search
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import TaskProofManagement from './TaskProofManagement';
 
 interface FarmTask {
   task_id: string;
@@ -40,6 +41,8 @@ interface FarmTask {
   rejected_at: string | null;
   approval_notes: string | null;
   rejection_reason: string | null;
+  requires_proof?: boolean;
+  proof_notes?: string | null;
 }
 
 interface TeamMember {
@@ -416,26 +419,38 @@ export default function FarmTasksManagement({ farmId, farmName }: FarmTasksManag
                   </div>
 
                   {/* Actions */}
-                  {task.status === 'submitted' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleApproveTask(task.task_id)}
-                        disabled={actionLoading === task.task_id}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        اعتماد
-                      </button>
-                      <button
-                        onClick={() => handleRejectTask(task.task_id)}
-                        disabled={actionLoading === task.task_id}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-colors disabled:opacity-50"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        رفض
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {/* Proof Management Component */}
+                    <TaskProofManagement
+                      taskId={task.task_id}
+                      taskTitle={task.title}
+                      taskStatus={task.status}
+                      requiresProof={task.requires_proof || false}
+                      onActionComplete={loadData}
+                    />
+
+                    {/* Legacy Actions (for non-proof tasks) */}
+                    {!task.requires_proof && task.status === 'submitted' && (
+                      <>
+                        <button
+                          onClick={() => handleApproveTask(task.task_id)}
+                          disabled={actionLoading === task.task_id}
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          اعتماد
+                        </button>
+                        <button
+                          onClick={() => handleRejectTask(task.task_id)}
+                          disabled={actionLoading === task.task_id}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-colors disabled:opacity-50"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          رفض
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );
