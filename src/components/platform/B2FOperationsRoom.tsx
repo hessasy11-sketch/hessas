@@ -7,7 +7,8 @@ import {
   RefreshCw,
   AlertTriangle,
   DollarSign,
-  Radar
+  Radar,
+  Layers
 } from 'lucide-react';
 import { useFarmRadar } from '../../hooks/useFarmRadar';
 import FarmRadarCard from './FarmRadarCard';
@@ -15,8 +16,9 @@ import CriticalAlertsPanel from './CriticalAlertsPanel';
 import NewBornFarmsAlert from './NewBornFarmsAlert';
 import ExpenseApprovalsView from './ExpenseApprovalsView';
 import FarmsComparisonPanel from './FarmsComparisonPanel';
+import ClusterMetricsPanel from './ClusterMetricsPanel';
 
-type Tab = 'radar' | 'expenses';
+type Tab = 'radar' | 'clusters' | 'expenses';
 
 export default function B2FOperationsRoom() {
   const navigate = useNavigate();
@@ -81,6 +83,17 @@ export default function B2FOperationsRoom() {
               Farm Radar
             </button>
             <button
+              onClick={() => setActiveTab('clusters')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${
+                activeTab === 'clusters'
+                  ? 'bg-white text-emerald-900 shadow-lg'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              <Layers className="w-5 h-5" />
+              مجموعات المزارع
+            </button>
+            <button
               onClick={() => setActiveTab('expenses')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${
                 activeTab === 'expenses'
@@ -96,7 +109,9 @@ export default function B2FOperationsRoom() {
       </div>
 
       <div className="max-w-[1600px] mx-auto px-6 py-6">
-        {activeTab === 'radar' ? (
+        {activeTab === 'clusters' ? (
+          <ClusterMetricsPanel />
+        ) : activeTab === 'radar' ? (
           <>
             <NewBornFarmsAlert />
 
