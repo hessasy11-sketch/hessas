@@ -30,6 +30,7 @@ import ActivityTimelineTab from './ActivityTimelineTab';
 import FarmDailySummaryCard from './FarmDailySummaryCard';
 import FarmContractsCard from './FarmContractsCard';
 import ContractDetailsModal from './ContractDetailsModal';
+import FarmKPIsPanel from './FarmKPIsPanel';
 
 interface FarmDetail {
   id: string;
@@ -389,6 +390,11 @@ export default function FarmDetailPage() {
           <div className="p-6">
             {activeTab === 'overview' && (
               <>
+                {/* Farm KPIs Panel */}
+                <div className="mb-8">
+                  <FarmKPIsPanel farmId={farmId!} />
+                </div>
+
                 {/* Daily Summary Card */}
                 <div className="mb-8">
                   <FarmDailySummaryCard farmId={farmId!} />
