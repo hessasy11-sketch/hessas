@@ -480,6 +480,35 @@ const FarmCommandCenter: React.FC = () => {
                               <span className="text-gray-500">معلق {expense.days_pending} يوم</span>
                             </div>
                           </div>
+                          <button
+                            onClick={async () => {
+                              const staffId = sessionStorage.getItem('current_staff_id');
+                              if (!staffId) {
+                                alert('الرجاء تسجيل الدخول أولاً');
+                                return;
+                              }
+                              if (!window.confirm('هل تريد إرسال طلب اعتماد هذا المصروف؟')) return;
+                              try {
+                                const { data, error } = await supabase.rpc('request_expense_approval', {
+                                  p_expense_id: expense.expense_id,
+                                  p_requested_by: staffId
+                                });
+                                if (error) throw error;
+                                if (data.success) {
+                                  alert(data.message);
+                                  loadAllData();
+                                } else {
+                                  alert(data.error || 'فشل الطلب');
+                                }
+                              } catch (err: any) {
+                                console.error('Error:', err);
+                                alert('حدث خطأ أثناء إرسال الطلب');
+                              }
+                            }}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium whitespace-nowrap"
+                          >
+                            طلب اعتماد
+                          </button>
                         </div>
                       </div>
                     ))

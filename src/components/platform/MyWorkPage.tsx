@@ -192,11 +192,11 @@ export default function MyWorkPage() {
 
   const filteredTasks = (data?.tasks || []).filter(task => {
     if (activeTab === 'open') {
-      return task.status === 'pending' || task.status === 'in_progress';
+      return task.status === 'new' || task.status === 'in_progress';
     } else if (activeTab === 'awaiting') {
-      return task.status === 'under_review' || task.status === 'awaiting_approval';
+      return task.status === 'submitted';
     } else {
-      return task.status === 'completed';
+      return task.status === 'approved' || task.status === 'rejected';
     }
   });
 
@@ -293,7 +293,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                مفتوحة ({tasks.filter(t => t.status === 'pending' || t.status === 'in_progress').length})
+                مفتوحة ({tasks.filter(t => t.status === 'new' || t.status === 'in_progress').length})
               </button>
               <button
                 onClick={() => setActiveTab('awaiting')}
@@ -303,7 +303,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                بانتظار الاعتماد ({tasks.filter(t => t.status === 'under_review' || t.status === 'awaiting_approval').length})
+                بانتظار الاعتماد ({tasks.filter(t => t.status === 'submitted').length})
               </button>
               <button
                 onClick={() => setActiveTab('completed')}
@@ -313,7 +313,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                مكتملة ({tasks.filter(t => t.status === 'completed').length})
+                مكتملة ({tasks.filter(t => t.status === 'approved' || t.status === 'rejected').length})
               </button>
             </div>
 
@@ -372,7 +372,7 @@ export default function MyWorkPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        {(task.status === 'pending') && (
+                        {(task.status === 'new') && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -389,14 +389,23 @@ export default function MyWorkPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateTaskStatus(task.id, task.taskType, task.taskType === 'farm' ? 'awaiting_approval' : 'under_review');
+                              handleUpdateTaskStatus(task.id, task.taskType, 'submitted');
                             }}
                             disabled={updatingTask === task.id}
                             className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                           >
-                            <Check className="w-3 h-3" />
-                            تم
+                            <FileCheck className="w-3 h-3" />
+                            إرسال للاعتماد
                           </button>
+                        )}
+                        {(task.status === 'submitted') && (
+                          <span className="text-xs text-gray-500 px-3 py-1.5">بانتظار الموافقة...</span>
+                        )}
+                        {(task.status === 'approved') && (
+                          <span className="text-xs text-green-600 px-3 py-1.5 font-medium">✓ تم الاعتماد</span>
+                        )}
+                        {(task.status === 'rejected') && (
+                          <span className="text-xs text-red-600 px-3 py-1.5 font-medium">✗ مرفوضة</span>
                         )}
                       </div>
                     </div>
