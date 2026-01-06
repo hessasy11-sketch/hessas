@@ -40,6 +40,7 @@ import { B2FAdminPage } from './components/platform/B2FAdminPage';
 import { SettingsAdminPage } from './components/platform/SettingsAdminPage';
 import ExecutiveLogsView from './components/platform/ExecutiveLogsView';
 import DecisionQueuePanel from './components/platform/DecisionQueuePanel';
+import ExecutiveDecisionsLog from './components/platform/ExecutiveDecisionsLog';
 import SensitiveCommandsDemo from './components/platform/SensitiveCommandsDemo';
 import FarmOperationalDetail from './components/B2F/farmCommand/FarmOperationalDetail';
 import FarmCommandCenter from './components/platform/FarmCommandCenter';
@@ -484,6 +485,14 @@ function App() {
         element={
           <SessionGuard>
             <DecisionQueuePanel />
+          </SessionGuard>
+        }
+      />
+      <Route
+        path="/admin/operations-room/executive-log"
+        element={
+          <SessionGuard>
+            <ExecutiveDecisionsLog />
           </SessionGuard>
         }
       />
