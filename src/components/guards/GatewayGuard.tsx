@@ -64,6 +64,12 @@ export default function GatewayGuard({ children }: Props) {
       return;
     }
 
+    // 6.5. صفحة "عملي اليوم" مسموحة لأي موظف لديه بطاقات
+    if (currentPath === '/admin/my-work' && cards.length > 0) {
+      setChecking(false);
+      return;
+    }
+
     // 7. التحقق: هل المسار مسموح للمستخدم؟
     const userCardKeys = cards.map(card => card.card_key);
     const hasAccess = isRouteAllowedForUser(currentPath, userCardKeys);

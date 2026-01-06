@@ -49,6 +49,7 @@ import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
+import MyWorkPage from './components/platform/MyWorkPage';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
@@ -472,6 +473,18 @@ function App() {
 
       {/* Crown Smart Gateway - Phase 1 */}
       <Route path="/admin/gateway" element={<CrownSmartGateway />} />
+
+      {/* My Work Page - Employee Daily Hub */}
+      <Route
+        path="/admin/my-work"
+        element={
+          <GatewayGuard>
+            <SessionGuard>
+              <MyWorkPage />
+            </SessionGuard>
+          </GatewayGuard>
+        }
+      />
 
       {/* ============================================
           OPERATIONS ROOM ROUTES (Session + Role-based)
