@@ -10,6 +10,7 @@ import {
 import { useFarmRadar } from '../../hooks/useFarmRadar';
 import FarmRadarCard from './FarmRadarCard';
 import CriticalAlertsPanel from './CriticalAlertsPanel';
+import NewBornFarmsAlert from './NewBornFarmsAlert';
 
 export default function B2FOperationsRoom() {
   const navigate = useNavigate();
@@ -60,6 +61,8 @@ export default function B2FOperationsRoom() {
       </div>
 
       <div className="max-w-[1600px] mx-auto px-6 py-6">
+        <NewBornFarmsAlert />
+
         <CriticalAlertsPanel
           onFilterChange={setFilterFarmIds}
           activeFilter={filterFarmIds}
