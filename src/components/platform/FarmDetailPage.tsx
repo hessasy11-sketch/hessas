@@ -27,6 +27,7 @@ import FarmContentsView from '../B2F/farmCommand/FarmContentsView';
 import EquipmentView from '../B2F/farmCommand/EquipmentView';
 import FinanceCalculatorView from '../B2F/farmCommand/FinanceCalculatorView';
 import ActivityTimelineTab from './ActivityTimelineTab';
+import FarmDailySummaryCard from './FarmDailySummaryCard';
 
 interface FarmDetail {
   id: string;
@@ -375,6 +376,11 @@ export default function FarmDetailPage() {
           <div className="p-6">
             {activeTab === 'overview' && (
               <>
+                {/* Daily Summary Card */}
+                <div className="mb-8">
+                  <FarmDailySummaryCard farmId={farmId!} />
+                </div>
+
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {/* Teams */}
