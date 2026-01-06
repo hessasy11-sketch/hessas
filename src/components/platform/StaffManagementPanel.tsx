@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffManagement } from '../../hooks/useStaffManagement';
 import CreateStaffModal from './CreateStaffModal';
+import GrantAccessModal from './GrantAccessModal';
 import BackToGatewayButton from './BackToGatewayButton';
 import {
   Users,
@@ -19,6 +20,7 @@ import {
   AlertTriangle,
   Clock,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
 
 export default function StaffManagementPanel() {
@@ -37,6 +39,10 @@ export default function StaffManagementPanel() {
   } = useStaffManagement(gmId);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [grantAccessModal, setGrantAccessModal] = useState<{
+    staffId: string;
+    staffName: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -378,6 +384,21 @@ export default function StaffManagementPanel() {
                               <Key className="w-4 h-4" />
                               <span>إعادة تعيين كلمة المرور</span>
                             </button>
+
+                            <button
+                              onClick={() => {
+                                setGrantAccessModal({
+                                  staffId: member.id,
+                                  staffName: member.name_ar
+                                });
+                                setSelectedStaff(null);
+                              }}
+                              disabled={actionLoading}
+                              className="w-full px-4 py-2 text-right hover:bg-purple-50 text-purple-600 font-medium flex items-center gap-2 disabled:opacity-50 border-t border-gray-100"
+                            >
+                              <Lock className="w-4 h-4" />
+                              <span>منح صلاحيات الوصول</span>
+                            </button>
                           </div>
                         </>
                       )}
@@ -463,6 +484,18 @@ export default function StaffManagementPanel() {
             </div>
           </div>
         </div>
+      )}
+
+      {grantAccessModal && (
+        <GrantAccessModal
+          staffId={grantAccessModal.staffId}
+          staffName={grantAccessModal.staffName}
+          onClose={() => setGrantAccessModal(null)}
+          onSuccess={() => {
+            refresh();
+            setGrantAccessModal(null);
+          }}
+        />
       )}
     </div>
   );

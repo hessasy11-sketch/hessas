@@ -23,6 +23,20 @@ export default function CrownSmartGateway() {
 
   const errorParam = searchParams.get('error');
 
+  // DEBUG: تفعيل مؤقت
+  useEffect(() => {
+    if (staffSession && !loading) {
+      console.log('🔍 GATEWAY DEBUG:');
+      console.log('Session:', staffSession);
+      console.log('User ID:', userId);
+      console.log('Role:', staffSession.role);
+      console.log('Department:', staffSession.department);
+      console.log('Is GM:', staffSession.role === 'general_manager');
+      console.log('Cards Count:', cards.length);
+      console.log('Cards:', cards);
+    }
+  }, [staffSession, userId, cards, loading]);
+
   useEffect(() => {
     const savedSession = localStorage.getItem('staff_session');
     if (savedSession) {
@@ -49,6 +63,13 @@ export default function CrownSmartGateway() {
     });
     setUserId(staffId);
     setShowLogin(false);
+
+    // إذا لم يكن GM، اذهب مباشرة إلى my-work
+    if (role !== 'general_manager') {
+      setTimeout(() => {
+        navigate('/admin/my-work');
+      }, 500);
+    }
   };
 
   const handleLogout = () => {

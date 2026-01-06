@@ -20,16 +20,36 @@ export default function SessionGuard({ children }: SessionGuardProps) {
     try {
       console.log('🔐 SessionGuard: Checking session for:', location.pathname);
 
+      // تحقق من جلسة staff_session الجديدة أولاً
+      const staffSessionData = localStorage.getItem('staff_session');
+      if (staffSessionData) {
+        try {
+          const staffSession = JSON.parse(staffSessionData);
+          if (staffSession.staffId && staffSession.role) {
+            console.log('✅ SessionGuard: Staff session found');
+            console.log('   - Staff ID:', staffSession.staffId);
+            console.log('   - Role:', staffSession.role);
+            console.log('   - Department:', staffSession.department);
+            setHasSession(true);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.log('❌ Invalid staff_session format');
+        }
+      }
+
+      // إذا لم تكن جلسة staff_session، تحقق من platform_staff_session القديمة
       const localSession = adminSessionManager.getSession();
 
       if (!localSession) {
-        console.log('❌ SessionGuard: No local session found');
+        console.log('❌ SessionGuard: No session found');
         setHasSession(false);
         setLoading(false);
         return;
       }
 
-      console.log('✅ SessionGuard: Local session exists');
+      console.log('✅ SessionGuard: Platform staff session exists');
 
       const dbSession = await adminSessionManager.restoreSessionFromDB();
 
@@ -68,11 +88,11 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   if (!hasSession) {
     console.log('🚫 SessionGuard: Access denied - no valid session');
-    console.log('   Redirecting to: /');
+    console.log('   Redirecting to: /admin/gateway');
 
     return (
       <Navigate
-        to="/"
+        to="/admin/gateway?error=no_session"
         replace
         state={{
           from: location.pathname,
