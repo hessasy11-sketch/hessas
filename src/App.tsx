@@ -49,7 +49,7 @@ import FarmCommandCenter from './components/platform/FarmCommandCenter';
 import FarmSetupPage from './components/platform/FarmSetupPage';
 import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
-import { SessionGuard, DepartmentGuard, FarmScopeGuard } from './components/guards';
+import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
 import { usePWA } from './hooks/usePWA';
 import { supabase } from './lib/supabase';
 import type { Database } from './lib/database.types';
@@ -481,9 +481,11 @@ function App() {
       <Route
         path="/admin/operations-room"
         element={
-          <SessionGuard>
-            <OperationsRoomHub />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <OperationsRoomHub />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -491,34 +493,42 @@ function App() {
       <Route
         path="/admin/operations-room/global"
         element={
-          <SessionGuard>
-            <ExecutivePulse />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <ExecutivePulse />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
       <Route
         path="/admin/operations-room/decisions"
         element={
-          <SessionGuard>
-            <DecisionQueuePanel />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DecisionQueuePanel />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
       <Route
         path="/admin/operations-room/executive-log"
         element={
-          <SessionGuard>
-            <ExecutiveDecisionsLog />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <ExecutiveDecisionsLog />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
       <Route
         path="/admin/operations-room/logs"
         element={
-          <SessionGuard>
-            <ExecutiveLogsView />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <ExecutiveLogsView />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
       <Route
@@ -560,11 +570,13 @@ function App() {
       <Route
         path="/admin/operations-room/b2b"
         element={
-          <SessionGuard>
-            <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
-              <B2BAuctionsOpsRoom />
-            </DepartmentGuard>
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
+                <B2BAuctionsOpsRoom />
+              </DepartmentGuard>
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -572,25 +584,31 @@ function App() {
       <Route
         path="/admin/operations-room/finance"
         element={
-          <SessionGuard>
-            <FinanceSection />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <FinanceSection />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
       <Route
         path="/admin/operations-room/marketing"
         element={
-          <SessionGuard>
-            <MarketingSection />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <MarketingSection />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
       <Route
         path="/admin/operations-room/partners"
         element={
-          <SessionGuard>
-            <PartnersSection />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <PartnersSection />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -602,11 +620,13 @@ function App() {
       <Route
         path="/admin/auctions"
         element={
-          <SessionGuard>
-            <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
-              <AuctionsAdminPage />
-            </DepartmentGuard>
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DepartmentGuard allowedDepartments={['b2b', 'B2B', 'مزادات']}>
+                <AuctionsAdminPage />
+              </DepartmentGuard>
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -614,11 +634,13 @@ function App() {
       <Route
         path="/admin/b2f"
         element={
-          <SessionGuard>
-            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
-              <B2FAdminPage />
-            </DepartmentGuard>
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+                <B2FAdminPage />
+              </DepartmentGuard>
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -626,11 +648,13 @@ function App() {
       <Route
         path="/admin/b2f/farm-command"
         element={
-          <SessionGuard>
-            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
-              <FarmCommandCenter />
-            </DepartmentGuard>
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+                <FarmCommandCenter />
+              </DepartmentGuard>
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -638,13 +662,15 @@ function App() {
       <Route
         path="/admin/b2f/farm-command/farms/:farmId"
         element={
-          <SessionGuard>
-            <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
-              <FarmScopeGuard farmIdParam="farmId" redirectTo="/admin/b2f/farm-command">
-                <FarmDetailPage />
-              </FarmScopeGuard>
-            </DepartmentGuard>
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DepartmentGuard allowedDepartments={['b2f', 'B2F', 'مزارع']}>
+                <FarmScopeGuard farmIdParam="farmId" redirectTo="/admin/b2f/farm-command">
+                  <FarmDetailPage />
+                </FarmScopeGuard>
+              </DepartmentGuard>
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -664,9 +690,11 @@ function App() {
       <Route
         path="/admin/settings"
         element={
-          <SessionGuard>
-            <SettingsAdminPage />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <SettingsAdminPage />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 
@@ -674,9 +702,11 @@ function App() {
       <Route
         path="/admin/settings/authority"
         element={
-          <SessionGuard>
-            <DecisionAuthoritiesView />
-          </SessionGuard>
+          <GatewayGuard>
+            <SessionGuard>
+              <DecisionAuthoritiesView />
+            </SessionGuard>
+          </GatewayGuard>
         }
       />
 

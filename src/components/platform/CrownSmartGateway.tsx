@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGatewayAccess } from '../../hooks/useGatewayAccess';
 import SmartGatewayCard from './SmartGatewayCard';
-import { Crown, LogOut, RefreshCw, Shield } from 'lucide-react';
+import { Crown, LogOut, RefreshCw, Shield, AlertTriangle, XCircle } from 'lucide-react';
 
 export default function CrownSmartGateway() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const { cards, loading, refresh } = useGatewayAccess(userId || undefined);
+
+  const errorParam = searchParams.get('error');
 
   useEffect(() => {
     const currentUserId = 'current-user-id';
@@ -16,6 +19,24 @@ export default function CrownSmartGateway() {
 
   const handleLogout = () => {
     navigate('/');
+  };
+
+  const clearError = () => {
+    searchParams.delete('error');
+    setSearchParams(searchParams);
+  };
+
+  const getErrorMessage = (errorCode: string) => {
+    switch (errorCode) {
+      case 'no_session':
+        return 'لا يوجد جلسة نشطة. يرجى تسجيل الدخول أولاً.';
+      case 'no_permission':
+        return 'لا تملك صلاحية للوصول إلى الصفحة المطلوبة.';
+      case 'access_denied':
+        return 'تم رفض الوصول. يرجى التواصل مع المدير العام.';
+      default:
+        return 'حدث خطأ في الوصول. يرجى المحاولة مرة أخرى.';
+    }
   };
 
   if (loading) {
@@ -71,6 +92,32 @@ export default function CrownSmartGateway() {
 
       {/* Content */}
       <div className="max-w-[1400px] mx-auto px-6 py-8">
+        {/* Error Alert */}
+        {errorParam && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-bold text-red-900">تم منع الوصول</h3>
+                  <button
+                    onClick={clearError}
+                    className="text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-red-700 leading-relaxed">
+                  {getErrorMessage(errorParam)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Welcome Banner */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
           <div className="flex items-start gap-4">
