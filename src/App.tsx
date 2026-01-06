@@ -56,6 +56,8 @@ import GMControlPanel from './components/platform/GMControlPanel';
 import StaffManagementPanel from './components/platform/StaffManagementPanel';
 import ViewAsBanner from './components/platform/ViewAsBanner';
 import FarmManagerDashboard from './components/platform/FarmManagerDashboard';
+import SimplifiedLogin from './components/SimplifiedLogin';
+import FarmsManagerDashboard from './components/FarmsManagerDashboard';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
 import { ImpersonationProvider } from './contexts/ImpersonationContext';
 import { usePWA } from './hooks/usePWA';
@@ -477,6 +479,12 @@ function App() {
     <ImpersonationProvider>
       <ViewAsBanner />
       <Routes>
+        {/* Simplified Login - NEW SYSTEM */}
+        <Route path="/login" element={<SimplifiedLogin />} />
+
+        {/* Farms Manager Dashboard - مدير المزارع (صاحب المنصة) */}
+        <Route path="/admin/farms-manager-dashboard" element={<FarmsManagerDashboard />} />
+
         {/* Public route: Invite acceptance (no session required) */}
         <Route path="/admin/invite" element={<InviteAcceptancePage />} />
 
