@@ -18,7 +18,8 @@ import {
   Edit,
   Activity,
   BarChart3,
-  FileCheck
+  FileCheck,
+  Award
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import FarmTeamManagement from './FarmTeamManagement';
@@ -31,6 +32,7 @@ import FarmDailySummaryCard from './FarmDailySummaryCard';
 import FarmContractsCard from './FarmContractsCard';
 import ContractDetailsModal from './ContractDetailsModal';
 import FarmKPIsPanel from './FarmKPIsPanel';
+import FarmManagerScore from './FarmManagerScore';
 
 interface FarmDetail {
   id: string;
@@ -55,7 +57,7 @@ interface FarmStats {
   monthly_net: number;
 }
 
-type Tab = 'overview' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculator' | 'timeline';
+type Tab = 'overview' | 'performance' | 'contents' | 'team' | 'tasks' | 'equipment' | 'calculator' | 'timeline';
 
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
@@ -318,6 +320,17 @@ export default function FarmDetailPage() {
                 نظرة عامة
               </button>
               <button
+                onClick={() => setActiveTab('performance')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'performance'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <Award className="w-5 h-5" />
+                الأداء
+              </button>
+              <button
                 onClick={() => setActiveTab('contents')}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'contents'
@@ -527,6 +540,10 @@ export default function FarmDetailPage() {
                   </div>
                 </div>
               </>
+            )}
+
+            {activeTab === 'performance' && (
+              <FarmManagerScore farmId={farmId!} periodDays={30} />
             )}
 
             {activeTab === 'contents' && (
