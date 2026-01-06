@@ -30,6 +30,9 @@ export default function MyWorkPage() {
 
   const { data, loading, error, refresh, updateTaskStatus } = useMyWork();
 
+  // Check if user has approval role
+  const hasApprovalRole = data?.role && ['super_admin', 'admin', 'supervisor', 'manager', 'accountant', 'farm_manager'].includes(data.role);
+
   useEffect(() => {
     const savedSession = localStorage.getItem('staff_session');
     if (savedSession) {
@@ -192,11 +195,11 @@ export default function MyWorkPage() {
 
   const filteredTasks = (data?.tasks || []).filter(task => {
     if (activeTab === 'open') {
-      return task.status === 'new' || task.status === 'in_progress';
+      return task.status === 'pending' || task.status === 'in_progress';
     } else if (activeTab === 'awaiting') {
-      return task.status === 'submitted';
+      return task.status === 'awaiting_approval';
     } else {
-      return task.status === 'approved' || task.status === 'rejected';
+      return task.status === 'completed';
     }
   });
 
@@ -293,7 +296,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                مفتوحة ({tasks.filter(t => t.status === 'new' || t.status === 'in_progress').length})
+                مفتوحة ({(data?.tasks || []).filter(t => t.status === 'pending' || t.status === 'in_progress').length})
               </button>
               <button
                 onClick={() => setActiveTab('awaiting')}
@@ -303,7 +306,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                بانتظار الاعتماد ({tasks.filter(t => t.status === 'submitted').length})
+                بانتظار الاعتماد ({(data?.tasks || []).filter(t => t.status === 'awaiting_approval').length})
               </button>
               <button
                 onClick={() => setActiveTab('completed')}
@@ -313,7 +316,7 @@ export default function MyWorkPage() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                مكتملة ({tasks.filter(t => t.status === 'approved' || t.status === 'rejected').length})
+                مكتملة ({(data?.tasks || []).filter(t => t.status === 'completed').length})
               </button>
             </div>
 
@@ -372,7 +375,7 @@ export default function MyWorkPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        {(task.status === 'new') && (
+                        {(task.status === 'pending') && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -389,20 +392,20 @@ export default function MyWorkPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateTaskStatus(task.id, task.taskType, 'submitted');
+                              handleUpdateTaskStatus(task.id, task.taskType, 'completed');
                             }}
                             disabled={updatingTask === task.id}
                             className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                           >
-                            <FileCheck className="w-3 h-3" />
-                            إرسال للاعتماد
+                            <Check className="w-3 h-3" />
+                            إنهاء
                           </button>
                         )}
-                        {(task.status === 'submitted') && (
+                        {(task.status === 'awaiting_approval') && (
                           <span className="text-xs text-gray-500 px-3 py-1.5">بانتظار الموافقة...</span>
                         )}
-                        {(task.status === 'approved') && (
-                          <span className="text-xs text-green-600 px-3 py-1.5 font-medium">✓ تم الاعتماد</span>
+                        {(task.status === 'completed') && (
+                          <span className="text-xs text-green-600 px-3 py-1.5 font-medium">✓ مكتملة</span>
                         )}
                         {(task.status === 'rejected') && (
                           <span className="text-xs text-red-600 px-3 py-1.5 font-medium">✗ مرفوضة</span>
@@ -513,8 +516,10 @@ export default function MyWorkPage() {
                               const task = (data?.tasks || []).find(t => t.id === alert.id);
                               if (task?.status === 'pending' || task?.status === 'in_progress') {
                                 setActiveTab('open');
-                              } else if (task?.status === 'under_review' || task?.status === 'awaiting_approval') {
+                              } else if (task?.status === 'awaiting_approval') {
                                 setActiveTab('awaiting');
+                              } else if (task?.status === 'completed') {
+                                setActiveTab('completed');
                               }
                             }}
                             className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-2"
