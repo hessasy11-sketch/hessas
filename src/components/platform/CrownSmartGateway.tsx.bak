@@ -2,60 +2,23 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGatewayAccess } from '../../hooks/useGatewayAccess';
 import SmartGatewayCard from './SmartGatewayCard';
-import StaffLoginForm from './StaffLoginForm';
-import { Crown, LogOut, RefreshCw, Shield, AlertTriangle, XCircle, User } from 'lucide-react';
-
-interface StaffSession {
-  staffId: string;
-  staffName: string;
-  role: string;
-  department?: string;
-  loginAt: string;
-}
+import { Crown, LogOut, RefreshCw, Shield, AlertTriangle, XCircle } from 'lucide-react';
 
 export default function CrownSmartGateway() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
-  const [staffSession, setStaffSession] = useState<StaffSession | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
   const { cards, loading, refresh } = useGatewayAccess(userId || undefined);
 
   const errorParam = searchParams.get('error');
 
   useEffect(() => {
-    const savedSession = localStorage.getItem('staff_session');
-    if (savedSession) {
-      try {
-        const session = JSON.parse(savedSession) as StaffSession;
-        setStaffSession(session);
-        setUserId(session.staffId);
-      } catch (err) {
-        console.error('Error parsing session:', err);
-        localStorage.removeItem('staff_session');
-        setShowLogin(true);
-      }
-    } else {
-      setShowLogin(true);
-    }
+    const currentUserId = 'current-user-id';
+    setUserId(currentUserId);
   }, []);
 
-  const handleLoginSuccess = (staffId: string, staffName: string, role: string) => {
-    setStaffSession({
-      staffId,
-      staffName,
-      role,
-      loginAt: new Date().toISOString(),
-    });
-    setUserId(staffId);
-    setShowLogin(false);
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem('staff_session');
-    setStaffSession(null);
-    setUserId(null);
-    setShowLogin(true);
+    navigate('/');
   };
 
   const clearError = () => {
@@ -76,10 +39,6 @@ export default function CrownSmartGateway() {
     }
   };
 
-  if (showLogin) {
-    return <StaffLoginForm onLoginSuccess={handleLoginSuccess} />;
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -93,9 +52,11 @@ export default function CrownSmartGateway() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white">
         <div className="max-w-[1400px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
+            {/* Left: Title */}
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border-2 border-white/20">
                 <Crown className="w-8 h-8 text-yellow-300" />
@@ -107,14 +68,8 @@ export default function CrownSmartGateway() {
               </div>
             </div>
 
+            {/* Right: Actions */}
             <div className="flex items-center gap-3">
-              {staffSession && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl backdrop-blur-sm">
-                  <User className="w-4 h-4" />
-                  <span className="font-medium">{staffSession.staffName}</span>
-                </div>
-              )}
-
               <button
                 onClick={refresh}
                 className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all backdrop-blur-sm"
@@ -135,7 +90,9 @@ export default function CrownSmartGateway() {
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-[1400px] mx-auto px-6 py-8">
+        {/* Error Alert */}
         {errorParam && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
@@ -161,6 +118,7 @@ export default function CrownSmartGateway() {
           </div>
         )}
 
+        {/* Welcome Banner */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -176,6 +134,7 @@ export default function CrownSmartGateway() {
           </div>
         </div>
 
+        {/* Cards Grid */}
         {cards.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
             <Crown className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -203,6 +162,7 @@ export default function CrownSmartGateway() {
           </>
         )}
 
+        {/* Footer Note */}
         <div className="mt-8 bg-blue-50 rounded-xl border border-blue-200 p-4">
           <div className="flex items-start gap-3">
             <Crown className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />

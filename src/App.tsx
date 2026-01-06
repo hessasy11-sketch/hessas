@@ -51,6 +51,7 @@ import InviteAcceptancePage from './components/platform/InviteAcceptancePage';
 import CrownSmartGateway from './components/platform/CrownSmartGateway';
 import MyWorkPage from './components/platform/MyWorkPage';
 import GMControlPanel from './components/platform/GMControlPanel';
+import StaffManagementPanel from './components/platform/StaffManagementPanel';
 import ViewAsBanner from './components/platform/ViewAsBanner';
 import { SessionGuard, DepartmentGuard, FarmScopeGuard, GatewayGuard } from './components/guards';
 import { ImpersonationProvider } from './contexts/ImpersonationContext';
@@ -486,6 +487,18 @@ function App() {
             <GatewayGuard>
               <SessionGuard>
                 <GMControlPanel />
+              </SessionGuard>
+            </GatewayGuard>
+          }
+        />
+
+        {/* Staff Management - Create & Manage Staff */}
+        <Route
+          path="/admin/settings/staff"
+          element={
+            <GatewayGuard>
+              <SessionGuard>
+                <StaffManagementPanel />
               </SessionGuard>
             </GatewayGuard>
           }
