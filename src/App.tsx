@@ -38,6 +38,10 @@ import type { Database } from './lib/database.types';
 type AuctionInsert = Database['public']['Tables']['auctions']['Insert'];
 type Auction = Database['public']['Tables']['auctions']['Row'];
 
+// Feature Toggle: إخفاء مؤقت لقسم B2B للتركيز على B2F
+// لإظهار B2B مرة أخرى، قم بتغيير القيمة إلى true
+const SHOW_B2B_SECTION = false;
+
 const SECTION_COLORS: Record<Section, string> = {
   companies: '#3B82F6',
   b2f: '#10B981',
@@ -48,6 +52,10 @@ function MainApp() {
   const { regions, getCitiesByRegion, getRegionById } = useRegionsAndCities();
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const saved = localStorage.getItem('lastSection');
+    // إذا كان B2B مخفياً، استخدم B2F كقسم افتراضي
+    if (!SHOW_B2B_SECTION && (!saved || saved === 'companies')) {
+      return 'b2f';
+    }
     return (saved as Section) || 'companies';
   });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);

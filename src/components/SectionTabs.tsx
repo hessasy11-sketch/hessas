@@ -7,6 +7,10 @@ interface SectionConfig {
   icon: string;
 }
 
+// Feature Toggle: إخفاء مؤقت لقسم B2B للتركيز على B2F
+// لإظهار B2B مرة أخرى، قم بتغيير القيمة إلى true
+const SHOW_B2B_SECTION = false;
+
 const SECTIONS: SectionConfig[] = [
   { id: 'companies', name: 'مزاد الشركات و المزارع', color: '#3B82F6', icon: '🏢' },
   { id: 'b2f', name: 'استثمار أشجار المزارع', color: '#10B981', icon: '🌳' },
@@ -18,6 +22,11 @@ interface SectionTabsProps {
 }
 
 export function SectionTabs({ activeSection, onSectionChange }: SectionTabsProps) {
+  // تصفية الأقسام بناءً على Feature Toggle
+  const visibleSections = SHOW_B2B_SECTION
+    ? SECTIONS
+    : SECTIONS.filter(section => section.id !== 'companies');
+
   return (
     <div className="w-full bg-white/50 backdrop-blur-sm py-1.5 shadow-sm border-b border-gray-100" dir="rtl">
       <div className="max-w-7xl mx-auto px-2 sm:px-4">
@@ -29,7 +38,7 @@ export function SectionTabs({ activeSection, onSectionChange }: SectionTabsProps
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {SECTIONS.map((section) => {
+          {visibleSections.map((section) => {
             const isActive = activeSection === section.id;
 
             return (
