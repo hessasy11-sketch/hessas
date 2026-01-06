@@ -49,24 +49,29 @@ export default function GMLoginPage() {
         return;
       }
 
-      // Create admin session
+      // Create admin session with proper data structure
       const sessionData = {
-        staffId: data.data.staffId,
-        staffName: data.data.fullName,
+        staff_id: data.data.staffId,
+        user_id: '', // Empty for now
+        full_name: data.data.fullName,
         role: data.data.role,
-        scopeType: data.data.scopeType,
-        staffCode: data.data.staffCode,
-        loginMethod: 'password',
-        landingRoute: data.data.landingRoute,
+        role_title: data.data.role,
+        department: '',
+        is_super_admin: data.data.role === 'super_admin',
+        is_platform_owner: false,
       };
 
-      // Use adminSessionManager to create persistent session
-      adminSessionManager.createSession(sessionData);
+      // Wait for session creation to complete
+      const sessionCreated = await adminSessionManager.createSession(sessionData);
 
-      // Save to localStorage for persistence
-      localStorage.setItem('admin_session', JSON.stringify(sessionData));
-      localStorage.setItem('current_staff_id', data.data.staffId);
-      sessionStorage.setItem('current_staff_id', data.data.staffId);
+      if (!sessionCreated) {
+        console.error('❌ Failed to create session in database');
+        setError('فشل إنشاء الجلسة. الرجاء المحاولة مرة أخرى');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Session created successfully, navigating to HQ');
 
       // Navigate to HQ dashboard
       navigate('/hq');
